@@ -26,8 +26,6 @@ namespace tool_research;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/lib/accesslib.php');
-
 /**
  * Courses manager.
  *
@@ -38,6 +36,7 @@ require_once($CFG->dirroot . '/lib/accesslib.php');
 class course_manager {
 
     const MIN_NUMBER_STUDENTS = 10;
+    const MIN_STUDENT_LOGS_PERCENT = 95;
 
     protected static $instance = null;
 
@@ -56,6 +55,8 @@ class course_manager {
 
     /**
      * Course manager constructor.
+     *
+     * Use self::instance() instead to get a course_manager instance as it returns cached copies.
      *
      * Loads course students and teachers.
      *
@@ -84,7 +85,8 @@ class course_manager {
         $this->now = time();
 
         if (empty($this->studentroles) || empty($this->teacherroles)) {
-            throw new moodle_exception('errornoroles', 'tool_research');
+            // Unexpected, site settings should be set with default values.
+            throw new \moodle_exception('errornoroles', 'tool_research');
         }
 
         // Get the course users, including users assigned to student and teacher roles at an higher context.
@@ -110,9 +112,9 @@ class course_manager {
     }
 
     /**
-     * Purges course instance
+     * Purges course instance.
      *
-     * Note that this does not change current instances.
+     * Note that this does not change current instances. Remove if not required from unit tests.
      *
      * @return void
      */
@@ -133,12 +135,12 @@ class course_manager {
         }
 
         // The field always exist but may have no valid if the course is created through a sync process.
-        if ($this->course->startdate) {
+        if (!empty($this->course->startdate)) {
             $this->starttime = $this->course->startdate;
         } else {
             // Fallback to the first student log.
-            list($studentssql, $studentsparams) = $DB->get_in_or_equal($this->students);
-            $select = 'courseid = :courseid AND ' . $studentssql;
+            list($studentssql, $studentsparams) = $DB->get_in_or_equal($this->students, SQL_PARAMS_NAMED);
+            $select = 'courseid = :courseid AND userid ' . $studentssql;
             $params = ['courseid' => $this->course->id] + $studentsparams;
             $records = $DB->get_records_select('logstore_standard_log', $select, $params,
                 'timecreated ASC', 'id, timecreated', 0, 1);
@@ -146,7 +148,7 @@ class course_manager {
                 // If there are no logs we assume the course has not started yet.
                 return 0;
             }
-            $this->starttime  = $records[0]->timecreated;
+            $this->starttime  = reset($records)->timecreated;
         }
 
         return $this->starttime;
@@ -165,15 +167,22 @@ class course_manager {
         }
 
         // The enddate field is only available from Moodle 3.2 (MDL-22078).
-        if ($this->course->enddate) {
+        if (!empty($this->course->enddate)) {
             $this->endtime = $this->course->enddate;
             return $this->endtime;
         }
 
+        // Not worth trying if we weren't able to determine the startdate, we need to base the calculations below on the
+        // course start date.
+        $starttime = $this->get_start_time();
+        if (!$starttime) {
+            return 0;
+        }
+
         // Check the amount of student logs in the 4 previous weeks.
-        list($studentssql, $studentsparams) = $DB->get_in_or_equal($this->students);
-        $sql = "SELECT COUNT(DISTINCT userid) FROM {logstore_standard_log}' WHERE " .
-            "courseid = :courseid AND timecreated > :timecreated AND $studentssql";
+        list($studentssql, $studentsparams) = $DB->get_in_or_equal($this->students, SQL_PARAMS_NAMED);
+        $sql = "SELECT COUNT(DISTINCT userid) FROM {logstore_standard_log} WHERE " .
+            "courseid = :courseid AND timecreated > :timecreated AND userid $studentssql";
         $params = array('courseid' => $this->course->id, 'timecreated' => $this->now - (WEEKSECS * 4)) + $studentsparams;
         $ntotallastmonth = $DB->count_records_sql($sql, $params);
 
@@ -184,25 +193,72 @@ class course_manager {
             return $this->endtime;
         }
 
-        // We need to work out a date, this may be computationally expensive.
-
-        // Not worth trying if we weren't able to determine the startdate, we need to base the calculations below on the
-        // course start date.
-        if (!$this->get_start_time()) {
-            return 0;
-        }
+        // We consider that the course was already finished. We still need to work out a date though,
+        // this may be computationally expensive.
 
         // Get the total amount of logs in the course, we will consider the end date the approximate date when
-        // the 95% of the student logs are included.
-        list($studentssql, $studentsparams) = $DB->get_in_or_equal($this->students);
-        $select = "WHERE courseid = :courseid AND $studentssql";
-        $params = array('courseid' => $this->course->id) + $studentsparams;
-        $ntotallogs = $DB->count_records_select('logstore_standard_log', $select, $params);
+        // the {self::MIN_STUDENT_LOGS_PERCENT}% of the student logs are included.
+        list($studentssql, $studentsparams) = $DB->get_in_or_equal($this->students, SQL_PARAMS_NAMED);
+        $filterselect = "courseid = :courseid AND userid $studentssql";
+        $filterparams = array('courseid' => $this->course->id) + $studentsparams;
+        $ntotallogs = $DB->count_records_select('logstore_standard_log', $filterselect, $filterparams);
 
-        // We continuously check until we reach the 95% of $ntotallogs.
-        // TODO Good moment for a rest.
+        if ($ntotallogs === 0) {
+            // No way to know if there are no logs.
+            $this->endtime = 0;
+            return $this->endtime;
+        }
 
+        // Default to ongoing. This may not be the best choice for courses with not much accesses, we
+        // may want to update self::MIN_STUDENT_LOGS_PERCENT in those cases.
+        $bestcandidate = 9999999999;
+        // We continuously try to find out the final course week until we reach 'a week' accuracy.
+        list($loopstart, $looptime, $loopend) = $this->update_loop_times($starttime, $this->now);
+
+        do {
+
+            // Add the time filters to the sql query.
+            $select = $filterselect . " AND timecreated >= :starttime AND timecreated <= :endtime";
+            $params = $filterparams + ['starttime' => $starttime, 'endtime' => $looptime];
+            $nlogs = $DB->count_records_select('logstore_standard_log', $select, $params);
+
+
+            // Move $looptime ahead or behind to find the more accurate end date according
+            // to self::MIN_STUDENT_LOGS_PERCENT.
+            if ($nlogs !== 0 && floor($nlogs / $ntotallogs) * 100 > self::MIN_STUDENT_LOGS_PERCENT) {
+                // We satisfy MIN_STUDENT_LOGS_PERCENT so we have a valid result.
+
+                // Store this value as the best end time candidate if the $looptime is lower than the
+                // previous best candidate.
+                if ($looptime < $bestcandidate) {
+                    $bestcandidate = $looptime;
+                }
+
+                // Go back in time to refine the end time. We want as much accuracy as possible.
+                list($loopstart, $looptime, $loopend) = $this->update_loop_times($loopstart, $looptime);
+            } else {
+                // We move ahead in time if we don't reach the minimum percent and if $nlogs === 0 (no logs between
+                // starttime and $looptime).
+                list($loopstart, $looptime, $loopend) = $this->update_loop_times($looptime, $loopend);
+            }
+
+        // We continuously check until we get 'a week' accuracy.
+        } while ($loopend - $loopstart > WEEKSECS);
+
+        $this->endtime = $bestcandidate;
         return $this->endtime;
+    }
+
+    /**
+     * Returns the average time between 2 timestamps.
+     *
+     * @param int $start
+     * @param int $end
+     * @return array [starttime, averagetime, endtime]
+     */
+    protected function update_loop_times($start, $end) {
+        $avg = intval(floor(($start + $end) / 2));
+        return array($start, $avg, $end);
     }
 
     /**
@@ -272,12 +328,12 @@ class course_manager {
      * Returns a list of user ids matching the specified roles in this course.
      *
      * @param array $roleids
-     * @return void
+     * @return array
      */
-    protected function get_users($roleids) {
+    public function get_users($roleids) {
 
         // We need to index by ra.id as a user may have more than 1 $roles role.
-        $records = get_role_users($roleids, $this->coursecontext, true, 'ra.id, u.id AS userid, r.id AS roleid');
+        $records = get_role_users($roleids, $this->coursecontext, true, 'ra.id, u.id AS userid, r.id AS roleid', 'ra.id ASC');
 
         // If a user have more than 1 $roles role array_combine will discard the duplicate.
         $callable = array($this, 'filter_user_id');
