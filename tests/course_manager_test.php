@@ -56,8 +56,8 @@ class tool_research_testcase extends advanced_testcase {
         $this->getDataGenerator()->enrol_user($this->teacher->id, $this->course->id, $this->teacherroleid);
 
 
-        set_config('studentroles', json_encode(array($this->studentroleid)), 'tool_research');
-        set_config('teacherroles', json_encode(array($this->editingteacherroleid, $this->teacherroleid)), 'tool_research');
+        set_config('studentroles', $this->studentroleid, 'tool_research');
+        set_config('teacherroles', $this->editingteacherroleid . ',' . $this->teacherroleid, 'tool_research');
     }
 
     /**
@@ -121,12 +121,20 @@ class tool_research_testcase extends advanced_testcase {
         $this->assertFalse($courseman->is_valid());
 
         // Valid start and end date.
-        $this->course->enddate = gmmktime('0', '0', '0', 9, 27, 2016);
+        $this->course->enddate = gmmktime('0', '0', '0', 8, 27, 2016);
         $DB->update_record('course', $this->course);
         $courseman = new \tool_research\course_manager($this->course);
         $this->assertTrue($courseman->was_started());
         $this->assertTrue($courseman->is_finished());
         $this->assertTrue($courseman->is_valid());
+
+        // Valid start and ongoing course.
+        $this->course->enddate = gmmktime('0', '0', '0', 8, 27, 2286);
+        $DB->update_record('course', $this->course);
+        $courseman = new \tool_research\course_manager($this->course);
+        $this->assertTrue($courseman->was_started());
+        $this->assertFalse($courseman->is_finished());
+        $this->assertFalse($courseman->is_valid());
     }
 
     /**
