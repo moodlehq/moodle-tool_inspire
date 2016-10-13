@@ -15,11 +15,24 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Functions used only in tool_research.
+ * Model requirements exception.
  *
- * @package    tool_research
- * @copyright  2016 David Monllao {@link http://www.davidmonllao.com}
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   tool_research
+ * @copyright David Monllao {@link http://www.davidmonllao.com}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+namespace tool_research;
+
 defined('MOODLE_INTERNAL') || die;
+
+/**
+ * Dummy class to identify model requirements exceptions.
+ *
+ * @package   core_search
+ * @copyright David Monllao {@link http://www.davidmonllao.com}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class requirements_exception extends \moodle_exception {
+}
+

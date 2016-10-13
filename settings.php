@@ -25,7 +25,30 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($hassiteconfig) {
-    $ADMIN->add('tools', new admin_externalpage('researchmanagement',
-            new lang_string('pluginname', 'tool_research'),
-            $CFG->wwwroot . '/' . $CFG->admin . '/tool/research/index.php'));
+    $settings = new admin_settingpage('researchmanagement', new lang_string('pluginname', 'tool_research'));
+    $ADMIN->add('tools', $settings);
+
+    $studentdefaultroles = [];
+    $teacherdefaultroles = [];
+
+    $allroles = role_fix_names(get_all_roles());
+    $rolechoices = [];
+    foreach ($allroles as $role) {
+        $rolechoices[$role->id] = $role->localname;
+
+        if ($role->shortname == 'student') {
+            $studentdefaultroles[] = $role->id;
+        } else if ($role->shortname == 'teacher') {
+            $teacherdefaultroles[] = $role->id;
+        } else if ($role->shortname == 'editingteacher') {
+            $teacherdefaultroles[] = $role->id;
+        }
+    }
+
+    $settings->add(new admin_setting_configmultiselect('tool_research/teacherroles', new lang_string('teacherroles', 'tool_research'),
+       '', $teacherdefaultroles, $rolechoices));
+
+    $settings->add(new admin_setting_configmultiselect('tool_research/studentroles', new lang_string('studentroles', 'tool_research'),
+       '', $studentdefaultroles, $rolechoices));
+
 }

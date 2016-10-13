@@ -15,36 +15,33 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Research info page.
  *
- * @package    tool_research
- * @copyright  2016 David Monllao {@link http://www.davidmonllao.com}
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   tool_research
+ * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_research\output;
+namespace tool_research\local\analyser;
 
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Shows research purposes info.
  *
- * @package    tool_research
- * @copyright  2016 David Monllao {@link http://www.davidmonllao.com}
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   tool_research
+ * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class info implements \renderable, \templatable {
+class enrolment extends by_course {
 
-    /**
-     * Exports the info data.
-     *
-     * @param \renderer_base $output
-     * @return \stdClass
-     */
-    public function export_for_template(\renderer_base $output) {
-        $data = new \stdClass();
+    public function rows_info() {
+        return array(
+            'user' => 'userid',
+            'course' => 'courseid'
+        );
+    }
 
-
-        return $data;
+    public function get_rows(\tool_research\analysable $course) {
+        // TODO Should not only contain ids but a bit more data like userid.
+        return $course->get_students();
     }
 }

@@ -15,7 +15,6 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Courses manager.
  *
  * @package   tool_research
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
@@ -27,16 +26,19 @@ namespace tool_research;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Courses manager.
  *
  * @package   tool_research
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class course_manager {
+class course implements \tool_research\analysable {
 
+    // TODO Force people to access this through a method, we may want to change values in future
+    // and allowing direct access to them restrict how we can manage backwards compatibility.
+    const MAX_TIME = 9999999999;
     const MIN_NUMBER_STUDENTS = 10;
-    const MIN_STUDENT_LOGS_PERCENT = 95;
+    const MIN_NUMBER_LOGS = 100;
+    const MIN_STUDENT_LOGS_PERCENT = 90;
 
     protected static $instance = null;
 
@@ -53,6 +55,8 @@ class course_manager {
     protected $students = [];
     protected $teachers = [];
 
+    protected $ntotallogs = null;
+
     /**
      * Course manager constructor.
      *
@@ -60,27 +64,22 @@ class course_manager {
      *
      * Loads course students and teachers.
      *
-     * @param mixed $course Course id or course stdClass
-     * @param mixed $studentroles
+     * Let's try to keep this computationally inexpensive.
+     *
+     * @param $courseid Course id
+     * @param array $studentroles
+     * @param array $teacherroles
      * @return void
      */
-    public function __construct($course, $studentroles = false, $teacherroles = false) {
+    public function __construct($courseid) {
 
-        if (is_scalar($course)) {
-            $course = get_course($course);
-        }
-        $this->course = $course;
+        $this->course = get_course($courseid);
+
         $this->coursecontext = \context_course::instance($this->course->id);
 
-        if ($studentroles === false) {
-            $studentroles = json_decode(get_config('tool_research', 'studentroles'));
-        }
-        $this->studentroles = $studentroles;
+        $this->studentroles = explode(',', get_config('tool_research', 'studentroles'));
 
-        if ($teacherroles === false) {
-            $teacherroles = json_decode(get_config('tool_research', 'teacherroles'));
-        }
-        $this->teacherroles = $teacherroles;
+        $this->teacherroles = explode(',', get_config('tool_research', 'teacherroles'));
 
         $this->now = time();
 
@@ -94,33 +93,31 @@ class course_manager {
         $this->teachers = $this->get_users($this->teacherroles);
     }
 
-    /**
-     * We just want to keep 1 instance per course as:
-     * - We don't want data to change during the process
-     * - It is good for performance
-     *
-     * @param mixed $course Course id integer or stdClass
-     * @return \tool_research\course_manager
-     */
-    public static function instance($course) {
-
-        if (self::$instance === null) {
-            self::$instance = new course_manager($course);
-        }
-
-        return self::$instance;
+    public function get_id() {
+        return $this->course->id;
     }
 
-    /**
-     * Purges course instance.
-     *
-     * Note that this does not change current instances. Remove if not required from unit tests.
-     *
-     * @return void
-     */
-    public static function purge() {
-        self::$instance = null;
+    public function get_usual_required_records() {
+        global $DB;
+
+        $storage = [];
+
+        $storage['course'] = $this->course;
+
+        list($sql, $params) = $DB->get_in_or_equal(array_keys($this->students + $this->teachers));
+        $storage['user'] = $DB->get_records_select('user', 'id ' . $sql, $params);
+
+        return $storage;
     }
+
+    public function get_metadata() {
+        // TODO We should be very careful with what we include here this is a WIP example.
+        return [
+            'courseid' => $this->course->id,
+            'courseshortname' => $this->course->shortname,
+        ];
+    }
+
 
     /**
      * Get the course start timestamp.
@@ -146,7 +143,8 @@ class course_manager {
                 'timecreated ASC', 'id, timecreated', 0, 1);
             if (!$records) {
                 // If there are no logs we assume the course has not started yet.
-                return 0;
+                $this->starttime = 0;
+                return $this->starttime;
             }
             $this->starttime  = reset($records)->timecreated;
         }
@@ -157,7 +155,7 @@ class course_manager {
     /**
      * Get the course end timestamp.
      *
-     * @return int Timestamp, 9999999999 if we don't know but ongoing and 0 if we can not work it out.
+     * @return int Timestamp, self::MAX_TIME if we don't know but ongoing and 0 if we can not work it out.
      */
     public function get_end_time() {
         global $DB;
@@ -176,42 +174,48 @@ class course_manager {
         // course start date.
         $starttime = $this->get_start_time();
         if (!$starttime) {
-            return 0;
-        }
-
-        // Check the amount of student logs in the 4 previous weeks.
-        list($studentssql, $studentsparams) = $DB->get_in_or_equal($this->students, SQL_PARAMS_NAMED);
-        $sql = "SELECT COUNT(DISTINCT userid) FROM {logstore_standard_log} WHERE " .
-            "courseid = :courseid AND timecreated > :timecreated AND userid $studentssql";
-        $params = array('courseid' => $this->course->id, 'timecreated' => $this->now - (WEEKSECS * 4)) + $studentsparams;
-        $ntotallastmonth = $DB->count_records_sql($sql, $params);
-
-        // If more than 1/4 of the students accessed the course in the last 4 weeks we can consider that
-        // the course is still ongoing and we can not determine when it will finish.
-        if ($ntotallastmonth > count($this->students) / 4) {
-            $this->endtime = 9999999999;
+            $this->endtime = 0;
             return $this->endtime;
         }
 
-        // We consider that the course was already finished. We still need to work out a date though,
-        // this may be computationally expensive.
+        if (empty($this->students)) {
+            $this->endtime = 0;
+            return $this->endtime;
+        }
 
-        // Get the total amount of logs in the course, we will consider the end date the approximate date when
-        // the {self::MIN_STUDENT_LOGS_PERCENT}% of the student logs are included.
-        list($studentssql, $studentsparams) = $DB->get_in_or_equal($this->students, SQL_PARAMS_NAMED);
-        $filterselect = "courseid = :courseid AND userid $studentssql";
-        $filterparams = array('courseid' => $this->course->id) + $studentsparams;
-        $ntotallogs = $DB->count_records_select('logstore_standard_log', $filterselect, $filterparams);
-
-        if ($ntotallogs === 0) {
+        if ($this->get_total_logs() === 0) {
             // No way to know if there are no logs.
             $this->endtime = 0;
             return $this->endtime;
         }
 
+        list($filterselect, $filterparams) = $this->get_query_filters();
+
+        $sql = "SELECT COUNT(DISTINCT userid) FROM {logstore_standard_log} " .
+            "WHERE $filterselect AND timecreated > :timecreated";
+        $params = $filterparams + array('timecreated' => $this->now - (WEEKSECS * 4));
+        $ntotallastmonth = $DB->count_records_sql($sql, $params);
+
+        // If more than 1/4 of the students accessed the course in the last 4 weeks we can consider that
+        // the course is still ongoing and we can not determine when it will finish.
+        if ($ntotallastmonth > count($this->students) / 4) {
+            $this->endtime = self::MAX_TIME;
+            return $this->endtime;
+        }
+
+        // We consider that the course was already finished. We still need to work out a date though,
+        // this may be computationally expensive.
+        //
+        // We will consider the end date the approximate date when
+        // the {self::MIN_STUDENT_LOGS_PERCENT}% of the student logs are included.
+        //
         // Default to ongoing. This may not be the best choice for courses with not much accesses, we
         // may want to update self::MIN_STUDENT_LOGS_PERCENT in those cases.
-        $bestcandidate = 9999999999;
+        $bestcandidate = self::MAX_TIME;
+
+        // We also store the percents so we can evaluate the algorithm and constants used.
+        $logspercents = [];
+
         // We continuously try to find out the final course week until we reach 'a week' accuracy.
         list($loopstart, $looptime, $loopend) = $this->update_loop_times($starttime, $this->now);
 
@@ -222,10 +226,10 @@ class course_manager {
             $params = $filterparams + ['starttime' => $starttime, 'endtime' => $looptime];
             $nlogs = $DB->count_records_select('logstore_standard_log', $select, $params);
 
-
             // Move $looptime ahead or behind to find the more accurate end date according
             // to self::MIN_STUDENT_LOGS_PERCENT.
-            if ($nlogs !== 0 && floor($nlogs / $ntotallogs) * 100 > self::MIN_STUDENT_LOGS_PERCENT) {
+            $logspercents[$looptime] = intval($nlogs / $this->get_total_logs() * 100);
+            if ($nlogs !== 0 && $logspercents[$looptime] > self::MIN_STUDENT_LOGS_PERCENT) {
                 // We satisfy MIN_STUDENT_LOGS_PERCENT so we have a valid result.
 
                 // Store this value as the best end time candidate if the $looptime is lower than the
@@ -245,20 +249,14 @@ class course_manager {
         // We continuously check until we get 'a week' accuracy.
         } while ($loopend - $loopstart > WEEKSECS);
 
+        // We couldn't work out any date with more logs than self::MIN_STUDENT_LOGS_PERCENT, notify the admin running
+        // the script about it.
+        if ($bestcandidate === self::MAX_TIME) {
+            debugging(json_encode($logspercents));
+        }
+
         $this->endtime = $bestcandidate;
         return $this->endtime;
-    }
-
-    /**
-     * Returns the average time between 2 timestamps.
-     *
-     * @param int $start
-     * @param int $end
-     * @return array [starttime, averagetime, endtime]
-     */
-    protected function update_loop_times($start, $end) {
-        $avg = intval(floor(($start + $end) / 2));
-        return array($start, $avg, $end);
     }
 
     /**
@@ -268,10 +266,20 @@ class course_manager {
      */
     public function is_valid() {
 
-        if ($this->was_started() && $this->is_finished() && $this->has_enough_students()) {
-            return true;
+        if (!$this->was_started() || !$this->is_finished() || !$this->has_enough_students()) {
+            return false;
         }
-        return false;
+
+        // Ideally we would test this, but I don't want to generate self::MIN_NUMBER_LOGS for
+        // each tests and more importantly would make test_start_and_end_times really hard to
+        // test.
+        if (!PHPUNIT_TEST) {
+            if (!$this->has_enough_logs()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -301,7 +309,8 @@ class course_manager {
     public function is_finished() {
 
         if ($this->finished === null) {
-            if ($this->get_end_time() === 0 || $this->now > $this->get_end_time()) {
+            $endtime = $this->get_end_time();
+            if ($endtime === 0 || $this->now < $endtime) {
                 // It is not yet finished or no idea when it finishes.
                 $this->finished = false;
             } else {
@@ -313,7 +322,7 @@ class course_manager {
     }
 
     /**
-     * Returns whether the course has enough students to analyse it or not.
+     * Whether the course has enough students to analyse it or not.
      *
      * @return bool
      */
@@ -322,6 +331,22 @@ class course_manager {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Whether the course has enough logs to be worth analysing it.
+     *
+     * @return bool
+     */
+    public function has_enough_logs() {
+        if ($this->get_total_logs() < self::MIN_NUMBER_LOGS) {
+            return false;
+        }
+        if ($this->get_total_logs() < count($this->students)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -342,6 +367,22 @@ class course_manager {
     }
 
     /**
+     * Returns the total number of student logs in the course
+     *
+     * @return int
+     */
+    public function get_total_logs() {
+        global $DB;
+
+        if ($this->ntotallogs === null) {
+            list($filterselect, $filterparams) = $this->get_query_filters();
+            $this->ntotallogs = $DB->count_records_select('logstore_standard_log', $filterselect, $filterparams);
+        }
+
+        return $this->ntotallogs;
+    }
+
+    /**
      * Used by get_users to extract the user id.
      *
      * @param \stdClass $record
@@ -349,5 +390,33 @@ class course_manager {
      */
     protected function filter_user_id($record) {
         return $record->userid;
+    }
+
+    /**
+     * Returns the average time between 2 timestamps.
+     *
+     * @param int $start
+     * @param int $end
+     * @return array [starttime, averagetime, endtime]
+     */
+    protected function update_loop_times($start, $end) {
+        $avg = intval(($start + $end) / 2);
+        return array($start, $avg, $end);
+    }
+
+    /**
+     * Returns the query and params used to filter {logstore_standard_log} table by this course students.
+     *
+     * @return array
+     */
+    protected function get_query_filters() {
+        global $DB;
+
+        // Check the amount of student logs in the 4 previous weeks.
+        list($studentssql, $studentsparams) = $DB->get_in_or_equal($this->students, SQL_PARAMS_NAMED);
+        $filterselect = "courseid = :courseid AND userid $studentssql";
+        $filterparams = array('courseid' => $this->course->id) + $studentsparams;
+
+        return array($filterselect, $filterparams);
     }
 }

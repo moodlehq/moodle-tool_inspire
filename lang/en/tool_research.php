@@ -22,5 +22,12 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+$string['errornorunrecord'] = 'Couldn\'t locate the current run record in the database';
 $string['errornoroles'] = 'Student or teacher roles have not been defined';
+$string['nocourses'] = 'No courses to analyse';
+$string['skippingcourse'] = 'Skipping course {$a}';
+$string['processingcourse'] = 'Processing course {$a}';
+$string['processingcourses'] = 'Processing courses...';
 $string['pluginname'] = 'Research';
+$string['studentroles'] = 'Student roles';
+$string['teacherroles'] = 'Teacher roles';

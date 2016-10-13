@@ -15,11 +15,21 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Functions used only in tool_research.
  *
- * @package    tool_research
- * @copyright  2016 David Monllao {@link http://www.davidmonllao.com}
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   tool_research
+ * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die;
+namespace tool_research\local\analyser;
+
+defined('MOODLE_INTERNAL') || die();
+
+/**
+ *
+ * @package   tool_research
+ * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class course extends sitewide {
+}

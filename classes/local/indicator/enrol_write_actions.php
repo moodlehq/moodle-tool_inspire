@@ -15,56 +15,38 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Research tool manager
+ * Write actions indicator.
  *
  * @package   tool_research
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_research;
+namespace tool_research\local\indicator;
 
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Research tool site manager.
+ * Write actions indicator.
  *
  * @package   tool_research
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class site_manager {
+class enrol_write_actions extends base implements \tool_research\local\calculable\enrolment {
 
+    public function get_required_records() {
+        global $DB;
+        return [
+            'course_modules' => $DB->get_records('course_modules', array('course' => $this->course->id))
+        ];
+    }
 
-    /**
-     * Analyses the site courses.
-     *
-     * @return void
-     */
-    protected function analyse() {
+    protected function get_requirements() {
+        return ['course', 'user'];
+    }
 
-        $studentroles = json_decode(get_config('tool_research', 'studentroles'));
-        $teacherroles = json_decode(get_config('tool_research', 'teacherroles'));
-
-        if (empty($studentroles) || empty($teacherroles)) {
-            throw new moodle_exception('errornoroles', 'tool_research');
-        }
-
-        // Iterate through all potentially valid courses.
-        $courses = $DB->get_recordset_select('course', 'id != :frontpage', array('frontpage' => SITEID));
-        if ($courses->valid() === false) {
-            $courses->close();
-            return false;
-        }
-
-        $status = [];
-        foreach ($courses as $coursedata) {
-            $course = new course_manager($coursedata, $studentroles, $teacherroles);
-
-            if ($course->is_valid()) {
-                $course->analyse();
-            }
-
-        }
+    public function calculate_row($row, $data, $starttime = false, $endtime = false) {
+        return rand(0, 10);
     }
 }
