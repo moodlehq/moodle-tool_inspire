@@ -39,6 +39,8 @@ abstract class base {
     protected $indicators;
     protected $rangeprocessors;
 
+    protected $options;
+
     public function __construct($modelid, $target, $indicators, $rangeprocessors) {
         $this->modelid = $modelid;
         $this->target = $target;
@@ -72,10 +74,10 @@ abstract class base {
      * In most of the cases you should have enough extending from one of these classes so you don't need
      * to reimplement this method.
      *
-     * @param array $filter
-     * @return void
+     * @param array $options
+     * @return array Array containing a status codes for each analysable and a list of files, one for each range processor
      */
-    abstract function analyse($filter);
+    abstract function analyse($options);
 
     /**
      * Checks if the analyser satisfies the calculable requirements.
@@ -97,14 +99,25 @@ abstract class base {
         }
     }
 
+    /**
+     * Processes an analysable
+     *
+     * This method returns the general analysable status and an array of files by range processor
+     * all error & status reporting at analysable + range processor level should not be returned
+     * but shown, through mtrace(), debugging() or through exceptions depending on the case.
+     *
+     * @param \tool_research\analysable $analysable
+     * @return array Analysable general status code and files by range processor
+     */
     public function process_analysable($analysable) {
 
         $files = [];
 
         if (!$this->target->is_valid($analysable)) {
+
             return [
-                [$analysable->get_id() => \tool_research\model::ANALYSABLE_STATUS_INVALID_FOR_TARGET],
-                $files
+                \tool_research\model::ANALYSABLE_STATUS_INVALID_FOR_TARGET,
+                false
             ];
         }
 
@@ -120,7 +133,7 @@ abstract class base {
         }
 
         if (empty($files)) {
-            // Flag it as invalid if the analysable wasn't valid for any range processors.
+            // Flag it as invalid if the analysable wasn't valid for any of the range processors.
             $status = \tool_research\model::ANALYSABLE_STATUS_INVALID_FOR_RANGEPROCESSORS;
         } else {
             $status = \tool_research\model::ANALYSABLE_STATUS_PROCESSED;
@@ -128,21 +141,26 @@ abstract class base {
 
         // TODO This looks confusing 1 for range processor? 1 for all? Should be 1 for analysable.
         return [
-            [$analysable->get_id() => $status],
+            $status,
             $files
         ];
     }
 
     protected function process_range($rangeprocessor, $analysable) {
 
-        if ($this->recently_analysed($rangeprocessor->get_codename(), $analysable->get_id())) {
-            return false;
-        }
+        mtrace($rangeprocessor->get_codename() . ' analysing ' . $analysable->get_id() . ' analysable');
 
         $rangeprocessor->set_analysable($analysable);
         if (!$rangeprocessor->is_valid_analysable()) {
-            debugging('invalid analysable for this processor');
+            mtrace(' - Invalid analysable for this processor');
             return false;
+        }
+
+        $recentlyanalysed = $this->recently_analysed($rangeprocessor->get_codename(), $analysable->get_id());
+        if ($recentlyanalysed && empty($this->options['analyseall'])) {
+            // Returning the previously created file.
+            mtrace(' - Already analysed');
+            return \tool_research\dataset_manager::get_file($modelid, $analysableid, $rangeprocessorcodename);
         }
 
         // What is a row is defined by the analyser, it can be an enrolment, a course, a user, a question
@@ -165,6 +183,7 @@ abstract class base {
         // Flag the model + analysable + rangeprocessor as analysed.
         $dataset->close_process();
 
+        mtrace(' - Successfully analysed');
         return $file;
     }
 

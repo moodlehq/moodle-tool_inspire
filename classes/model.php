@@ -36,7 +36,7 @@ defined('MOODLE_INTERNAL') || die();
 class model {
 
     const ANALYSE_OK = 0;
-    const ANALYSE_ERROR = 1;
+    const ANALYSE_GENERAL_ERROR = 1;
     const ANALYSE_INPROGRESS = 2;
     const ANALYSE_REJECTED_RANGE_PROCESSOR = 3;
     const ANALYSABLE_STATUS_INVALID_FOR_RANGEPROCESSORS = 4;
@@ -116,16 +116,16 @@ class model {
     /**
      * Analyses the model.
      *
-     * @param  array   $filters
-     * @return [] Status codes
+     * @param  array   $options
+     * @return array Status codes and generated files
      */
-    public function analyse($filter = array()) {
+    public function analyse($options = array()) {
 
         $target = $this->get_target();
         $indicators = $this->get_indicators();
         $rangeprocessors = $this->get_range_processors();
 
         $analyser = $this->get_analyser($target, $indicators, $rangeprocessors);
-        return $analyser->analyse($filter);
+        return $analyser->analyse($options);
     }
 }

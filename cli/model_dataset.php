@@ -31,11 +31,11 @@ $help = "Evaluates a model dataset:
 
 Options:
 --model       Model code name (Optional)
---filters     Analyser dependant (Optional)
+--filter     Analyser dependant (Optional)
 -h, --help    Print out this help
 
 Example:
-\$ sudo -u www-data /usr/bin/php admin/tool/research/cli/model_dataset.php --filters=123,321
+\$ sudo -u www-data /usr/bin/php admin/tool/research/cli/model_dataset.php --filter=123,321
 ";
 
 // Now get cli options.
@@ -43,7 +43,7 @@ list($options, $unrecognized) = cli_get_params(
     array(
         'help'      => false,
         'model'   => false,
-        'filters' => false
+        'filter' => false
     ),
     array(
         'h' => 'help',
@@ -56,8 +56,8 @@ if ($options['help']) {
 }
 
 // Reformat them as an array.
-if ($options['filters'] !== false) {
-    $options['filters'] = explode(',', $options['filters']);
+if ($options['filter'] !== false) {
+    $options['filter'] = explode(',', $options['filter']);
 }
 
 echo "\n".get_string('processingcourses', 'tool_research')."\n\n";
@@ -69,7 +69,9 @@ $modelobj = new \stdClass();
 $modelobj->id = 1;
 $modelobj->target = '\tool_research\local\target\grade_pass';
 $model = new \tool_research\model($modelobj);
-$status = $model->analyse($options['filters']);
+
+$analyseroptions = array('filter' => $options['filter']);
+$status = $model->analyse($analyseroptions);
 
 var_dump($status);
 

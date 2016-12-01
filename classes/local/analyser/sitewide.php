@@ -37,16 +37,19 @@ abstract class sitewide extends base {
         return new \tool_research\site();
     }
 
-    public function analyse($filter) {
+    public function analyse($options) {
+
+        $this->options = $options;
 
         // Here there is a single analysable and it is the system.
-        $analysable = $this->get_site($filter);
+        $analysable = $this->get_site();
 
         list($status, $rangeprocessorfiles) = $this->process_analysable($analysable);
 
-        // Needs to be an array to match the same interface we have when we deal with multiple analysables per site.
-        $status = [$analysable->get_id() => $status];
-
-        return [$status, $rangeprocessorfiles];
+        // Needs to be an array of arrays to match the same interface we have when we deal with multiple analysables per site.
+        return array(
+            'status' => array($analysable->get_id() => $status),
+            'files' => $rangeprocessorfiles
+        );
     }
 }

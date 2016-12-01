@@ -367,6 +367,15 @@ class course implements \tool_research\analysable {
     }
 
     /**
+     * Returns the course students.
+     *
+     * @return stdClass[]
+     */
+    public function get_students() {
+        return $this->students;
+    }
+
+    /**
      * Returns the total number of student logs in the course
      *
      * @return int

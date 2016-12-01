@@ -33,15 +33,15 @@ defined('MOODLE_INTERNAL') || die();
  */
 abstract class by_course extends base {
 
-    public function get_courses($filter) {
+    public function get_courses() {
         global $DB;
 
         // Default to all system courses.
-        if (empty($filter['courseids'])) {
+        if (!empty($options['filter']['courseids'])) {
+            $courseids = $otions['filter']['courseids'];
+        } else {
             // Iterate through all potentially valid courses.
             $courseids = $DB->get_fieldset_select('course', 'id', 'id != :frontpage', array('frontpage' => SITEID), 'sortorder ASC');
-        } else {
-            $courseids = $filter['courseids'];
         }
 
         if (!$courseids) {
@@ -57,20 +57,25 @@ abstract class by_course extends base {
         return $analysables;
     }
 
-    public function analyse($filter) {
+    public function analyse($options = array()) {
+
+        $this->options = $options;
 
         $status = [];
         $filesbyrangeprocessor = [];
 
         // This class and all children will iterate through a list of courses (\tool_research\course).
-        $analysables = $this->get_courses($filter);
+        $analysables = $this->get_courses();
         foreach ($analysables as $analysableid => $analysable) {
 
             list($status[$analysableid], $analysablefiles) = $this->process_analysable($analysable);
 
-            // Later we will need to aggregate data by range processor.
-            foreach ($analysablefiles as $rangeprocessorcodename => $file) {
-                $filesbyrangeprocessor[$rangeprocessorcodename][$analysableid] = $file;
+            // Var $analysablefiles may be empty if the analysable couldn't be analysed.
+            if ($analysablefiles) {
+                // Later we will need to aggregate data by range processor.
+                foreach ($analysablefiles as $rangeprocessorcodename => $file) {
+                    $filesbyrangeprocessor[$rangeprocessorcodename][$analysableid] = $file;
+                }
             }
         }
 
@@ -80,11 +85,14 @@ abstract class by_course extends base {
             $rangeprocessorfiles[$rangeprocessorcodename] = $this->merge_datasets($files);
         }
 
-        return array($status, $rangeprocessorfiles);
+        return array(
+            'status' => $status,
+            'files' => $rangeprocessorfiles
+        );
     }
 
     protected function merge_datasets($filerecords) {
-        debugging('merge datasets todo');
+        die('merge datasets todo');
     }
 
 }

@@ -35,6 +35,8 @@ require_once($CFG->dirroot . '/lib/csvlib.class.php');
  */
 class dataset_manager {
 
+    const FILEAREA = 'datasets';
+
     /**
      * The model id.
      *
@@ -107,7 +109,7 @@ class dataset_manager {
         $fs = get_file_storage();
         $filerecord = [
             'component' => 'tool_research',
-            'filearea' => 'models',
+            'filearea' => self::FILEAREA,
             'itemid' => $this->analysableid,
             'contextid' => \context_system::instance()->id,
             'filepath' => '/' . $this->modelid,
@@ -169,5 +171,12 @@ class dataset_manager {
         $params = array('modelid' => $modelid, 'analysableid' => $analysableid,
             'rangeprocessor' => $rangeprocessorcodename);
         return $DB->get_record('tool_research_runs', $params);
+    }
+
+    public static function get_file($modelid, $analysableid, $rangeprocessorcodename) {
+
+        $fs = get_file_storage();
+        return $fs->get_file(\context_system::instance()->id, 'tool_research', self::FILEAREA,
+            $analysableid, '/' . $modelid, $rangeprocessorcodename . '.csv');
     }
 }
