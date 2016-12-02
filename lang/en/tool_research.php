@@ -25,7 +25,10 @@
 $string['errormlwrongformat'] = 'The machine learning processor return can not be decoded: "{$a}"';
 $string['errornomlresults'] = 'No results returned from the machine learning processor, check the output directory contents for more info';
 $string['errornorunrecord'] = 'Couldn\'t locate the current run record in the database';
+$string['errornoindicators'] = 'This model does not have any indicator';
+$string['errornorangeprocessors'] = 'This model does not have any range processor';
 $string['errornoroles'] = 'Student or teacher roles have not been defined';
+$string['errornotarget'] = 'This model does not have any target';
 $string['modeloutputdir'] = 'Models output directory';
 $string['nocourses'] = 'No courses to analyse';
 $string['processingcourse'] = 'Processing course {$a}';

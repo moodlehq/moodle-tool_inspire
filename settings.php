@@ -28,6 +28,8 @@ if ($hassiteconfig) {
     $settings = new admin_settingpage('researchmanagement', new lang_string('pluginname', 'tool_research'));
     $ADMIN->add('tools', $settings);
 
+    $defaultmodeloutputdir = rtrim($CFG->dataroot, '/') . DIRECTORY_SEPARATOR . 'models';
+    $settings->add(new admin_setting_configtext('tool_research/modeloutputdir', new lang_string('modeloutputdir', 'tool_research'), '', $defaultmodeloutputdir, PARAM_PATH));
     $studentdefaultroles = [];
     $teacherdefaultroles = [];
 

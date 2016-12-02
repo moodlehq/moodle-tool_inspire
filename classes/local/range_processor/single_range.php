@@ -22,9 +22,17 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_research\range_processor;
+namespace tool_research\local\range_processor;
 
 defined('MOODLE_INTERNAL') || die();
 
 class single_range extends base {
+
+    protected function define_ranges() {
+        return [
+            'id' => 1,
+            'start' => $this->analysable->get_start(),
+            'end' => $this->analysable->get_end()
+        ];
+    }
 }

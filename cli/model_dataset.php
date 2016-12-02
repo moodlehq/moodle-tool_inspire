@@ -27,12 +27,12 @@ define('CLI_SCRIPT', true);
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->libdir.'/clilib.php');
 
-$help = "Evaluates a model dataset:
+$help = "Creates a model dataset:
 
 Options:
---model       Model code name (Optional)
+--model      Model code name (Optional)
 --filter     Analyser dependant (Optional)
--h, --help    Print out this help
+-h, --help   Print out this help
 
 Example:
 \$ sudo -u www-data /usr/bin/php admin/tool/research/cli/model_dataset.php --filter=123,321
@@ -71,9 +71,11 @@ $modelobj->target = '\tool_research\local\target\grade_pass';
 $model = new \tool_research\model($modelobj);
 
 $analyseroptions = array('filter' => $options['filter']);
-$status = $model->analyse($analyseroptions);
+$status = $model->build_dataset($analyseroptions);
 
 var_dump($status);
+
+$model->evaluate();
 
 cli_heading(get_string('success'));
 exit(0);

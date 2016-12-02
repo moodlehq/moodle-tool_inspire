@@ -149,8 +149,8 @@ class tool_research_testcase extends advanced_testcase {
 
         // Unknown.
         $courseman = new \tool_research\course_manager($this->course);
-        $this->assertEquals(0, $courseman->get_start_time());
-        $this->assertEquals(0, $courseman->get_end_time());
+        $this->assertEquals(0, $courseman->get_start());
+        $this->assertEquals(0, $courseman->get_end());
 
         // Guess the start date based on the first student course log.
         $time = gmmktime('0', '0', '0', 10, 24, 2015);
@@ -158,22 +158,22 @@ class tool_research_testcase extends advanced_testcase {
         $courseman = new \tool_research\course_manager($this->course);
 
         // It should match the first log.
-        $this->assertEquals($time, $courseman->get_start_time());
+        $this->assertEquals($time, $courseman->get_start());
 
         // Having only 1 log will use that log timecreated to decide what was the course end time.
 
         // The end time calculation depends on the current time, so we can not check against the exact
         // time, we check against a time range instead.
-        $this->assertGreaterThan($this->time_greater_than($time), $courseman->get_end_time());
-        $this->assertLessThan($this->time_less_than($time), $courseman->get_end_time());
+        $this->assertGreaterThan($this->time_greater_than($time), $courseman->get_end());
+        $this->assertLessThan($this->time_less_than($time), $courseman->get_end());
 
         // A course where start date was set.
         $this->course->startdate = $time;
         $DB->update_record('course', $this->course);
         $courseman = new \tool_research\course_manager($this->course);
-        $this->assertEquals($this->course->startdate, $courseman->get_start_time());
-        $this->assertGreaterThan($this->time_greater_than($time), $courseman->get_end_time());
-        $this->assertLessThan($this->time_less_than($time), $courseman->get_end_time());
+        $this->assertEquals($this->course->startdate, $courseman->get_start());
+        $this->assertGreaterThan($this->time_greater_than($time), $courseman->get_end());
+        $this->assertLessThan($this->time_less_than($time), $courseman->get_end());
 
         // Test the ongoing course detection.
         // get_end_date looks for the 25% of different user accesses in the last month over the course
@@ -185,14 +185,14 @@ class tool_research_testcase extends advanced_testcase {
         $this->generate_log(time() - WEEKSECS);
 
         $courseman = new \tool_research\course_manager($this->course);
-        $this->assertEquals(9999999999, $courseman->get_end_time());
+        $this->assertEquals(9999999999, $courseman->get_end());
 
 
-        // Explanation about get_end_time logic and how are we testing it:
+        // Explanation about get_end logic and how are we testing it:
         // - get_end_date calculates the approximate course end time using the course start time
         //   and the current time by searching for a time that contains the 95% of the student
         //   logs (\tool_research\course_manager::MIN_STUDENT_LOGS_PERCENT) so we need to add at
-        //   least 20 logs so get_end_time can work as expected.
+        //   least 20 logs so get_end can work as expected.
         // - we will try different combinations and we will check the returned course end time
         //   against a time range of 2 weeks.
 
@@ -205,7 +205,7 @@ class tool_research_testcase extends advanced_testcase {
         }
         $courseman = new \tool_research\course_manager($this->course);
         $approximateend = $time + (WEEKSECS * 8) + 50000;
-        $endtime = $courseman->get_end_time();
+        $endtime = $courseman->get_end();
         $this->assertGreaterThan($this->time_greater_than($approximateend), $endtime);
         $this->assertLessThan($this->time_less_than($approximateend), $endtime);
 
@@ -218,13 +218,13 @@ class tool_research_testcase extends advanced_testcase {
             }
         }
         $courseman = new \tool_research\course_manager($this->course);
-        $endtime = $courseman->get_end_time();
+        $endtime = $courseman->get_end();
         $this->assertGreaterThan($this->time_greater_than($monthsago), $endtime);
         $this->assertLessThan($this->time_less_than($monthsago), $endtime);
     }
 
     /**
-     * Get the minimum time that is considered valid according to get_end_time logic.
+     * Get the minimum time that is considered valid according to get_end logic.
      *
      * @param int $time
      * @return int
@@ -234,7 +234,7 @@ class tool_research_testcase extends advanced_testcase {
     }
 
     /**
-     * Get the maximum time that is considered valid according to get_end_time logic.
+     * Get the maximum time that is considered valid according to get_end logic.
      *
      * @param int $time
      * @return int

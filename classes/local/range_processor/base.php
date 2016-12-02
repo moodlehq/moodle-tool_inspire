@@ -22,7 +22,7 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_research\range_processor;
+namespace tool_research\local\range_processor;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -38,6 +38,11 @@ abstract class base {
      */
     protected $analysable;
 
+
+    /**
+     * @var array
+     */
+    protected $rows;
 
     /**
      * @var array
@@ -95,7 +100,6 @@ abstract class base {
      * @return bool
      */
     public function is_valid_analysable() {
-        debugging('todo rangeprocessor::is_valid_analysable');
         return true;
     }
 
@@ -123,12 +127,13 @@ abstract class base {
 
         // We first calculate the target because it may just say no no no and throw an exception
         // if the calculation goes wrong and the analysable is not valid.
-        $calculatedtarget = $this->calculate_target($target);
-        $this->calculate_indicators($indicators);
-        // Now that we already have the indicators in the dataset we can add the target.
-        $this->add_to_dataset($calculatedtarget);
+        $calculatedtarget = $target->calculate($this->rows, $this->storage);
 
-        $this->add_range_indicators();
+        $this->calculate_indicators($indicators);
+
+        // Now that we have the indicators in place we can add the target and the range indicators to each of them.
+        $this->add_target_and_range_indicators($calculatedtarget);
+
         $this->add_metadata($indicators, $target);
     }
 
@@ -149,26 +154,32 @@ abstract class base {
 
                 // Calculate the indicator for each example in this time range.
                 $calculated = $indicator->calculate($this->rows, $this->storage, $range['start'], $range['end']);
-                $this->validate_calculated_data($calculated, $indicator->get_codename());
-                $this->add_to_dataset($calculated);
+
+                // Copy the calculated data to the dataset.
+                foreach ($calculated as $analyserrowid => $calculatedvalue) {
+
+                    $uniquerowid = $this->append_rangeid($analyserrowid, $range->id);
+
+                    // Init the row if it is still empty.
+                    if (!isset($this->dataset[$uniquerowid])) {
+                        $this->dataset[$uniquerowid] = [];
+                    }
+
+                    // Append the indicator at the end of the row.
+                    $this->dataset[$uniquerowid][] = $calculatedvalue;
+                }
             }
         }
     }
 
-    protected function calculate_target($target) {
-        $calculated = $target->calculate($this->rows, $this->storage);
-        $this->validate_calculated_data($calculated, $target->get_codename());
-        return $calculated;
-    }
-
     /**
-     * Adds time range indicators to each row.
+     * Adds time range indicators and the target to each row.
      *
      * This will identify the row as belonging to a specific range.
      *
      * @return void
      */
-    protected function add_range_indicators() {
+    protected function add_target_and_range_indicators($calculatedtarget) {
 
         $nranges = count($this->get_ranges());
         if ($nranges < 2) {
@@ -176,8 +187,11 @@ abstract class base {
             return;
         }
 
-        foreach ($this->dataset as $rowid => $row) {
-            list($analyserrowid, $rangeid) = $this->infer_row_info($rowid);
+        foreach ($this->dataset as $uniquerowid => $row) {
+            list($analyserrowid, $rangeid) = $this->infer_row_info($uniquerowid);
+
+            // Add this rowid's calculated target.
+            $this->dataset[$uniquerowid][] = $calculatedtarget[$analyserrowid];
 
             // 1 column for each range.
             $rangeindicators = array_fill(0, $nranges, 0);
@@ -185,24 +199,7 @@ abstract class base {
             // -1 as range ids start from 1 and array indexes from 0.
             $rangeindicators[$rangeid - 1] = 1;
 
-            $this->dataset[$rowid] = $rangeindicators + $row;
-        }
-    }
-
-    protected function add_to_dataset($calculated) {
-
-        // Copy the calculated data to the dataset.
-        foreach ($calculated as $analyserrowid => $calculatedvalue) {
-
-            $rowid = $this->append_rangeid($analyserrowid, $range['id']);
-
-            // Init the row if it is still empty.
-            if (!isset($this->dataset[$rowid])) {
-                $this->dataset[$rowid] = [];
-            }
-
-            // Append the indicator at the end of the row.
-            $this->dataset[$rowid][] = $calculatedvalue;
+            $this->dataset[$uniquerowid] = $rangeindicators + $row;
         }
     }
 
@@ -217,17 +214,6 @@ abstract class base {
             $this->validate_ranges();
         }
         return $this->ranges;
-    }
-
-    /**
-     * Returns the dataset size.
-     *
-     * This is just the default implementation. Should work for most of the cases otherwise overwrite.
-     *
-     * @return int
-     */
-    protected function get_dataset_size() {
-        return (count($this->rows) * count($this->get_ranges()));
     }
 
     protected function append_rangeid($rowid, $rangeid) {
@@ -359,22 +345,5 @@ abstract class base {
                     '" range is not fully defined. We need an id, a start and an end.');
             }
         }
-    }
-
-    /**
-     * validate_calculated_data
-     *
-     * @throw \coding_exception
-     * @param int[] $calculated
-     * @param string $itemcodename
-     * @return void
-     */
-    protected function validate_calculated_data($calculated, $itemcodename) {
-		$datasetsize = $this->get_dataset_size();
-		if (count($calculated) !== $datasetsize) {
-			throw new \coding_exception('Indicator ' . $itemcodename . ' returned ' . count($calculated) .
-				' records, ' . $datasetsize . ' records were supposed to be returned');
-		}
-
     }
 }

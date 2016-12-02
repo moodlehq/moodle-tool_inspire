@@ -53,4 +53,14 @@ class site implements \tool_research\analysable {
             'var2' => 'value2',
         ];
     }
+
+    public function get_start() {
+        global $DB;
+        return $DB->get_record_sql("SELECT MIN(timecreated) AS time FROM {logstore_standard_log}");
+    }
+
+    public function get_end() {
+        global $DB;
+        return $DB->get_record_sql("SELECT MAX(timecreated) AS time FROM {logstore_standard_log}");
+    }
 }

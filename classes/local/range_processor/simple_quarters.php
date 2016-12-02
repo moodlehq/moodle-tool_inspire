@@ -22,7 +22,7 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_research\range_processor;
+namespace tool_research\local\range_processor;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -36,24 +36,24 @@ defined('MOODLE_INTERNAL') || die();
 class simple_quarters extends base {
 
     protected function define_ranges() {
-        $duration = floor(($this->courseendtime - $this->coursestarttime) / 4);
+        $duration = floor(($this->analysable->get_end() - $this->analysable->get_start()) / 4);
         return [
             [
                 'id' => 1,
-                'start' => $this->coursestarttime,
-                'end' => $this->coursestarttime + $duration
+                'start' => $this->analysable->get_start(),
+                'end' => $this->analysable->get_start() + $duration
             ], [
                 'id' => 2,
-                'start' => $this->coursestarttime + $duration,
-                'end' => $this->coursestarttime + ($duration * 2)
+                'start' => $this->analysable->get_start() + $duration,
+                'end' => $this->analysable->get_start() + ($duration * 2)
             ], [
                 'id' => 3,
-                'start' => $this->coursestarttime + ($duration * 2),
-                'end' => $this->coursestarttime + ($duration * 3)
+                'start' => $this->analysable->get_start() + ($duration * 2),
+                'end' => $this->analysable->get_start() + ($duration * 3)
             ], [
                 'id' => 4,
-                'start' => $this->coursestarttime + ($duration * 3),
-                'end' => $this->coursestarttime + ($duration * 4)
+                'start' => $this->analysable->get_start() + ($duration * 3),
+                'end' => $this->analysable->get_start() + ($duration * 4)
             ]
         ];
     }

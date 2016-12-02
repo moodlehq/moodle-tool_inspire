@@ -44,7 +44,7 @@ class grade_pass extends base {
     }
 
     public function calculate_row($row, $data) {
-        return rand(0, 1);
+        return mt_rand(0, 100) / 100;
     }
 
     public function get_required_records() {

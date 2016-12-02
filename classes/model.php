@@ -47,21 +47,21 @@ class model {
         $this->model = $model;
     }
 
-    public function get_target() {
+    protected function get_target() {
         $classname = $this->model->target;
         return new $classname();
     }
 
-    public function get_indicators() {
+    protected function get_indicators() {
 
         $indicators = [];
 
         // TODO Read the model indicators instead of read all indicators in the folder.
-        $classes = \core_component::get_component_classes_in_namespace('tool_research', 'indicator');
+        $classes = \core_component::get_component_classes_in_namespace('tool_research', 'local\\indicator');
         foreach ($classes as $fullclassname => $classpath) {
 
             // Discard abstract classes and others.
-            if (is_subclass_of($fullclassname, 'tool_research\indicator\base')) {
+            if (is_subclass_of($fullclassname, 'tool_research\local\indicator\base')) {
                 if ((new \ReflectionClass($fullclassname))->isInstantiable()) {
                     $indicators[$fullclassname] = new $fullclassname();
                 }
@@ -84,10 +84,10 @@ class model {
      *
      * @return \tool_research\range_processor\base[]
      */
-    public function get_range_processors() {
+    protected function get_range_processors() {
 
         // TODO: It should be able to search range processors in other plugins.
-        $classes = \core_component::get_component_classes_in_namespace('tool_research', 'range_processor');
+        $classes = \core_component::get_component_classes_in_namespace('tool_research', 'local\\range_processor');
 
         $rangeprocessors = [];
         foreach ($classes as $fullclassname => $classpath) {
@@ -114,18 +114,77 @@ class model {
     }
 
     /**
-     * Analyses the model.
+     * Builds the model dataset.
      *
      * @param  array   $options
      * @return array Status codes and generated files
      */
-    public function analyse($options = array()) {
+    public function build_dataset($options = array()) {
 
         $target = $this->get_target();
         $indicators = $this->get_indicators();
         $rangeprocessors = $this->get_range_processors();
 
+        if (empty($target)) {
+            throw new \moodle_exception('errornotarget', 'tool_research');
+        }
+
+        if (empty($indicators)) {
+            throw new \moodle_exception('errornoindicators', 'tool_research');
+        }
+
+        if (empty($rangeprocessors)) {
+            throw new \moodle_exception('errornorangeprocessors', 'tool_research');
+        }
+
         $analyser = $this->get_analyser($target, $indicators, $rangeprocessors);
         return $analyser->analyse($options);
+    }
+
+    /**
+     * Evaluates the model.
+     *
+     * @return void
+     */
+    public function evaluate() {
+
+        foreach ($this->get_range_processors() as $rangeprocessor) {
+
+            $dataset = \tool_research\dataset_manager::get_range_file($this->model->id, $rangeprocessor->get_codename());
+
+            $outputdir = $this->get_output_dir($rangeprocessor->get_codename());
+
+            $ml = $this->get_machine_learning_processor();
+            $results = $ml->evaluate_dataset($dataset, $outputdir);
+            var_dump($results);
+        }
+    }
+
+    protected function get_machine_learning_processor() {
+        // TODO Select it based on a config setting.
+        // TODO Add a PHP one.
+        return new \tool_research\ml\python\processor();
+    }
+
+    protected function get_output_dir($subdir = false) {
+        global $CFG;
+
+        $outputdir = get_config('tool_research', 'modeloutputdir');
+        if (empty($outputdir)) {
+            // Apply default value.
+            $outputdir = rtrim($CFG->dataroot, '/') . DIRECTORY_SEPARATOR . 'models';
+        }
+
+        $outputdir = $outputdir . DIRECTORY_SEPARATOR . $this->modelid;
+
+        if ($subdir) {
+            $outputdir = $outputdir . DIRECTORY_SEPARATOR . $subdir;
+        }
+
+        if (!is_dir($outputdir)) {
+            mkdir($outputdir, $CFG->directorypermissions, true);
+        }
+
+        return $outputdir;
     }
 }

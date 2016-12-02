@@ -33,7 +33,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class enrol_write_actions extends base implements \tool_research\local\calculable\enrolment {
+class enrol_write_actions extends base {
 
     public function get_required_records() {
         global $DB;
@@ -42,7 +42,7 @@ class enrol_write_actions extends base implements \tool_research\local\calculabl
         ];
     }
 
-    protected function get_requirements() {
+    public function get_requirements() {
         return ['course', 'user'];
     }
 

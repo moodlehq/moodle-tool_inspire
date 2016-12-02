@@ -76,7 +76,7 @@ class dataset_manager {
         global $DB;
 
         // Delete the previous record if there is any.
-        $params = array('modelid' => $this->modelid, 'analysableid' => $this->analysableid, $this->rangeprocessor);
+        $params = array('modelid' => $this->modelid, 'analysableid' => $this->analysableid, 'rangeprocessor' => $this->rangeprocessor);
         $run = $DB->get_record('tool_research_runs', $params);
         if ($run) {
             if ($run->inprogress) {
@@ -112,7 +112,7 @@ class dataset_manager {
             'filearea' => self::FILEAREA,
             'itemid' => $this->analysableid,
             'contextid' => \context_system::instance()->id,
-            'filepath' => '/' . $this->modelid,
+            'filepath' => '/' . $this->modelid . '/analysable',
             'filename' => $this->rangeprocessor . '.csv'
         ];
         $fs->delete_area_files($filerecord['contextid'], $filerecord['component'], $filerecord['filearea'], $filerecord['itemid']);
@@ -173,10 +173,67 @@ class dataset_manager {
         return $DB->get_record('tool_research_runs', $params);
     }
 
-    public static function get_file($modelid, $analysableid, $rangeprocessorcodename) {
+    public static function get_analysable_file($modelid, $analysableid, $rangeprocessorcodename) {
 
         $fs = get_file_storage();
         return $fs->get_file(\context_system::instance()->id, 'tool_research', self::FILEAREA,
-            $analysableid, '/' . $modelid, $rangeprocessorcodename . '.csv');
+            $analysableid, '/' . $modelid . '/analysable', $rangeprocessorcodename . '.csv');
+    }
+
+    public static function get_range_file($modelid, $rangeprocessorcodename) {
+        $fs = get_file_storage();
+        return $fs->get_file(\context_system::instance()->id, 'tool_research', self::FILEAREA,
+            $analysableid, '/' . $modelid . '/analysable', $rangeprocessorcodename . '.csv');
+    }
+
+    /**
+     * Merge multiple files into one.
+     *
+     * Important! It is the caller responsability to ensure that the datasets are compatible.
+     *
+     * @param array $files
+     * @return \stored_file
+     */
+    public static function merge_datasets(array $files, $modelid, $rangeprocessorcodename) {
+
+        if (count($files) === 1) {
+            return reset($files);
+        }
+
+        $tmpfilepath = make_request_directory() . DIRECTORY_SEPARATOR . 'tmpfile.csv';
+        $wh = fopen($tmpfilepath, 'w');
+
+        // Iterate through all files and add them to the tmp one. We don't want file contents in memory.
+        foreach ($files as $file) {
+            $rh = $file->get_content_file_handle();
+            while ($line = fgets($rh, 40960)) {
+                fwrite($wh, $line);
+            }
+        }
+
+        $filerecord = [
+            'component' => 'tool_research',
+            'filearea' => self::FILEAREA,
+            'itemid' => $this->convert_to_int($rangeprocessorcodename),
+            'contextid' => \context_system::instance()->id,
+            'filepath' => '/' . $modelid . '/range',
+            'filename' => $rangeprocessorcodename . '.csv'
+        ];
+
+        return $fs->create_file_from_pathname($filerecord, $tmpfilepath);
+    }
+
+    /**
+     * I know it is not very orthodox...
+     *
+     * @param string $string
+     * @return int
+     */
+    protected function convert_to_int($string) {
+        $sum = 0;
+        for ($i = 0; $i < strlen($string); $i++) {
+            $sum += ord($string[$i]);
+        }
+        return $sum;
     }
 }

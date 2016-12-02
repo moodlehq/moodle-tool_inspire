@@ -33,7 +33,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class read_actions extends base implements \tool_research\local\calculable\enrolment {
+class read_actions extends base {
 
     public function get_required_records() {
         global $DB;
@@ -42,11 +42,11 @@ class read_actions extends base implements \tool_research\local\calculable\enrol
         ];
     }
 
-    public function calculate_by_enrolment($elements, $data, $starttime = false, $endtime = false) {
-        $calculated = [];
-        foreach ($elements as $userid => $user) {
-            $calculated[$userid] = rand(0, 10);
-        }
-        return $calculated;
+    public function get_requirements() {
+        return ['course', 'user'];
+    }
+
+    public function calculate_row($row, $data, $starttime = false, $endtime = false) {
+        return rand(0, 10);
     }
 }

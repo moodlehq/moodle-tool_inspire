@@ -124,7 +124,7 @@ class course implements \tool_research\analysable {
      *
      * @return int Timestamp or 0 if has not started yet.
      */
-    public function get_start_time() {
+    public function get_start() {
         global $DB;
 
         if ($this->starttime !== null) {
@@ -157,7 +157,7 @@ class course implements \tool_research\analysable {
      *
      * @return int Timestamp, self::MAX_TIME if we don't know but ongoing and 0 if we can not work it out.
      */
-    public function get_end_time() {
+    public function get_end() {
         global $DB;
 
         if ($this->endtime !== null) {
@@ -172,7 +172,7 @@ class course implements \tool_research\analysable {
 
         // Not worth trying if we weren't able to determine the startdate, we need to base the calculations below on the
         // course start date.
-        $starttime = $this->get_start_time();
+        $starttime = $this->get_start();
         if (!$starttime) {
             $this->endtime = 0;
             return $this->endtime;
@@ -290,7 +290,7 @@ class course implements \tool_research\analysable {
     public function was_started() {
 
         if ($this->started === null) {
-            if ($this->get_start_time() === 0 || $this->now < $this->get_start_time()) {
+            if ($this->get_start() === 0 || $this->now < $this->get_start()) {
                 // Not yet started.
                 $this->started = false;
             } else {
@@ -309,7 +309,7 @@ class course implements \tool_research\analysable {
     public function is_finished() {
 
         if ($this->finished === null) {
-            $endtime = $this->get_end_time();
+            $endtime = $this->get_end();
             if ($endtime === 0 || $this->now < $endtime) {
                 // It is not yet finished or no idea when it finishes.
                 $this->finished = false;

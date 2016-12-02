@@ -38,4 +38,8 @@ interface analysable {
     public function get_usual_required_records();
 
     public function get_metadata();
+
+    public function get_start();
+
+    public function get_end();
 }

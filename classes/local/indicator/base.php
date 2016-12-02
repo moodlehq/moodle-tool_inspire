@@ -33,10 +33,10 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-abstract class base implements \tool_research\calculable {
+abstract class base extends \tool_research\calculable {
 
 
-    abstract protected function get_requirements();
+    abstract public function get_requirements();
 
     /**
      * Calculates the row.

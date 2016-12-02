@@ -82,17 +82,13 @@ abstract class by_course extends base {
         // We join the datasets by range processor.
         $rangeprocessorfiles = [];
         foreach ($filesbyrangeprocessor as $rangeprocessorcodename => $files) {
-            $rangeprocessorfiles[$rangeprocessorcodename] = $this->merge_datasets($files);
+            $rangeprocessorfiles[$rangeprocessorcodename] = \tool_research\dataset_manager::merge_datasets($files);
         }
 
         return array(
             'status' => $status,
             'files' => $rangeprocessorfiles
         );
-    }
-
-    protected function merge_datasets($filerecords) {
-        die('merge datasets todo');
     }
 
 }

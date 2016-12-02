@@ -24,6 +24,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2016052301;
+$plugin->version = 2016052303;
 $plugin->requires = 2016051900;
 $plugin->component = 'tool_research';

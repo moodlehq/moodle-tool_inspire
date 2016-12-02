@@ -160,7 +160,7 @@ abstract class base {
         if ($recentlyanalysed && empty($this->options['analyseall'])) {
             // Returning the previously created file.
             mtrace(' - Already analysed');
-            return \tool_research\dataset_manager::get_file($modelid, $analysableid, $rangeprocessorcodename);
+            return \tool_research\dataset_manager::get_analysable_file($modelid, $analysableid, $rangeprocessorcodename);
         }
 
         // What is a row is defined by the analyser, it can be an enrolment, a course, a user, a question
@@ -175,7 +175,7 @@ abstract class base {
 
         // Here we start the memory intensive process that will last until $data var is
         // unset (until the method is finished basically).
-        $data = $rangeprocessor->calculate($rows, $target, $indicators);
+        $data = $rangeprocessor->calculate($this->target, $this->indicators);
 
         // Write all calculated data to a file.
         $file = $dataset->store($data);

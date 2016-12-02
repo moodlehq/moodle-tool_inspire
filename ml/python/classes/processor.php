@@ -36,7 +36,6 @@ defined('MOODLE_INTERNAL') || die();
 class processor {
 
     function evaluate_dataset($datasetpath, $outputdir) {
-        //global $CFG;
 
         $absolutescriptpath = escapeshellarg(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'cli' . DIRECTORY_SEPARATOR .
             'check-classification-singleclass.py');
@@ -49,10 +48,7 @@ class processor {
 
         $output = null;
         $exitcode = null;
-        //$cwd= getcwd();
-        //chdir($CFG->dirroot);
         $result = exec($cmd, $output, $exitcode);
-        //chdir($cwd);
 
         if (!$result) {
             throw new \moodle_exception('errornomlresults', 'tool_research');
