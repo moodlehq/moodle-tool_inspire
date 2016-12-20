@@ -1,4 +1,0 @@
-BinaryClassifier            82-84%
-BinaryClassifierSkflow      82-84%
-BinaryClassifierNN          83-86%
-BinaryClassifierDNN         77-78%

@@ -154,16 +154,16 @@ class model {
 
             $outputdir = $this->get_output_dir($rangeprocessor->get_codename());
 
-            $ml = $this->get_machine_learning_processor();
-            $results = $ml->evaluate_dataset($dataset, $outputdir);
+            $predict = $this->get_predictions_processor();
+            $results = $predict->evaluate_dataset($dataset, $outputdir);
             var_dump($results);
         }
     }
 
-    protected function get_machine_learning_processor() {
+    protected function get_predictions_processor() {
         // TODO Select it based on a config setting.
         // TODO Add a PHP one.
-        return new \tool_research\ml\python\processor();
+        return new \tool_research\predict\python\processor();
     }
 
     protected function get_output_dir($subdir = false) {

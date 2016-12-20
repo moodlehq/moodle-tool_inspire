@@ -15,14 +15,14 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Python machine learning processor
+ * Python predictions processor
  *
  * @package   tool_research
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace ml_python;
+namespace predict_python;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -51,12 +51,12 @@ class processor {
         $result = exec($cmd, $output, $exitcode);
 
         if (!$result) {
-            throw new \moodle_exception('errornomlresults', 'tool_research');
+            throw new \moodle_exception('errornopredictresults', 'tool_research');
         }
 
 
         if (!$resultobj = json_decode($result)) {
-            throw new \moodle_exception('errormlwrongformat', 'tool_research', '', json_last_error_msg());
+            throw new \moodle_exception('errorpredictwrongformat', 'tool_research', '', json_last_error_msg());
         }
 
         return $resultobj;

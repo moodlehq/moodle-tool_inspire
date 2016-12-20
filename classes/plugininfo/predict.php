@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Machine learning processors subplugin plugin info.
+ * Prediction processors subplugin plugin info.
  *
  * @package   tool_research
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
@@ -27,13 +27,13 @@ namespace tool_research\plugininfo;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Machine learning processors subplugin plugin info.
+ * Prediction processors subplugin plugin info.
  *
  * @package   tool_research
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class ml extends \core\plugininfo\base {
+class predict extends \core\plugininfo\base {
 
     public function is_uninstall_allowed() {
         return true;

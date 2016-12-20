@@ -17,7 +17,7 @@
 /**
  * Version details.
  *
- * @package   ml_python
+ * @package   predict_python
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -26,4 +26,4 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->version = 2016052302;
 $plugin->requires = 2016051900;
-$plugin->component = 'ml_python';
+$plugin->component = 'predict_python';

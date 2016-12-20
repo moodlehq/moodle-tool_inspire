@@ -25,5 +25,5 @@
 defined('MOODLE_INTERNAL') || die();
 
 $subplugins = array(
-    'ml' => 'admin/tool/research/ml'
+    'predict' => 'admin/tool/research/predict'
 );

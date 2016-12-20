@@ -22,8 +22,8 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['errormlwrongformat'] = 'The machine learning processor return can not be decoded: "{$a}"';
-$string['errornomlresults'] = 'No results returned from the machine learning processor, check the output directory contents for more info';
+$string['errorpredictwrongformat'] = 'The predictions processor return can not be decoded: "{$a}"';
+$string['errornopredictresults'] = 'No results returned from the predictions processor, check the output directory contents for more info';
 $string['errornorunrecord'] = 'Couldn\'t locate the current run record in the database';
 $string['errornoindicators'] = 'This model does not have any indicator';
 $string['errornorangeprocessors'] = 'This model does not have any range processor';
@@ -36,6 +36,6 @@ $string['processingcourses'] = 'Processing courses...';
 $string['pluginname'] = 'Research';
 $string['skippingcourse'] = 'Skipping course {$a}';
 $string['studentroles'] = 'Student roles';
-$string['subplugintype_ml'] = 'Machine learning processor';
-$string['subplugintype_ml_plural'] = 'Machine learning processors';
+$string['subplugintype_predict'] = 'Predictions processor';
+$string['subplugintype_predict_plural'] = 'Predictions processors';
 $string['teacherroles'] = 'Teacher roles';
