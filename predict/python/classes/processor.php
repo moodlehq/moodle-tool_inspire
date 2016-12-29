@@ -35,17 +35,23 @@ defined('MOODLE_INTERNAL') || die();
  */
 class processor {
 
+    const VALIDATION = 0.7;
+    const DEVIATION = 0.02;
+    const ITERATIONS = 30;
+
     function evaluate_dataset($datasetpath, $outputdir) {
+
+        mtrace('Evaluating ' . $datasetpath . ' dataset');
 
         $absolutescriptpath = escapeshellarg(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'cli' . DIRECTORY_SEPARATOR .
             'check-classification-singleclass.py');
 
         $cmd = 'python ' . $absolutescriptpath . ' ' .
             escapeshellarg($datasetpath) . ' ' .
-            escapeshellarg($validation) . ' ' .
-            escapeshellarg($deviation) . ' ' .
-            escapeshellarg($nruns);
-
+            escapeshellarg(self::VALIDATION) . ' ' .
+            escapeshellarg(self::DEVIATION) . ' ' .
+            escapeshellarg(self::ITERATIONS);
+var_dump($cmd);
         $output = null;
         $exitcode = null;
         $result = exec($cmd, $output, $exitcode);

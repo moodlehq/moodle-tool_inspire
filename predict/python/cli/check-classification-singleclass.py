@@ -6,8 +6,8 @@ from BinaryClassifierNN import BinaryClassifierNN
 binary_classifier = BinaryClassifierNN()
 
 # Sklearn binary classifier - logistic regression.
-#from BinaryClassifier import BinaryClassifier
-#binary_classifier = BinaryClassifier()
+from BinaryClassifier import BinaryClassifier
+binary_classifier = BinaryClassifier()
 
 # TensorFlow binary classifier - NN.
 #from BinaryClassifierTensorFlow import BinaryClassifierTensorFlow

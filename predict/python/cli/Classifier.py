@@ -37,7 +37,7 @@ class Classifier(object):
 
     def get_examples(self, filepath):
 
-        examples = np.loadtxt(filepath, delimiter=',', dtype='float')
+        examples = np.loadtxt(filepath, delimiter=',', dtype='float', skiprows=4)
         examples = shuffle(examples)
 
         # All columns but the last one.

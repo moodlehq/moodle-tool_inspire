@@ -124,12 +124,7 @@ class NN():
         # If instead of a [0,1,0,1,1...] vector we would have a matrix
         # [[1,0],[1,0],[0,1],...] we would just probs - y.
         deltas[self.num_layers - 1] = probs
-        print("AAAAAAAAAAAAAAA")
-        print(y)
-        print(probs)
         deltas[self.num_layers - 1][range(n_examples), y] -= 1
-        print(deltas[self.num_layers - 1])
-        exit()
 
         # Calculate deltas from the last hidden layer to the first hidden layer.
         # Using -2 instead of -1 because we already have the output layer error.
