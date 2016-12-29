@@ -40,6 +40,7 @@ class model {
     const ANALYSE_INPROGRESS = 2;
     const ANALYSE_REJECTED_RANGE_PROCESSOR = 3;
     const ANALYSABLE_STATUS_INVALID_FOR_RANGEPROCESSORS = 4;
+    const ANALYSABLE_STATUS_INVALID_FOR_TARGET = 5;
 
     protected $model = null;
 
@@ -95,6 +96,7 @@ class model {
                $rangeprocessors[] = new $fullclassname();
             }
         }
+
         return $rangeprocessors;
     }
 
@@ -148,22 +150,39 @@ class model {
      */
     public function evaluate() {
 
+        $return = array();
+
         foreach ($this->get_range_processors() as $rangeprocessor) {
 
             $dataset = \tool_research\dataset_manager::get_range_file($this->model->id, $rangeprocessor->get_codename());
+            if (!$dataset) {
+                $return[$rangeprocessor->get_codename()] = array('status' => self::ANALYSE_GENERAL_ERROR);
+                continue;
+            }
 
             $outputdir = $this->get_output_dir($rangeprocessor->get_codename());
 
             $predict = $this->get_predictions_processor();
-            $results = $predict->evaluate_dataset($dataset, $outputdir);
-            var_dump($results);
+
+            // From moodle filesystem to the file system.
+            // TODO This is not ideal, but it seems that there is no read access to moodle filesystem files.
+            $dir = make_request_directory();
+            $filepath = $dataset->copy_content_to_temp($dir);
+
+            // Evaluate the dataset.
+            $return[$rangeprocessor->get_codename()] = array(
+                'status' => self::ANALYSE_OK,
+                'results' => $predict->evaluate_dataset($filepath, $outputdir)
+            );
         }
+
+        return $return;
     }
 
     protected function get_predictions_processor() {
         // TODO Select it based on a config setting.
         // TODO Add a PHP one.
-        return new \tool_research\predict\python\processor();
+        return new \predict_python\processor();
     }
 
     protected function get_output_dir($subdir = false) {
@@ -175,7 +194,7 @@ class model {
             $outputdir = rtrim($CFG->dataroot, '/') . DIRECTORY_SEPARATOR . 'models';
         }
 
-        $outputdir = $outputdir . DIRECTORY_SEPARATOR . $this->modelid;
+        $outputdir = $outputdir . DIRECTORY_SEPARATOR . $this->model->id;
 
         if ($subdir) {
             $outputdir = $outputdir . DIRECTORY_SEPARATOR . $subdir;
