@@ -30,7 +30,8 @@ require_once($CFG->libdir.'/clilib.php');
 $help = "Creates a model dataset:
 
 Options:
---model      Model code name (Optional)
+--model      Model code name
+--analyseall Analyse all site or only non rencently analysed analysables
 --filter     Analyser dependant (Optional)
 -h, --help   Print out this help
 
@@ -41,9 +42,10 @@ Example:
 // Now get cli options.
 list($options, $unrecognized) = cli_get_params(
     array(
-        'help'      => false,
-        'model'   => false,
-        'filter' => false
+        'help'          => false,
+        'model'         => false,
+        'analyseall'    => false,
+        'filter'        => false
     ),
     array(
         'h' => 'help',
@@ -70,12 +72,14 @@ $modelobj->id = 1;
 $modelobj->target = '\tool_research\local\target\grade_pass';
 $model = new \tool_research\model($modelobj);
 
-$analyseroptions = array('filter' => $options['filter']);
+$analyseroptions = array('filter' => $options['filter'], 'analyseall' => $options['analyseall']);
 $status = $model->build_dataset($analyseroptions);
 
-var_dump($status);
+var_dump($status['status']);
 
-$model->evaluate();
+$results = $model->evaluate();
+
+var_dump($results);
 
 cli_heading(get_string('success'));
 exit(0);

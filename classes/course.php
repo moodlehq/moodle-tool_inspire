@@ -133,7 +133,7 @@ class course implements \tool_research\analysable {
 
         // The field always exist but may have no valid if the course is created through a sync process.
         if (!empty($this->course->startdate)) {
-            $this->starttime = $this->course->startdate;
+            $this->starttime = (int)$this->course->startdate;
         } else {
             // Fallback to the first student log.
             list($studentssql, $studentsparams) = $DB->get_in_or_equal($this->students, SQL_PARAMS_NAMED);
@@ -146,7 +146,7 @@ class course implements \tool_research\analysable {
                 $this->starttime = 0;
                 return $this->starttime;
             }
-            $this->starttime  = reset($records)->timecreated;
+            $this->starttime  = (int)reset($records)->timecreated;
         }
 
         return $this->starttime;
@@ -166,7 +166,7 @@ class course implements \tool_research\analysable {
 
         // The enddate field is only available from Moodle 3.2 (MDL-22078).
         if (!empty($this->course->enddate)) {
-            $this->endtime = $this->course->enddate;
+            $this->endtime = (int)$this->course->enddate;
             return $this->endtime;
         }
 
@@ -255,7 +255,7 @@ class course implements \tool_research\analysable {
             debugging(json_encode($logspercents));
         }
 
-        $this->endtime = $bestcandidate;
+        $this->endtime = (int)$bestcandidate;
         return $this->endtime;
     }
 

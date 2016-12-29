@@ -33,12 +33,12 @@ defined('MOODLE_INTERNAL') || die();
  */
 abstract class by_course extends base {
 
-    public function get_courses() {
+    public function get_courses($options) {
         global $DB;
 
         // Default to all system courses.
-        if (!empty($options['filter']['courseids'])) {
-            $courseids = $otions['filter']['courseids'];
+        if (!empty($options['filter'])) {
+            $courseids = $options['filter'];
         } else {
             // Iterate through all potentially valid courses.
             $courseids = $DB->get_fieldset_select('course', 'id', 'id != :frontpage', array('frontpage' => SITEID), 'sortorder ASC');
@@ -65,7 +65,7 @@ abstract class by_course extends base {
         $filesbyrangeprocessor = [];
 
         // This class and all children will iterate through a list of courses (\tool_research\course).
-        $analysables = $this->get_courses();
+        $analysables = $this->get_courses($options);
         foreach ($analysables as $analysableid => $analysable) {
 
             list($status[$analysableid], $analysablefiles) = $this->process_analysable($analysable);
@@ -81,8 +81,16 @@ abstract class by_course extends base {
 
         // We join the datasets by range processor.
         $rangeprocessorfiles = [];
+        mtrace('Merging datasets');
+
         foreach ($filesbyrangeprocessor as $rangeprocessorcodename => $files) {
-            $rangeprocessorfiles[$rangeprocessorcodename] = \tool_research\dataset_manager::merge_datasets($files);
+
+            // Delete the previous copy.
+            \tool_research\dataset_manager::delete_range_file($this->modelid, $rangeprocessorcodename);
+
+            // Merge all course files into one.
+            $rangeprocessorfiles[$rangeprocessorcodename] = \tool_research\dataset_manager::merge_datasets($files, $this->modelid,
+                $rangeprocessorcodename);
         }
 
         return array(

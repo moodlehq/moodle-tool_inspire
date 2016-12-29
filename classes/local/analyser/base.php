@@ -90,8 +90,8 @@ abstract class base {
         $rowsinfo = $this->rows_info();
 
         foreach ($this->indicators as $indicator) {
-            foreach ($indicator->get_requirements() as $requirement) {
-                if (!in_array($requirement, $rowsinfo)) {
+            foreach ($indicator::get_requirements() as $requirement) {
+                if (empty($rowsinfo[$requirement])) {
                     throw new \tool_research\requirements_exception($indicator->get_codename() . ' indicator requires ' .
                         $requirement . ' which is not provided by ' . get_class($this));
                 }
@@ -136,7 +136,7 @@ abstract class base {
             // Flag it as invalid if the analysable wasn't valid for any of the range processors.
             $status = \tool_research\model::ANALYSABLE_STATUS_INVALID_FOR_RANGEPROCESSORS;
         } else {
-            $status = \tool_research\model::ANALYSABLE_STATUS_PROCESSED;
+            $status = \tool_research\model::ANALYSE_OK;
         }
 
         // TODO This looks confusing 1 for range processor? 1 for all? Should be 1 for analysable.
@@ -148,7 +148,7 @@ abstract class base {
 
     protected function process_range($rangeprocessor, $analysable) {
 
-        mtrace($rangeprocessor->get_codename() . ' analysing ' . $analysable->get_id() . ' analysable');
+        mtrace($rangeprocessor->get_codename() . ' analysing analysable with id ' . $analysable->get_id());
 
         $rangeprocessor->set_analysable($analysable);
         if (!$rangeprocessor->is_valid_analysable()) {
@@ -160,7 +160,7 @@ abstract class base {
         if ($recentlyanalysed && empty($this->options['analyseall'])) {
             // Returning the previously created file.
             mtrace(' - Already analysed');
-            return \tool_research\dataset_manager::get_analysable_file($modelid, $analysableid, $rangeprocessorcodename);
+            return \tool_research\dataset_manager::get_analysable_file($this->modelid, $analysable->get_id(), $rangeprocessor->get_codename());
         }
 
         // What is a row is defined by the analyser, it can be an enrolment, a course, a user, a question
@@ -176,6 +176,11 @@ abstract class base {
         // Here we start the memory intensive process that will last until $data var is
         // unset (until the method is finished basically).
         $data = $rangeprocessor->calculate($this->target, $this->indicators);
+
+        if (!$data) {
+            mtrace(' - No data available');
+            return false;
+        }
 
         // Write all calculated data to a file.
         $file = $dataset->store($data);
