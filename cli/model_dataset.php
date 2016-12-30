@@ -73,13 +73,25 @@ $modelobj->target = '\tool_research\local\target\grade_pass';
 $model = new \tool_research\model($modelobj);
 
 $analyseroptions = array('filter' => $options['filter'], 'analyseall' => $options['analyseall']);
-$status = $model->build_dataset($analyseroptions);
+$results = $model->build_dataset($analyseroptions);
 
-var_dump($status['status']);
+foreach ($results['status'] as $analysableid => $statuscode) {
+    mtrace('Analysable ' . $analysableid . ': Status code ' . $statuscode . '. ');
+    if (!empty($results['messages'][$analysableid])) {
+        mtrace(' - ' . $results['messages'][$analysableid]);
+    }
+}
 
 $results = $model->evaluate();
 
-var_dump($results);
+foreach ($results as $rangeprocessorcodename => $data) {
+    mtrace($rangeprocessorcodename . ' phi: ' . $data['results']->phi);
+    if ($data['results']->errors) {
+        foreach ($data['results']->errors as $error) {
+            mtrace(' - ' . $error);
+        }
+    }
+}
 
 cli_heading(get_string('success'));
 exit(0);
