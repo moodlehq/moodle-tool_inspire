@@ -35,19 +35,69 @@ defined('MOODLE_INTERNAL') || die();
  */
 abstract class base extends \tool_research\calculable {
 
+    const MIN_VALUE = -1;
 
-    abstract public function get_requirements();
+    const MAX_VALUE = 1;
+
+    abstract static public function get_requirements();
 
     /**
      * Calculates the row.
      *
-     * In case there are no values to return or the indicator is not applicable just return an array of nulls.
+     * Return a value from self::MIN_VALUE to self::MAX_VALUE or null if the indicator can not be calculated for this row.
      *
-     * @param stdClass $row
+     * @param int $row
      * @param array $data
      * @param integer $starttime Limit the calculation to this timestart
      * @param integer $endtime Limit the calculation to this timeend
-     * @return float
+     * @return float|null
      */
     abstract protected function calculate_row($row, $data, $starttime, $endtime);
+
+    public static function get_max_value() {
+        return self::MAX_VALUE;
+    }
+
+    public static function get_min_value() {
+        return self::MIN_VALUE;
+    }
+
+    /**
+     * Calculates the indicator.
+     *
+     * Returns an array of values which size matches $rows size.
+     *
+     * @param array $rows
+     * @param array $data All required data.
+     * @param integer $starttime Limit the calculation to this timestart
+     * @param integer $endtime Limit the calculation to this timeend
+     * @return array The format to follow is [userid] = scalar
+     */
+    public function calculate($rows, $data, $starttime = false, $endtime = false) {
+        $calculations = [];
+        foreach ($rows as $rowid => $row) {
+
+            $calculatedvalue = $this->calculate_row($row, $data, $starttime, $endtime);
+
+            if (is_null($calculatedvalue)) {
+                // Converted to 0 = unknown.
+                $calculatedvalue = 0;
+            } else if ($calculatedvalue === 0) {
+                // We convert zeros to the minimal non-zero value.
+                $calculatedvalue = $this->get_middle_value();
+            } else if ($calculatedvalue > self::MAX_VALUE || $calculatedvalue < self::MIN_VALUE) {
+                throw new \coding_exception('Calculated values should be higher than ' . self::MIN_VALUE .
+                    ' and lower than ' . self::MAX_VALUE . ' ' . $calculatedvalue . ' received');
+            }
+
+            $calculations[$rowid] = $calculatedvalue;
+        }
+
+        return $calculations;
+    }
+
+    protected function get_middle_value() {
+        // In the middle of self::MIN_VALUE and self::MAX_VALUE but different than 0.
+        return 0.01;
+    }
 }

@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Read actions indicator.
+ * Write actions indicator.
  *
  * @package   tool_research
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
@@ -27,13 +27,13 @@ namespace tool_research\local\indicator;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Read actions indicator.
+ * Write actions indicator.
  *
  * @package   tool_research
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class read_actions extends base {
+class any_write_action extends base {
 
     public static function get_requirements() {
         return ['course', 'user'];
@@ -44,29 +44,9 @@ class read_actions extends base {
         // Filter by context to use the db table index.
         $context = \context_course::instance($data['course']->id);
         $select = "userid = :userid AND contextlevel = :contextlevel AND contextinstanceid = :contextinstanceid AND " .
-            "crud = 'r' AND timecreated > :starttime AND timecreated <= :endtime";
+            "(crud = 'c' OR crud = 'u') AND timecreated > :starttime AND timecreated <= :endtime";
         $params = array('userid' => $row, 'contextlevel' => $context->contextlevel,
             'contextinstanceid' => $context->instanceid, 'starttime' => $starttime, 'endtime' => $endtime);
-        $nrecords = $DB->count_records_select('logstore_standard_log', $select, $params);
-
-        // We define a list of ranges to fit $nrecords into it
-        // # Done absolutely nothing
-        // # Not much really, just accessing the course once a week
-        // # More than just accessing the course, some interaction
-        // # Significant contribution, will depend on the course anyway
-
-        // We need to adapt the limits to the time range duration.
-        $nweeks = $this->get_time_range_weeks_number($starttime, $endtime);
-
-        $limit = $nweeks * 3 * 10;
-        $ranges = array(
-            array('eq', 0),
-            // 1 course access per week (3 records are easily generated).
-            array('le', $nweeks * 3),
-            // 3 course accesses per week doing some stuff.
-            array('le', $limit),
-            array('gt', $limit)
-        );
-        return $this->classify_value($nrecords, $ranges);
+        return $DB->record_exists_select('logstore_standard_log', $select, $params) ? self::get_max_value() : self::get_min_value();
     }
 }

@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Write actions indicator.
+ * User profile set indicator.
  *
  * @package   tool_research
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
@@ -27,26 +27,48 @@ namespace tool_research\local\indicator;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Write actions indicator.
+ * User profile set indicator.
  *
  * @package   tool_research
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class enrol_write_actions extends base {
+class user_profile_set extends base {
 
-    public function get_required_records() {
-        global $DB;
-        return [
-            'course_modules' => $DB->get_records('course_modules', array('course' => $this->course->id))
-        ];
-    }
-
-    public function get_requirements() {
-        return ['course', 'user'];
+    public static function get_requirements() {
+        return ['user'];
     }
 
     public function calculate_row($row, $data, $starttime = false, $endtime = false) {
-        return rand(0, 10);
+        $user = $data['user'][$row];
+
+        // Nothing set results in -1.
+        $calculatedvalue = self::MIN_VALUE;
+
+        if (!$user->policyagreed) {
+            return self::MIN_VALUE;
+        }
+
+        if (!$user->confirmed) {
+            return self::MIN_VALUE;
+        }
+
+        if ($user->description != '') {
+            $calculatedvalue += 1;
+        }
+
+        if ($user->picture != '') {
+            $calculatedvalue += 1;
+        }
+
+        // 0.2 for any of the following fields being set (some of them may even be compulsory or have a default).
+        $fields = array('institution', 'department', 'address', 'city', 'country', 'url');
+        foreach ($fields as $fieldname) {
+            if ($user->{$fieldname} != '') {
+                $calculatedvalue += 0.2;
+            }
+        }
+
+        return $this->limit_value($calculatedvalue);
     }
 }
