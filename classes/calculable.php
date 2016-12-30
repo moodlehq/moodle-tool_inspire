@@ -36,6 +36,17 @@ defined('MOODLE_INTERNAL') || die();
 abstract class calculable {
 
     /**
+     * Calculation for all provided rows.
+     *
+     * @param int $row
+     * @param array $data
+     * @param int $starttime
+     * @param int $endtime
+     * @return int[]|float[]
+     */
+    abstract public function calculate($rows, $data, $starttime = false, $endtime = false);
+
+    /**
      * Return database records required to perform a calculation, for all course students.
      *
      * Course data and course users data is available in $this->course, $this->students and
@@ -53,43 +64,15 @@ abstract class calculable {
      *
      * IMPORTANT! No database writes are allowed here as we keep track of all different dataset items requirements.
      *
+     * @param \tool_research\local\analysable $analysable
      * @return null|array The format to follow is [tablename][id] = stdClass(dbrecord)
      */
-    abstract public function get_required_records();
-
-    /**
-     * Calculates the calculable.
-     *
-     * Returns an array of values which size matches $rows size.
-     *
-     * @param array $rows
-     * @param array $data All required data.
-     * @param integer $starttime Limit the calculation to this timestart
-     * @param integer $endtime Limit the calculation to this timeend
-     * @return array The format to follow is [userid] = scalar
-     */
-    public function calculate($rows, $data, $starttime = false, $endtime = false) {
-        $calculations = [];
-        foreach ($rows as $rowid => $row) {
-            // TODO Comment about different child interfaces or solve this somehow.
-            $calculations[$rowid] = $this->calculate_row($row, $data, $starttime, $endtime);
-        }
-        return $calculations;
+    public function get_required_records(\tool_research\analysable $analysable) {
+        return null;
     }
 
     /**
-     * Default.
-     *
-     * Feel free to overwrite but return PARAM_ALPHANUMEXT.
-     *
-     * @return string
-     */
-    public function get_name() {
-        return get_class($this);
-    }
-
-    /**
-     * Returns a code name for the indicator.
+     * Returns a name for the indicator.
      *
      * Used as column identificator.
      *
@@ -97,9 +80,117 @@ abstract class calculable {
      *
      * @return string
      */
-    public function get_codename() {
-        $fullclassname = get_class($this);
-        return substr($fullclassname, strrpos($fullclassname, '\\') + 1);
+    public static function get_name() {
+        return get_called_class();
     }
 
+    /**
+     * Returns the number of weeks a time range contains.
+     *
+     * Useful for calculations that depend on the time range duration.
+     *
+     * @param int $starttime
+     * @param int $endtime
+     * @return float
+     */
+    protected function get_time_range_weeks_number($starttime, $endtime) {
+        if ($endtime <= $starttime) {
+            throw new \coding_exception('End time timestamp should be greater than start time.');
+        }
+
+        $diff = $endtime - $starttime;
+
+        // No need to be strict about DST here.
+        return $diff / WEEKSECS;
+    }
+
+    /**
+     * Limits the calculated value to the minimum and maximum values.
+     *
+     * @param float $calculatedvalue
+     * @return float|null
+     */
+    protected function limit_value($calculatedvalue) {
+        return max(min($calculatedvalue, static::get_max_value()), static::get_min_value());
+    }
+
+    /**
+     * Classifies the provided value into the provided range according to the ranges predicates.
+     *
+     * Use:
+     * - eq as 'equal'
+     * - ne as 'not equal'
+     * - lt as 'lower than'
+     * - le as 'lower or equal than'
+     * - gt as 'greater than'
+     * - ge as 'greater or equal than'
+     *
+     * @param int|float $value
+     * @param array $ranges e.g. [ ['lt', 20], ['ge', 20] ]
+     * @return void
+     */
+    protected function classify_value($value, $ranges) {
+
+        // To automatically return calculated values from min to max values.
+        $rangeweight = (static::get_max_value() - static::get_min_value()) / (count($ranges) - 1);
+
+        foreach ($ranges as $key => $range) {
+
+            $match = false;
+
+            if (count($range) != 2) {
+                throw \coding_exception('classify_value() $ranges array param should contain 2 items, the predicate ' .
+                    'e.g. greater (gt), lower or equal (le)... and the value.');
+            }
+
+            list($predicate, $rangevalue) = $range;
+
+            switch ($predicate) {
+                case 'eq':
+                    if ($value == $rangevalue) {
+                        $match = true;
+                    }
+                    break;
+                case 'ne':
+                    if ($value != $rangevalue) {
+                        $match = true;
+                    }
+                    break;
+                case 'lt':
+                    if ($value < $rangevalue) {
+                        $match = true;
+                    }
+                    break;
+                case 'le':
+                    if ($value <= $rangevalue) {
+                        $match = true;
+                    }
+                    break;
+                case 'gt':
+                    if ($value > $rangevalue) {
+                        $match = true;
+                    }
+                    break;
+                case 'ge':
+                    if ($value >= $rangevalue) {
+                        $match = true;
+                    }
+                    break;
+                default:
+                    throw new \coding_exception('Unrecognised predicate ' . $predicate . '. Please use eq, ne, lt, le, ge or gt.');
+            }
+
+            // Calculate and return a linear calculated value for the provided value.
+            if ($match) {
+                $calculatedvalue = round(static::get_min_value() + ($rangeweight * $key), 2);
+                if ($calculatedvalue === 0) {
+                    $calculatedvalue = $this->get_middle_value();
+                }
+                return $calculatedvalue;
+            }
+        }
+
+        throw new \coding_exception('The provided value "' . $value . '" can not be fit into any of the provided ranges, you ' .
+            'should provide ranges for all possible values.');
+    }
 }

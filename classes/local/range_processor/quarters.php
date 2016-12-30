@@ -33,25 +33,21 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class simple_quarters extends base {
+class quarters extends base {
 
     protected function define_ranges() {
         $duration = floor(($this->analysable->get_end() - $this->analysable->get_start()) / 4);
         return [
             [
-                'id' => 1,
-                'start' => $this->analysable->get_start(),
-                'end' => $this->analysable->get_start() + $duration
-            ], [
-                'id' => 2,
-                'start' => $this->analysable->get_start() + $duration,
-                'end' => $this->analysable->get_start() + ($duration * 2)
-            ], [
-                'id' => 3,
+                //'start' => $this->analysable->get_start(),
+                //'end' => $this->analysable->get_start() + $duration
+            //], [
+                //'start' => $this->analysable->get_start() + $duration,
+                //'end' => $this->analysable->get_start() + ($duration * 2)
+            //], [
                 'start' => $this->analysable->get_start() + ($duration * 2),
                 'end' => $this->analysable->get_start() + ($duration * 3)
             ], [
-                'id' => 4,
                 'start' => $this->analysable->get_start() + ($duration * 3),
                 'end' => $this->analysable->get_start() + ($duration * 4)
             ]

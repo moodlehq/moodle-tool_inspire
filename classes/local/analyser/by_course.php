@@ -62,20 +62,23 @@ abstract class by_course extends base {
         $this->options = $options;
 
         $status = [];
+        $messages = [];
         $filesbyrangeprocessor = [];
 
         // This class and all children will iterate through a list of courses (\tool_research\course).
         $analysables = $this->get_courses($options);
         foreach ($analysables as $analysableid => $analysable) {
 
-            list($status[$analysableid], $analysablefiles) = $this->process_analysable($analysable);
+            list($status[$analysableid], $data) = $this->process_analysable($analysable);
 
-            // Var $analysablefiles may be empty if the analysable couldn't be analysed.
-            if ($analysablefiles) {
+            if ($status[$analysableid] === \tool_research\model::ANALYSE_OK) {
                 // Later we will need to aggregate data by range processor.
-                foreach ($analysablefiles as $rangeprocessorcodename => $file) {
+                foreach ($data as $rangeprocessorcodename => $file) {
                     $filesbyrangeprocessor[$rangeprocessorcodename][$analysableid] = $file;
                 }
+            } else {
+                // Store the message.
+                $messages[$analysableid] = $data;
             }
         }
 
@@ -95,7 +98,8 @@ abstract class by_course extends base {
 
         return array(
             'status' => $status,
-            'files' => $rangeprocessorfiles
+            'files' => $rangeprocessorfiles,
+            'messages' => $messages
         );
     }
 

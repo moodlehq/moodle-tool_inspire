@@ -44,12 +44,22 @@ abstract class sitewide extends base {
         // Here there is a single analysable and it is the system.
         $analysable = $this->get_site();
 
-        list($status, $rangeprocessorfiles) = $this->process_analysable($analysable);
+        list($status, $data) = $this->process_analysable($analysable);
 
         // Needs to be an array of arrays to match the same interface we have when we deal with multiple analysables per site.
-        return array(
+        $return = array(
             'status' => array($analysable->get_id() => $status),
-            'files' => $rangeprocessorfiles
+            'files' => array(),
+            'messages' => array()
         );
+
+        if ($status === \tool_research\model::ANALYSE_OK) {
+            $return['files'] = $data;
+        } else {
+            // $data contains the error message if something went wrong.
+            $return['messages'][$analysable->get_id()] = $data;
+        }
+
+        return $return;
     }
 }

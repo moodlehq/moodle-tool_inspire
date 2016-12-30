@@ -36,6 +36,13 @@ defined('MOODLE_INTERNAL') || die();
 abstract class base extends \tool_research\calculable {
 
     /**
+     * This target have linear or discrete values.
+     *
+     * @return bool
+     */
+    abstract public function is_linear();
+
+    /**
      * Returns the analyser class that should be used along with this target.
      *
      * @return string
@@ -49,21 +56,87 @@ abstract class base extends \tool_research\calculable {
      * e.g. Imagine that your analysable don't have students and you need them.
      *
      * @param \tool_research\analysable $analysable
-     * @return bool
+     * @return true|string
      */
-    abstract public function is_valid(\tool_research\analysable $analysable);
+    abstract public function check_analysable(\tool_research\analysable $analysable);
 
     /**
-     * Calculates this target for all course students.
+     * Calculates this target for the provided row.
      *
-     * Returns an array of values which size matches $this->students. Use the userid as key.
+     * In case there are no values to return or the provided row is not applicable just return null.
      *
-     * In case there are no values to return or the target is not applicable throw an exception as
-     * this is not a valid model.
-     *
-     * @param stdClass $row
+     * @param int $row
      * @param array $data
-     * @return float
+     * @return float|null
      */
     abstract protected function calculate_row($row, $data);
+
+    /**
+     * Returns the target discrete values.
+     *
+     * Only useful for targets using discrete values, must be overwriten if it is the case.
+     *
+     * @return array
+     */
+    protected function get_classes() {
+        // Coding exception as this will only be called if this target have non-linear values.
+        throw new \coding_exception('Overwrite get_classes() and return an array with the different target classes');
+    }
+
+    /**
+     * Gets the maximum value for this target
+     *
+     * @return float
+     */
+    protected static function get_max_value() {
+        // Coding exception as this will only be called if this target have linear values.
+        throw new \coding_exception('Overwrite get_max_value() and return the target max value');
+    }
+
+    /**
+     * Gets the minimum value for this target
+     *
+     * @return float
+     */
+    protected static function get_min_value() {
+        // Coding exception as this will only be called if this target have linear values.
+        throw new \coding_exception('Overwrite get_min_value() and return the target min value');
+    }
+
+    protected function is_a_class($class) {
+        return (in_array($class, $this->get_classes()));
+    }
+
+    /**
+     * Calculates the target.
+     *
+     * Returns an array of values which size matches $rows size.
+     *
+     * Rows with null values will be skipped as invalid by range processors.
+     *
+     * @param array $rows
+     * @param array $data All required data.
+     * @param integer $notused1 startime is not necessary when calculating targets
+     * @param integer $notused2 endtime is not necessary when calculating targets
+     * @return array The format to follow is [userid] = scalar|null
+     */
+    public function calculate($rows, $data, $notused1 = false, $notused2 = false) {
+
+        $calculations = [];
+        foreach ($rows as $rowid => $row) {
+            $calculatedvalue = $this->calculate_row($row, $data);
+
+            if (!is_null($calculatedvalue)) {
+                if ($this->is_linear() && ($calculatedvalue > self::get_max_value() || $calculatedvalue < self::get_min_value())) {
+                    throw new \coding_exception('Calculated values should be higher than ' . self::get_min_value() .
+                        ' and lower than ' . self::get_max_value() . '. ' . $calculatedvalue . ' received');
+                } else if (!$this->is_linear() && $this->is_a_class($calculatedvalue) === false) {
+                    throw new \coding_exception('Calculated values should be one of the target classes (' .
+                        json_encode($this->get_classes()) . '). ' . $calculatedvalue . ' received');
+                }
+            }
+            $calculations[$rowid] = $calculatedvalue;
+        }
+        return $calculations;
+    }
 }

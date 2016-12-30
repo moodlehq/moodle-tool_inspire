@@ -107,17 +107,18 @@ abstract class base {
      * but shown, through mtrace(), debugging() or through exceptions depending on the case.
      *
      * @param \tool_research\analysable $analysable
-     * @return array Analysable general status code and files by range processor
+     * @return array Analysable general status code AND (files by range processor OR error code)
      */
     public function process_analysable($analysable) {
 
         $files = [];
+        $message = null;
 
-        if (!$this->target->is_valid($analysable)) {
-
+        $result = $this->target->check_analysable($analysable);
+        if ($result !== true) {
             return [
                 \tool_research\model::ANALYSABLE_STATUS_INVALID_FOR_TARGET,
-                false
+                $result
             ];
         }
 
@@ -135,6 +136,7 @@ abstract class base {
         if (empty($files)) {
             // Flag it as invalid if the analysable wasn't valid for any of the range processors.
             $status = \tool_research\model::ANALYSABLE_STATUS_INVALID_FOR_RANGEPROCESSORS;
+            $message = 'Analysable not valid for any of the range processors';
         } else {
             $status = \tool_research\model::ANALYSE_OK;
         }
@@ -142,7 +144,8 @@ abstract class base {
         // TODO This looks confusing 1 for range processor? 1 for all? Should be 1 for analysable.
         return [
             $status,
-            $files
+            $files,
+            $message
         ];
     }
 

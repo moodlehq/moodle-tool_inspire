@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Weekly range processor.
+ * Range processor splitting the course in quarters and accumulating data.
  *
  * @package   tool_research
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
@@ -26,13 +26,30 @@ namespace tool_research\local\range_processor;
 
 defined('MOODLE_INTERNAL') || die();
 
-class single_range extends base {
+/**
+ * Range processor splitting the course in quarters and accumulating data.
+ *
+ * @package   tool_research
+ * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class quarters_accum extends base {
 
     protected function define_ranges() {
+        $duration = floor(($this->analysable->get_end() - $this->analysable->get_start()) / 4);
         return [
             [
+                //'start' => $this->analysable->get_start(),
+                //'end' => $this->analysable->get_start() + $duration
+            //], [
+                //'start' => $this->analysable->get_start(),
+                //'end' => $this->analysable->get_start() + ($duration * 2)
+            //], [
                 'start' => $this->analysable->get_start(),
-                'end' => $this->analysable->get_end()
+                'end' => $this->analysable->get_start() + ($duration * 3)
+            ], [
+                'start' => $this->analysable->get_start(),
+                'end' => $this->analysable->get_start() + ($duration * 4)
             ]
         ];
     }

@@ -51,7 +51,7 @@ class processor {
             escapeshellarg(self::VALIDATION) . ' ' .
             escapeshellarg(self::DEVIATION) . ' ' .
             escapeshellarg(self::ITERATIONS);
-var_dump($cmd);
+
         $output = null;
         $exitcode = null;
         $result = exec($cmd, $output, $exitcode);
