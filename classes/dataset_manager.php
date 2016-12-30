@@ -25,8 +25,6 @@ namespace tool_research;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/lib/csvlib.class.php');
-
 /**
  *
  * @package   tool_research
@@ -80,7 +78,7 @@ class dataset_manager {
         $run = $DB->get_record('tool_research_runs', $params);
         if ($run) {
             if ($run->inprogress) {
-                return \tool_research\site_manager::ANALYSE_INPROGRESS;
+                return \tool_research\model::ANALYSE_INPROGRESS;
             }
             $DB->delete_records('tool_research_runs', $params);
         }
@@ -112,21 +110,23 @@ class dataset_manager {
             'filearea' => self::FILEAREA,
             'itemid' => $this->analysableid,
             'contextid' => \context_system::instance()->id,
-            'filepath' => '/' . $this->modelid . '/analysable',
-            'filename' => $this->rangeprocessor . '.csv'
+            'filepath' => '/' . $this->modelid . '/analysable/' . $this->rangeprocessor . '/',
+            'filename' => 'dataset.csv'
         ];
-        $fs->delete_area_files($filerecord['contextid'], $filerecord['component'], $filerecord['filearea'], $filerecord['itemid']);
+
+        $select = " = {$filerecord['itemid']} AND filepath = :filepath";
+        $fs->delete_area_files_select($filerecord['contextid'], $filerecord['component'], $filerecord['filearea'],
+            $select, array('filepath' => $filerecord['filepath']));
 
         // Write all this stuff to a tmp file.
-        $writer = new \csv_export_writer();
-        $writer->set_filename($filerecord['filename']);
-
+        $filepath = make_request_directory() . DIRECTORY_SEPARATOR . $filerecord['filename'];
+        $fh = fopen($filepath, 'w+');
         foreach ($data as $row) {
-            $writer->add_data($row);
+            fputcsv($fh, $row);
         }
+        fclose($fh);
 
-        // TODO: LOL, no fclose() for csv_export_writer::fp?
-        return $fs->create_file_from_pathname($filerecord, $writer->path);
+        return $fs->create_file_from_pathname($filerecord, $filepath);
     }
 
     /**
@@ -174,16 +174,25 @@ class dataset_manager {
     }
 
     public static function get_analysable_file($modelid, $analysableid, $rangeprocessorcodename) {
-
         $fs = get_file_storage();
         return $fs->get_file(\context_system::instance()->id, 'tool_research', self::FILEAREA,
-            $analysableid, '/' . $modelid . '/analysable', $rangeprocessorcodename . '.csv');
+            $analysableid, '/' . $modelid . '/analysable/' . $rangeprocessorcodename . '/', 'dataset.csv');
     }
 
     public static function get_range_file($modelid, $rangeprocessorcodename) {
         $fs = get_file_storage();
         return $fs->get_file(\context_system::instance()->id, 'tool_research', self::FILEAREA,
-            $analysableid, '/' . $modelid . '/analysable', $rangeprocessorcodename . '.csv');
+            self::convert_to_int($rangeprocessorcodename), '/' . $modelid . '/range/' . $rangeprocessorcodename . '/', 'dataset.csv');
+    }
+
+    public static function delete_range_file($modelid, $rangeprocessorcodename) {
+        $fs = get_file_storage();
+        if ($file = self::get_range_file($modelid, $rangeprocessorcodename)) {
+            $file->delete();
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -191,22 +200,65 @@ class dataset_manager {
      *
      * Important! It is the caller responsability to ensure that the datasets are compatible.
      *
-     * @param array $files
+     * @param array  $files
+     * @param int    $modelid
+     * @param string $rangeproceesorcodename
      * @return \stored_file
      */
     public static function merge_datasets(array $files, $modelid, $rangeprocessorcodename) {
 
-        if (count($files) === 1) {
-            return reset($files);
-        }
-
         $tmpfilepath = make_request_directory() . DIRECTORY_SEPARATOR . 'tmpfile.csv';
         $wh = fopen($tmpfilepath, 'w');
+
+        // Add headers.
+        // We could also do this with a single iteration gathering all files headers and appending them to the beginning of the file
+        // once all file contents are merged.
+        $varnames = '';
+        $analysablesvalues = '';
+        foreach ($files as $file) {
+            $rh = $file->get_content_file_handle();
+
+            // Copy the var names as they are, all files should have the same var names.
+            $varnames = fgets($rh);
+
+            $analysablesvalues[] = explode(',', rtrim(fgets($rh), "\n"));
+
+            // Third one is empty.
+            fgets($rh);
+
+            // Copy the columns as they are, all files should have the same columns.
+            $columns = fgets($rh);
+        }
+
+        // Merge analysable values skipping the ones that are the same in all analysables.
+        $values = array();
+        foreach ($analysablesvalues as $analysablevalues) {
+            foreach ($analysablevalues as $varkey => $value) {
+                $values[$varkey][] = $value;
+            }
+        }
+        foreach ($values as $varkey => $varvalues) {
+            $values[$varkey] = implode('|', $varvalues);
+        }
+        $values = implode(',', $values);
+
+        fwrite($wh, $varnames);
+        fwrite($wh, $values);
+        fwrite($wh, "\n");
+        fwrite($wh, $columns);
 
         // Iterate through all files and add them to the tmp one. We don't want file contents in memory.
         foreach ($files as $file) {
             $rh = $file->get_content_file_handle();
-            while ($line = fgets($rh, 40960)) {
+
+            // Skip headers.
+            fgets($rh);
+            fgets($rh);
+            fgets($rh);
+            fgets($rh);
+
+            // Copy all the following lines.
+            while ($line = fgets($rh)) {
                 fwrite($wh, $line);
             }
         }
@@ -214,11 +266,13 @@ class dataset_manager {
         $filerecord = [
             'component' => 'tool_research',
             'filearea' => self::FILEAREA,
-            'itemid' => $this->convert_to_int($rangeprocessorcodename),
+            'itemid' => self::convert_to_int($rangeprocessorcodename),
             'contextid' => \context_system::instance()->id,
-            'filepath' => '/' . $modelid . '/range',
-            'filename' => $rangeprocessorcodename . '.csv'
+            'filepath' => '/' . $modelid . '/range/' . $rangeprocessorcodename . '/',
+            'filename' => 'dataset.csv'
         ];
+
+        $fs = get_file_storage();
 
         return $fs->create_file_from_pathname($filerecord, $tmpfilepath);
     }
@@ -229,7 +283,7 @@ class dataset_manager {
      * @param string $string
      * @return int
      */
-    protected function convert_to_int($string) {
+    protected static function convert_to_int($string) {
         $sum = 0;
         for ($i = 0; $i < strlen($string); $i++) {
             $sum += ord($string[$i]);
