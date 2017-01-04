@@ -237,7 +237,11 @@ abstract class base {
     protected function add_metadata(&$dataset, $indicators, $target) {
 
         // Metadata is mainly provided by the analysable.
-        $metadata = array('rangeprocessor' => $this->get_codename());
+        $metadata = array(
+            'rangeprocessor' => $this->get_codename(),
+            'nfeatures' => count(current($dataset)) - 1, // We skip the target row.
+            'targetclasses' => json_encode($target->get_classes())
+        );
         $metadata = array_merge($metadata, $this->analysable->get_metadata());
 
         // The first 2 rows will be used to store metadata about the dataset.
@@ -251,7 +255,7 @@ abstract class base {
         $headers = $this->get_columns_headers($indicators, $target);
 
         // This will also reset examples' dataset keys.
-        array_unshift($dataset, $metadatacolumns, $metadatavalues, [], $headers);
+        array_unshift($dataset, $metadatacolumns, $metadatavalues, $headers);
     }
 
     /**

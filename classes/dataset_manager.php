@@ -208,7 +208,6 @@ class dataset_manager {
     public static function merge_datasets(array $files, $modelid, $rangeprocessorcodename) {
 
         $tmpfilepath = make_request_directory() . DIRECTORY_SEPARATOR . 'tmpfile.csv';
-        $wh = fopen($tmpfilepath, 'w');
 
         // Add headers.
         // We could also do this with a single iteration gathering all files headers and appending them to the beginning of the file
@@ -223,9 +222,6 @@ class dataset_manager {
 
             $analysablesvalues[] = explode(',', rtrim(fgets($rh), "\n"));
 
-            // Third one is empty.
-            fgets($rh);
-
             // Copy the columns as they are, all files should have the same columns.
             $columns = fgets($rh);
         }
@@ -234,7 +230,8 @@ class dataset_manager {
         $values = array();
         foreach ($analysablesvalues as $analysablevalues) {
             foreach ($analysablevalues as $varkey => $value) {
-                $values[$varkey][] = $value;
+                // Sha1 to make it unique.
+                $values[$varkey][sha1($value)] = $value;
             }
         }
         foreach ($values as $varkey => $varvalues) {
@@ -242,9 +239,11 @@ class dataset_manager {
         }
         $values = implode(',', $values);
 
+        // Start writing to the merge file.
+        $wh = fopen($tmpfilepath, 'w');
+
         fwrite($wh, $varnames);
         fwrite($wh, $values);
-        fwrite($wh, "\n");
         fwrite($wh, $columns);
 
         // Iterate through all files and add them to the tmp one. We don't want file contents in memory.
@@ -255,13 +254,14 @@ class dataset_manager {
             fgets($rh);
             fgets($rh);
             fgets($rh);
-            fgets($rh);
 
             // Copy all the following lines.
             while ($line = fgets($rh)) {
                 fwrite($wh, $line);
             }
+            fclose($rh);
         }
+        fclose($wh);
 
         $filerecord = [
             'component' => 'tool_research',
