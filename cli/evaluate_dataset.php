@@ -27,16 +27,14 @@ define('CLI_SCRIPT', true);
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->libdir.'/clilib.php');
 
-$help = "Creates a model dataset:
+$help = "Evaluates a model dataset.:
 
 Options:
 --model      Model code name
---analyseall Analyse all site or only non rencently analysed analysables
---filter     Analyser dependant (Optional)
 -h, --help   Print out this help
 
 Example:
-\$ sudo -u www-data /usr/bin/php admin/tool/research/cli/model_dataset.php --filter=123,321
+\$ sudo -u www-data /usr/bin/php admin/tool/research/cli/evaluate_dataset.php
 ";
 
 // Now get cli options.
@@ -44,8 +42,6 @@ list($options, $unrecognized) = cli_get_params(
     array(
         'help'          => false,
         'model'         => false,
-        'analyseall'    => false,
-        'filter'        => false
     ),
     array(
         'h' => 'help',
@@ -57,11 +53,6 @@ if ($options['help']) {
     exit(0);
 }
 
-// Reformat them as an array.
-if ($options['filter'] !== false) {
-    $options['filter'] = explode(',', $options['filter']);
-}
-
 echo "\n".get_string('processingcourses', 'tool_research')."\n\n";
 
 // TODO Set a DB table for this.
@@ -71,16 +62,6 @@ $modelobj = new \stdClass();
 $modelobj->id = 1;
 $modelobj->target = '\tool_research\local\target\grade_pass';
 $model = new \tool_research\model($modelobj);
-
-$analyseroptions = array('filter' => $options['filter'], 'analyseall' => $options['analyseall']);
-$results = $model->build_dataset($analyseroptions);
-
-foreach ($results['status'] as $analysableid => $statuscode) {
-    mtrace('Analysable ' . $analysableid . ': Status code ' . $statuscode . '. ');
-    if (!empty($results['messages'][$analysableid])) {
-        mtrace(' - ' . $results['messages'][$analysableid]);
-    }
-}
 
 $results = $model->evaluate();
 

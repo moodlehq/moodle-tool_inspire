@@ -240,7 +240,8 @@ abstract class base {
         $metadata = array(
             'rangeprocessor' => $this->get_codename(),
             'nfeatures' => count(current($dataset)) - 1, // We skip the target row.
-            'targetclasses' => json_encode($target->get_classes())
+            'targetclasses' => json_encode($target->get_classes()),
+            'targettype' => ($target->is_linear()) ? 'linear' : 'discrete'
         );
         $metadata = array_merge($metadata, $this->analysable->get_metadata());
 

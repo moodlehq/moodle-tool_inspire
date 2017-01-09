@@ -218,12 +218,12 @@ class dataset_manager {
             $rh = $file->get_content_file_handle();
 
             // Copy the var names as they are, all files should have the same var names.
-            $varnames = fgets($rh);
+            $varnames = fgetcsv($rh);
 
-            $analysablesvalues[] = explode(',', rtrim(fgets($rh), "\n"));
+            $analysablesvalues[] = fgetcsv($rh);
 
             // Copy the columns as they are, all files should have the same columns.
-            $columns = fgets($rh);
+            $columns = fgetcsv($rh);
         }
 
         // Merge analysable values skipping the ones that are the same in all analysables.
@@ -237,14 +237,13 @@ class dataset_manager {
         foreach ($values as $varkey => $varvalues) {
             $values[$varkey] = implode('|', $varvalues);
         }
-        $values = implode(',', $values);
 
         // Start writing to the merge file.
         $wh = fopen($tmpfilepath, 'w');
 
-        fwrite($wh, $varnames);
-        fwrite($wh, $values);
-        fwrite($wh, $columns);
+        fputcsv($wh, $varnames);
+        fputcsv($wh, $values);
+        fputcsv($wh, $columns);
 
         // Iterate through all files and add them to the tmp one. We don't want file contents in memory.
         foreach ($files as $file) {

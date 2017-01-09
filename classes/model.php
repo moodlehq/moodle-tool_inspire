@@ -156,7 +156,13 @@ class model {
 
             $dataset = \tool_research\dataset_manager::get_range_file($this->model->id, $rangeprocessor->get_codename());
             if (!$dataset) {
-                $return[$rangeprocessor->get_codename()] = array('status' => self::ANALYSE_GENERAL_ERROR);
+
+                $results = new \stdClass();
+                $results->errors = array('No dataset found');
+                $return[$rangeprocessor->get_codename()] = array(
+                    'status' => self::ANALYSE_GENERAL_ERROR,
+                    'results' => $results
+                );
                 continue;
             }
 
@@ -181,8 +187,8 @@ class model {
 
     protected function get_predictions_processor() {
         // TODO Select it based on a config setting.
-        // TODO Add a PHP one.
-        return new \predict_python\processor();
+        //return new \predict_python\processor();
+        return new \predict_php\processor();
     }
 
     protected function get_output_dir($subdir = false) {
