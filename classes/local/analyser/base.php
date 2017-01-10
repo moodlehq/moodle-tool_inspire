@@ -47,8 +47,8 @@ abstract class base {
         $this->indicators = $indicators;
         $this->rangeprocessors = $rangeprocessors;
 
-        // Checks if the analyser satisfies the provided calculables (target + indicators) needs.
-        $this->check_calculable_requirements();
+        // Checks if the analyser satisfies the indicators requirements.
+        $this->check_indicators_requirements();
     }
 
     /**
@@ -80,12 +80,12 @@ abstract class base {
     abstract function analyse($options);
 
     /**
-     * Checks if the analyser satisfies the calculable requirements.
+     * Checks if the analyser satisfies all the model indicators requirements.
      *
      * @throws requirements_exception
      * @return void
      */
-    protected function check_calculable_requirements() {
+    protected function check_indicators_requirements() {
 
         $rowsinfo = $this->rows_info();
 

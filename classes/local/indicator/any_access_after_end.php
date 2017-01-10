@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * User tracks forums indicator.
+ * Any access before the starts indicator.
  *
  * @package   tool_research
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
@@ -27,19 +27,27 @@ namespace tool_research\local\indicator;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * User tracks forums indicator.
+ * Any access before the start indicator.
  *
  * @package   tool_research
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class user_tracks_forums extends base {
+class any_access_before_start extends base {
 
-    public static function get_requirements() {
-        return ['user'];
+    public static function min_contextlevel_depth() {
+        // Does not make much sense at context system, but it is calculable.
+        return CONTEXT_SYSTEM;
     }
 
-    public function calculate_row($row, $data, $starttime = false, $endtime = false) {
-        return ($data['user'][$row]->trackforums) ? self::get_max_value() : self::get_min_value();
+    public function calculate_row($row, \tool_research\analysable $analysable, $data, $starttime = false, $endtime = false) {
+        global $DB;
+        // Filter by context to use the db table index.
+        $context = $analysable->get_context();
+        $select = "userid = :userid AND contextlevel = :contextlevel AND contextinstanceid = :contextinstanceid AND " .
+            "timecreated < :start";
+        $params = array('userid' => $row, 'contextlevel' => $context->contextlevel,
+            'contextinstanceid' => $context->instanceid, 'start' => $analysable->get_start());
+        return $DB->record_exists_select('logstore_standard_log', $select, $params) ? self::get_max_value() : self::get_min_value();
     }
 }

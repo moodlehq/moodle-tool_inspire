@@ -93,7 +93,8 @@ class model {
         $rangeprocessors = [];
         foreach ($classes as $fullclassname => $classpath) {
             if (self::is_a_valid_range_processor($fullclassname)) {
-               $rangeprocessors[] = new $fullclassname();
+               $instance = new $fullclassname();
+               $rangeprocessors[$instance->get_codename()] = $instance;
             }
         }
 
@@ -187,8 +188,8 @@ class model {
 
     protected function get_predictions_processor() {
         // TODO Select it based on a config setting.
-        //return new \predict_python\processor();
-        return new \predict_php\processor();
+        return new \predict_python\processor();
+        //return new \predict_php\processor();
     }
 
     protected function get_output_dir($subdir = false) {

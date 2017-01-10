@@ -52,8 +52,8 @@ class course implements \tool_research\analysable {
     protected $endtime = null;
     protected $finished = null;
 
-    protected $students = [];
-    protected $teachers = [];
+    protected $studentids = [];
+    protected $teacherids = [];
 
     protected $ntotallogs = null;
 
@@ -89,12 +89,16 @@ class course implements \tool_research\analysable {
         }
 
         // Get the course users, including users assigned to student and teacher roles at an higher context.
-        $this->students = $this->get_users($this->studentroles);
-        $this->teachers = $this->get_users($this->teacherroles);
+        $this->studentids = $this->get_user_ids($this->studentroles);
+        $this->teacherids = $this->get_user_ids($this->teacherroles);
     }
 
     public function get_id() {
         return $this->course->id;
+    }
+
+    public function get_context() {
+        return \context_course::instance($this->course->id);
     }
 
     public function get_usual_required_records() {
@@ -104,7 +108,7 @@ class course implements \tool_research\analysable {
 
         $storage['course'] = $this->course;
 
-        list($sql, $params) = $DB->get_in_or_equal(array_keys($this->students + $this->teachers));
+        list($sql, $params) = $DB->get_in_or_equal(array_keys($this->studentids + $this->teacherids));
         $storage['user'] = $DB->get_records_select('user', 'id ' . $sql, $params);
 
         return $storage;
@@ -136,7 +140,7 @@ class course implements \tool_research\analysable {
             $this->starttime = (int)$this->course->startdate;
         } else {
             // Fallback to the first student log.
-            list($studentssql, $studentsparams) = $DB->get_in_or_equal($this->students, SQL_PARAMS_NAMED);
+            list($studentssql, $studentsparams) = $DB->get_in_or_equal($this->studentids, SQL_PARAMS_NAMED);
             $select = 'courseid = :courseid AND userid ' . $studentssql;
             $params = ['courseid' => $this->course->id] + $studentsparams;
             $records = $DB->get_records_select('logstore_standard_log', $select, $params,
@@ -178,7 +182,7 @@ class course implements \tool_research\analysable {
             return $this->endtime;
         }
 
-        if (empty($this->students)) {
+        if (empty($this->studentids)) {
             $this->endtime = 0;
             return $this->endtime;
         }
@@ -198,7 +202,7 @@ class course implements \tool_research\analysable {
 
         // If more than 1/4 of the students accessed the course in the last 4 weeks we can consider that
         // the course is still ongoing and we can not determine when it will finish.
-        if ($ntotallastmonth > count($this->students) / 4) {
+        if ($ntotallastmonth > count($this->studentids) / 4) {
             $this->endtime = self::MAX_TIME;
             return $this->endtime;
         }
@@ -327,7 +331,7 @@ class course implements \tool_research\analysable {
      * @return bool
      */
     public function has_enough_students() {
-        if (count($this->students) >= self::MIN_NUMBER_STUDENTS) {
+        if (count($this->studentids) >= self::MIN_NUMBER_STUDENTS) {
             return true;
         }
         return false;
@@ -342,7 +346,7 @@ class course implements \tool_research\analysable {
         if ($this->get_total_logs() < self::MIN_NUMBER_LOGS) {
             return false;
         }
-        if ($this->get_total_logs() < count($this->students)) {
+        if ($this->get_total_logs() < count($this->studentids)) {
             return false;
         }
 
@@ -355,7 +359,7 @@ class course implements \tool_research\analysable {
      * @param array $roleids
      * @return array
      */
-    public function get_users($roleids) {
+    public function get_user_ids($roleids) {
 
         // We need to index by ra.id as a user may have more than 1 $roles role.
         $records = get_role_users($roleids, $this->coursecontext, true, 'ra.id, u.id AS userid, r.id AS roleid', 'ra.id ASC');
@@ -372,7 +376,7 @@ class course implements \tool_research\analysable {
      * @return stdClass[]
      */
     public function get_students() {
-        return $this->students;
+        return $this->studentids;
     }
 
     /**
@@ -391,8 +395,12 @@ class course implements \tool_research\analysable {
         return $this->ntotallogs;
     }
 
+    public function get_course_obj() {
+        return $this->course;
+    }
+
     /**
-     * Used by get_users to extract the user id.
+     * Used by get_user_ids to extract the user id.
      *
      * @param \stdClass $record
      * @return int The user id.
@@ -422,7 +430,7 @@ class course implements \tool_research\analysable {
         global $DB;
 
         // Check the amount of student logs in the 4 previous weeks.
-        list($studentssql, $studentsparams) = $DB->get_in_or_equal($this->students, SQL_PARAMS_NAMED);
+        list($studentssql, $studentsparams) = $DB->get_in_or_equal($this->studentids, SQL_PARAMS_NAMED);
         $filterselect = "courseid = :courseid AND userid $studentssql";
         $filterparams = array('courseid' => $this->course->id) + $studentsparams;
 

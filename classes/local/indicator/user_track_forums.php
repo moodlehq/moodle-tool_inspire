@@ -33,13 +33,13 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class user_tracks_forums extends base {
+class user_track_forums extends base {
 
     public static function get_requirements() {
-        return ['course', 'user'];
+        return ['user'];
     }
 
-    public function calculate_row($row, $data, $starttime = false, $endtime = false) {
-        return ($data['user'][$row]->trackforums);
+    public function calculate_row($row, \tool_research\analysable $analysable, $data, $starttime = false, $endtime = false) {
+        return ($data['user'][$row]->trackforums) ? self::get_max_value() : self::get_min_value();
     }
 }

@@ -66,10 +66,11 @@ abstract class base extends \tool_research\calculable {
      * In case there are no values to return or the provided row is not applicable just return null.
      *
      * @param int $row
+     * @param \tool_research\analysable $analysable
      * @param array $data
      * @return float|null
      */
-    abstract protected function calculate_row($row, $data);
+    abstract protected function calculate_row($row, \tool_research\analysable $analysable, $data);
 
     /**
      * Returns the target discrete values.
@@ -115,16 +116,17 @@ abstract class base extends \tool_research\calculable {
      * Rows with null values will be skipped as invalid by range processors.
      *
      * @param array $rows
+     * @param \tool_research\analysable $analysable
      * @param array $data All required data.
      * @param integer $notused1 startime is not necessary when calculating targets
      * @param integer $notused2 endtime is not necessary when calculating targets
      * @return array The format to follow is [userid] = scalar|null
      */
-    public function calculate($rows, $data, $notused1 = false, $notused2 = false) {
+    public function calculate($rows, \tool_research\analysable $analysable, $data, $notused1 = false, $notused2 = false) {
 
         $calculations = [];
         foreach ($rows as $rowid => $row) {
-            $calculatedvalue = $this->calculate_row($row, $data);
+            $calculatedvalue = $this->calculate_row($row, $analysable, $data);
 
             if (!is_null($calculatedvalue)) {
                 if ($this->is_linear() && ($calculatedvalue > self::get_max_value() || $calculatedvalue < self::get_min_value())) {

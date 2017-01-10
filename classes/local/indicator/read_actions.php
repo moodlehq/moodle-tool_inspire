@@ -39,10 +39,10 @@ class read_actions extends base {
         return ['course', 'user'];
     }
 
-    public function calculate_row($row, $data, $starttime = false, $endtime = false) {
+    public function calculate_row($row, \tool_research\analysable $analysable, $data, $starttime = false, $endtime = false) {
         global $DB;
         // Filter by context to use the db table index.
-        $context = \context_course::instance($data['course']->id);
+        $context = $analysable->get_context();
         $select = "userid = :userid AND contextlevel = :contextlevel AND contextinstanceid = :contextinstanceid AND " .
             "crud = 'r' AND timecreated > :starttime AND timecreated <= :endtime";
         $params = array('userid' => $row, 'contextlevel' => $context->contextlevel,

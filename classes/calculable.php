@@ -49,7 +49,7 @@ abstract class calculable {
     /**
      * Return database records required to perform a calculation, for all course students.
      *
-     * Course data and course users data is available in $this->course, $this->students and
+     * Course data and course users data is available in $this->course, $this->studentids and
      * $this->teachers. In self::calculate you can also access $data['course'] and
      * $data['user'], this last one including only students and teachers by default.
      *

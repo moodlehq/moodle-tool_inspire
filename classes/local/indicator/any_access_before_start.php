@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * User profile set indicator.
+ * Any access after the end indicator.
  *
  * @package   tool_research
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
@@ -27,48 +27,27 @@ namespace tool_research\local\indicator;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * User profile set indicator.
+ * Any access after the end indicator.
  *
  * @package   tool_research
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class user_profile_set extends base {
+class any_access_after_end extends base {
 
-    public static function get_requirements() {
-        return ['user'];
+    public static function min_contextlevel_depth() {
+        // Does not make much sense at context system, but it is calculable.
+        return CONTEXT_SYSTEM;
     }
 
     public function calculate_row($row, \tool_research\analysable $analysable, $data, $starttime = false, $endtime = false) {
-        $user = $data['user'][$row];
-
-        // Nothing set results in -1.
-        $calculatedvalue = self::MIN_VALUE;
-
-        if (!$user->policyagreed) {
-            return self::MIN_VALUE;
-        }
-
-        if (!$user->confirmed) {
-            return self::MIN_VALUE;
-        }
-
-        if ($user->description != '') {
-            $calculatedvalue += 1;
-        }
-
-        if ($user->picture != '') {
-            $calculatedvalue += 1;
-        }
-
-        // 0.2 for any of the following fields being set (some of them may even be compulsory or have a default).
-        $fields = array('institution', 'department', 'address', 'city', 'country', 'url');
-        foreach ($fields as $fieldname) {
-            if ($user->{$fieldname} != '') {
-                $calculatedvalue += 0.2;
-            }
-        }
-
-        return $this->limit_value($calculatedvalue);
+        global $DB;
+        // Filter by context to use the db table index.
+        $context = $analysable->get_context();
+        $select = "userid = :userid AND contextlevel = :contextlevel AND contextinstanceid = :contextinstanceid AND " .
+            "timecreated > :end";
+        $params = array('userid' => $row, 'contextlevel' => $context->contextlevel,
+            'contextinstanceid' => $context->instanceid, 'end' => $analysable->get_end());
+        return $DB->record_exists_select('logstore_standard_log', $select, $params) ? self::get_max_value() : self::get_min_value();
     }
 }

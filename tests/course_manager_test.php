@@ -69,13 +69,13 @@ class tool_research_testcase extends advanced_testcase {
         $this->resetAfterTest(true);
 
         $coursemanager = new \tool_research\course_manager($this->course);
-        $this->assertCount(3, $coursemanager->get_users(array($this->studentroleid)));
-        $this->assertCount(2, $coursemanager->get_users(array($this->editingteacherroleid)));
-        $this->assertCount(1, $coursemanager->get_users(array($this->teacherroleid)));
+        $this->assertCount(3, $coursemanager->get_user_ids(array($this->studentroleid)));
+        $this->assertCount(2, $coursemanager->get_user_ids(array($this->editingteacherroleid)));
+        $this->assertCount(1, $coursemanager->get_user_ids(array($this->teacherroleid)));
 
         // Distinct is applied
-        $this->assertCount(3, $coursemanager->get_users(array($this->editingteacherroleid, $this->teacherroleid)));
-        $this->assertCount(4, $coursemanager->get_users(array($this->editingteacherroleid, $this->studentroleid)));
+        $this->assertCount(3, $coursemanager->get_user_ids(array($this->editingteacherroleid, $this->teacherroleid)));
+        $this->assertCount(4, $coursemanager->get_user_ids(array($this->editingteacherroleid, $this->studentroleid)));
     }
 
     /**

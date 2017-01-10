@@ -37,6 +37,10 @@ class site implements \tool_research\analysable {
         return SYSCONTEXTID;
     }
 
+    public function get_context() {
+        return \context_system::instance();
+    }
+
     public function get_usual_required_records() {
         global $DB;
 

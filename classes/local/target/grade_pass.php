@@ -86,7 +86,7 @@ class grade_pass extends base {
         return true;
     }
 
-    public function calculate_row($row, $data) {
+    public function calculate_row($row, \tool_research\analysable $analysable, $data) {
 
         $params = array('userid' => $row, 'itemid' => self::$coursegradeitems[$data['course']->id]->id);
         $grade = \grade_grade::fetch($params);
@@ -113,6 +113,10 @@ class grade_pass extends base {
 
         if (!isset($class)) {
             throw new \coding_exception('Something wrong with ' . $weightedgrade . ' grade, should be between 0 and 1');
+        }
+
+        if (!in_array($class, $this->get_classes())) {
+            throw new \coding_exception($class . ' class is not part of ' . json_encode($this->get_classes()));
         }
 
         return $class;

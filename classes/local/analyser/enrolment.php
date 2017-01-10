@@ -41,7 +41,6 @@ class enrolment extends by_course {
     }
 
     public function get_rows(\tool_research\analysable $course) {
-        // TODO Should not only contain ids but a bit more data like userid.
         return $course->get_students();
     }
 }

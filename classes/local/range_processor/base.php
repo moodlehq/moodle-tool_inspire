@@ -124,7 +124,7 @@ abstract class base {
         }
 
         // We first calculate the target because analysable data may still be invalid, we need to stop if it is not.
-        $calculatedtarget = $target->calculate($this->rows, $this->storage);
+        $calculatedtarget = $target->calculate($this->rows, $this->analysable, $this->storage);
 
         // We remove rows we can not calculate their target.
         $this->rows = array_filter($this->rows, function($row) use ($calculatedtarget) {
@@ -145,7 +145,7 @@ abstract class base {
         $this->calculate_indicators($dataset, $indicators);
 
         // Now that we have the indicators in place we can add the target and the range indicators to each of them.
-        $this->add_target_and_range_indicators($dataset, $calculatedtarget);
+        $this->fill_dataset($dataset, $calculatedtarget);
 
         $this->add_metadata($dataset, $indicators, $target);
 
@@ -168,7 +168,7 @@ abstract class base {
             foreach ($ranges as $rangeindex => $range) {
 
                 // Calculate the indicator for each example in this time range.
-                $calculated = $indicator->calculate($this->rows, $this->storage, $range['start'], $range['end']);
+                $calculated = $indicator->calculate($this->rows, $this->analysable, $this->storage, $range['start'], $range['end']);
 
                 // Copy the calculated data to the dataset.
                 foreach ($calculated as $analyserrowid => $calculatedvalue) {
@@ -194,7 +194,7 @@ abstract class base {
      *
      * @return void
      */
-    protected function add_target_and_range_indicators(&$dataset, $calculatedtarget) {
+    protected function fill_dataset(&$dataset, $calculatedtarget) {
 
         $nranges = count($this->get_ranges());
 
