@@ -15,9 +15,9 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Research subplugins.
+ * Inspire subplugins.
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -25,5 +25,5 @@
 defined('MOODLE_INTERNAL') || die();
 
 $subplugins = array(
-    'predict' => 'admin/tool/research/predict'
+    'predict' => 'admin/tool/inspire/predict'
 );

@@ -15,21 +15,21 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Research info page.
+ * Inspire info page.
  *
- * @package    tool_research
+ * @package    tool_inspire
  * @copyright  2016 David Monllao {@link http://www.davidmonllao.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_research\output;
+namespace tool_inspire\output;
 
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Shows research purposes info.
+ * Shows tool_inspire info.
  *
- * @package    tool_research
+ * @package    tool_inspire
  * @copyright  2016 David Monllao {@link http://www.davidmonllao.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */

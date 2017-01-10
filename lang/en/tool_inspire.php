@@ -15,9 +15,9 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Strings for tool_research.
+ * Strings for tool_inspire.
  *
- * @package tool_research
+ * @package tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -33,7 +33,7 @@ $string['modeloutputdir'] = 'Models output directory';
 $string['nocourses'] = 'No courses to analyse';
 $string['processingcourse'] = 'Processing course {$a}';
 $string['processingcourses'] = 'Processing courses...';
-$string['pluginname'] = 'Research';
+$string['pluginname'] = 'Inspire';
 $string['skippingcourse'] = 'Skipping course {$a}';
 $string['studentroles'] = 'Student roles';
 $string['subplugintype_predict'] = 'Predictions processor';

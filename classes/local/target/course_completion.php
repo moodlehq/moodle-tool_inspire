@@ -17,12 +17,12 @@
 /**
  * Course completion target.
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_research\local\target;
+namespace tool_inspire\local\target;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -32,7 +32,7 @@ require_once($CFG->dirroot . '/completion/completion_completion.php');
 /**
  * Course completion target.
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -47,10 +47,10 @@ class course_completion extends base {
     }
 
     public function get_analyser_class() {
-        return '\\tool_research\\local\\analyser\\enrolment';
+        return '\\tool_inspire\\local\\analyser\\enrolment';
     }
 
-    public function check_analysable(\tool_research\analysable $analysable) {
+    public function check_analysable(\tool_inspire\analysable $analysable) {
         global $DB;
 
         $completion = new completion_info($analysable->get_course_obj());
@@ -82,7 +82,7 @@ class course_completion extends base {
         return true;
     }
 
-    public function calculate_row($row, \tool_research\analysable $analysable, $data) {
+    public function calculate_row($row, \tool_inspire\analysable $analysable, $data) {
         $ccompletion = new completion_completion(array('userid' => $row, 'course' => $analysable->get_id()));
         return $ccompletion->is_complete() ? 1 : 0;
     }

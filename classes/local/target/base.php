@@ -17,23 +17,23 @@
 /**
  * Abstract base target.
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_research\local\target;
+namespace tool_inspire\local\target;
 
 defined('MOODLE_INTERNAL') || die();
 
 /**
  * Abstract base target.
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-abstract class base extends \tool_research\calculable {
+abstract class base extends \tool_inspire\calculable {
 
     /**
      * This target have linear or discrete values.
@@ -55,10 +55,10 @@ abstract class base extends \tool_research\calculable {
      * This method can be used as a quick way to discard invalid analysables.
      * e.g. Imagine that your analysable don't have students and you need them.
      *
-     * @param \tool_research\analysable $analysable
+     * @param \tool_inspire\analysable $analysable
      * @return true|string
      */
-    abstract public function check_analysable(\tool_research\analysable $analysable);
+    abstract public function check_analysable(\tool_inspire\analysable $analysable);
 
     /**
      * Calculates this target for the provided row.
@@ -66,11 +66,11 @@ abstract class base extends \tool_research\calculable {
      * In case there are no values to return or the provided row is not applicable just return null.
      *
      * @param int $row
-     * @param \tool_research\analysable $analysable
+     * @param \tool_inspire\analysable $analysable
      * @param array $data
      * @return float|null
      */
-    abstract protected function calculate_row($row, \tool_research\analysable $analysable, $data);
+    abstract protected function calculate_row($row, \tool_inspire\analysable $analysable, $data);
 
     /**
      * Returns the target discrete values.
@@ -116,13 +116,13 @@ abstract class base extends \tool_research\calculable {
      * Rows with null values will be skipped as invalid by range processors.
      *
      * @param array $rows
-     * @param \tool_research\analysable $analysable
+     * @param \tool_inspire\analysable $analysable
      * @param array $data All required data.
      * @param integer $notused1 startime is not necessary when calculating targets
      * @param integer $notused2 endtime is not necessary when calculating targets
      * @return array The format to follow is [userid] = scalar|null
      */
-    public function calculate($rows, \tool_research\analysable $analysable, $data, $notused1 = false, $notused2 = false) {
+    public function calculate($rows, \tool_inspire\analysable $analysable, $data, $notused1 = false, $notused2 = false) {
 
         $calculations = [];
         foreach ($rows as $rowid => $row) {

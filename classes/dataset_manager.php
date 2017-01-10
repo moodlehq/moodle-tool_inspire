@@ -16,18 +16,18 @@
 
 /**
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_research;
+namespace tool_inspire;
 
 defined('MOODLE_INTERNAL') || die();
 
 /**
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -75,12 +75,12 @@ class dataset_manager {
 
         // Delete the previous record if there is any.
         $params = array('modelid' => $this->modelid, 'analysableid' => $this->analysableid, 'rangeprocessor' => $this->rangeprocessor);
-        $run = $DB->get_record('tool_research_runs', $params);
+        $run = $DB->get_record('tool_inspire_runs', $params);
         if ($run) {
             if ($run->inprogress) {
-                return \tool_research\model::ANALYSE_INPROGRESS;
+                return \tool_inspire\model::ANALYSE_INPROGRESS;
             }
-            $DB->delete_records('tool_research_runs', $params);
+            $DB->delete_records('tool_inspire_runs', $params);
         }
 
         $run = new \stdClass();
@@ -89,7 +89,7 @@ class dataset_manager {
         $run->rangeprocessor = $this->rangeprocessor;
         $run->inprogress = 1;
         $run->timecompleted = 0;
-        $run->id = $DB->insert_record('tool_research_runs', $run);
+        $run->id = $DB->insert_record('tool_inspire_runs', $run);
 
         // We delete the in progress record if there is an error during the process.
         \core_shutdown_manager::register_function(array($this, 'kill_in_progress'), $params);
@@ -106,7 +106,7 @@ class dataset_manager {
         // Delete previous file if it exists.
         $fs = get_file_storage();
         $filerecord = [
-            'component' => 'tool_research',
+            'component' => 'tool_inspire',
             'filearea' => self::FILEAREA,
             'itemid' => $this->analysableid,
             'contextid' => \context_system::instance()->id,
@@ -139,14 +139,14 @@ class dataset_manager {
 
         $params = array('modelid' => $this->modelid, 'analysableid' => $this->analysableid,
             'rangeprocessor' => $this->rangeprocessor, 'inprogress' => 1);
-        if (!$run = $DB->get_record('tool_research_runs', $params)) {
-            throw new \moodle_exception('errornorunrecord', 'tool_research');
+        if (!$run = $DB->get_record('tool_inspire_runs', $params)) {
+            throw new \moodle_exception('errornorunrecord', 'tool_inspire');
         }
 
         // Mark it as completed.
         $run->timecompleted = time();
         $run->inprogress = 0;
-        $DB->update_record('tool_research_runs', $run);
+        $DB->update_record('tool_inspire_runs', $run);
     }
 
     /**
@@ -162,7 +162,7 @@ class dataset_manager {
         // Kill in-progress runs if there is any.
         $params = array('modelid' => $modelid, 'analysableid' => $analysableid, 'rangeprocessor' => $rangeprocessorcodename,
             'inprogress' => 1, 'timecompleted' => 0);
-        $DB->delete_records('tool_research_runs', $params);
+        $DB->delete_records('tool_inspire_runs', $params);
     }
 
     public static function get_run($modelid, $analysableid, $rangeprocessorcodename) {
@@ -170,18 +170,18 @@ class dataset_manager {
 
         $params = array('modelid' => $modelid, 'analysableid' => $analysableid,
             'rangeprocessor' => $rangeprocessorcodename);
-        return $DB->get_record('tool_research_runs', $params);
+        return $DB->get_record('tool_inspire_runs', $params);
     }
 
     public static function get_analysable_file($modelid, $analysableid, $rangeprocessorcodename) {
         $fs = get_file_storage();
-        return $fs->get_file(\context_system::instance()->id, 'tool_research', self::FILEAREA,
+        return $fs->get_file(\context_system::instance()->id, 'tool_inspire', self::FILEAREA,
             $analysableid, '/' . $modelid . '/analysable/' . $rangeprocessorcodename . '/', 'dataset.csv');
     }
 
     public static function get_range_file($modelid, $rangeprocessorcodename) {
         $fs = get_file_storage();
-        return $fs->get_file(\context_system::instance()->id, 'tool_research', self::FILEAREA,
+        return $fs->get_file(\context_system::instance()->id, 'tool_inspire', self::FILEAREA,
             self::convert_to_int($rangeprocessorcodename), '/' . $modelid . '/range/' . $rangeprocessorcodename . '/', 'dataset.csv');
     }
 
@@ -263,7 +263,7 @@ class dataset_manager {
         fclose($wh);
 
         $filerecord = [
-            'component' => 'tool_research',
+            'component' => 'tool_inspire',
             'filearea' => self::FILEAREA,
             'itemid' => self::convert_to_int($rangeprocessorcodename),
             'contextid' => \context_system::instance()->id,

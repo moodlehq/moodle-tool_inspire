@@ -15,9 +15,9 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Research tool frontend.
+ * Inspire tool frontend.
  *
- * @package tool_research
+ * @package tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -25,12 +25,12 @@
 require_once(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 
-admin_externalpage_setup('researchmanagement');
+admin_externalpage_setup('inspiremanagement');
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('pluginname', 'tool_research'));
+echo $OUTPUT->heading(get_string('pluginname', 'tool_inspire'));
 
-$renderable = new \tool_research\output\info();
-echo $PAGE->get_renderer('tool_research')->render($renderable);
+$renderable = new \tool_inspire\output\info();
+echo $PAGE->get_renderer('tool_inspire')->render($renderable);
 
 echo $OUTPUT->footer();

@@ -15,21 +15,21 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Research tool manager
+ * Inspire tool manager
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_research;
+namespace tool_inspire;
 
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Research tool site manager.
+ * Inspire tool site manager.
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -58,11 +58,11 @@ class model {
         $indicators = [];
 
         // TODO Read the model indicators instead of read all indicators in the folder.
-        $classes = \core_component::get_component_classes_in_namespace('tool_research', 'local\\indicator');
+        $classes = \core_component::get_component_classes_in_namespace('tool_inspire', 'local\\indicator');
         foreach ($classes as $fullclassname => $classpath) {
 
             // Discard abstract classes and others.
-            if (is_subclass_of($fullclassname, 'tool_research\local\indicator\base')) {
+            if (is_subclass_of($fullclassname, 'tool_inspire\local\indicator\base')) {
                 if ((new \ReflectionClass($fullclassname))->isInstantiable()) {
                     $indicators[$fullclassname] = new $fullclassname();
                 }
@@ -83,12 +83,12 @@ class model {
     /**
      * Get all available range processors.
      *
-     * @return \tool_research\range_processor\base[]
+     * @return \tool_inspire\range_processor\base[]
      */
     protected function get_range_processors() {
 
         // TODO: It should be able to search range processors in other plugins.
-        $classes = \core_component::get_component_classes_in_namespace('tool_research', 'local\\range_processor');
+        $classes = \core_component::get_component_classes_in_namespace('tool_inspire', 'local\\range_processor');
 
         $rangeprocessors = [];
         foreach ($classes as $fullclassname => $classpath) {
@@ -108,7 +108,7 @@ class model {
      * @return bool
      */
     protected static function is_a_valid_range_processor($fullclassname) {
-        if (is_subclass_of($fullclassname, '\tool_research\local\range_processor\base')) {
+        if (is_subclass_of($fullclassname, '\tool_inspire\local\range_processor\base')) {
             if ((new \ReflectionClass($fullclassname))->isInstantiable()) {
                 return true;
             }
@@ -129,15 +129,15 @@ class model {
         $rangeprocessors = $this->get_range_processors();
 
         if (empty($target)) {
-            throw new \moodle_exception('errornotarget', 'tool_research');
+            throw new \moodle_exception('errornotarget', 'tool_inspire');
         }
 
         if (empty($indicators)) {
-            throw new \moodle_exception('errornoindicators', 'tool_research');
+            throw new \moodle_exception('errornoindicators', 'tool_inspire');
         }
 
         if (empty($rangeprocessors)) {
-            throw new \moodle_exception('errornorangeprocessors', 'tool_research');
+            throw new \moodle_exception('errornorangeprocessors', 'tool_inspire');
         }
 
         $analyser = $this->get_analyser($target, $indicators, $rangeprocessors);
@@ -155,7 +155,7 @@ class model {
 
         foreach ($this->get_range_processors() as $rangeprocessor) {
 
-            $dataset = \tool_research\dataset_manager::get_range_file($this->model->id, $rangeprocessor->get_codename());
+            $dataset = \tool_inspire\dataset_manager::get_range_file($this->model->id, $rangeprocessor->get_codename());
             if (!$dataset) {
 
                 $results = new \stdClass();
@@ -195,7 +195,7 @@ class model {
     protected function get_output_dir($subdir = false) {
         global $CFG;
 
-        $outputdir = get_config('tool_research', 'modeloutputdir');
+        $outputdir = get_config('tool_inspire', 'modeloutputdir');
         if (empty($outputdir)) {
             // Apply default value.
             $outputdir = rtrim($CFG->dataroot, '/') . DIRECTORY_SEPARATOR . 'models';

@@ -16,18 +16,18 @@
 
 /**
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_research\local\analyser;
+namespace tool_inspire\local\analyser;
 
 defined('MOODLE_INTERNAL') || die();
 
 /**
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -61,15 +61,15 @@ abstract class base {
     /**
      * This function returns the list of rows that will be calculated.
      *
-     * @param \tool_research\analysable $analysable
+     * @param \tool_inspire\analysable $analysable
      * @return array
      */
-    abstract function get_rows(\tool_research\analysable $analysable);
+    abstract function get_rows(\tool_inspire\analysable $analysable);
 
     /**
      * Main analyser method which processes the site analysables.
      *
-     * \tool_research\local\analyser\by_course and \tool_research\local\analyser\sitewide are implementing
+     * \tool_inspire\local\analyser\by_course and \tool_inspire\local\analyser\sitewide are implementing
      * this method returning site courses (by_course) and the whole system (sitewide) as analysables.
      * In most of the cases you should have enough extending from one of these classes so you don't need
      * to reimplement this method.
@@ -92,7 +92,7 @@ abstract class base {
         foreach ($this->indicators as $indicator) {
             foreach ($indicator::get_requirements() as $requirement) {
                 if (empty($rowsinfo[$requirement])) {
-                    throw new \tool_research\requirements_exception($indicator->get_codename() . ' indicator requires ' .
+                    throw new \tool_inspire\requirements_exception($indicator->get_codename() . ' indicator requires ' .
                         $requirement . ' which is not provided by ' . get_class($this));
                 }
             }
@@ -106,7 +106,7 @@ abstract class base {
      * all error & status reporting at analysable + range processor level should not be returned
      * but shown, through mtrace(), debugging() or through exceptions depending on the case.
      *
-     * @param \tool_research\analysable $analysable
+     * @param \tool_inspire\analysable $analysable
      * @return array Analysable general status code AND (files by range processor OR error code)
      */
     public function process_analysable($analysable) {
@@ -117,7 +117,7 @@ abstract class base {
         $result = $this->target->check_analysable($analysable);
         if ($result !== true) {
             return [
-                \tool_research\model::ANALYSABLE_STATUS_INVALID_FOR_TARGET,
+                \tool_inspire\model::ANALYSABLE_STATUS_INVALID_FOR_TARGET,
                 $result
             ];
         }
@@ -135,10 +135,10 @@ abstract class base {
 
         if (empty($files)) {
             // Flag it as invalid if the analysable wasn't valid for any of the range processors.
-            $status = \tool_research\model::ANALYSABLE_STATUS_INVALID_FOR_RANGEPROCESSORS;
+            $status = \tool_inspire\model::ANALYSABLE_STATUS_INVALID_FOR_RANGEPROCESSORS;
             $message = 'Analysable not valid for any of the range processors';
         } else {
-            $status = \tool_research\model::ANALYSE_OK;
+            $status = \tool_inspire\model::ANALYSE_OK;
         }
 
         // TODO This looks confusing 1 for range processor? 1 for all? Should be 1 for analysable.
@@ -163,7 +163,7 @@ abstract class base {
         if ($recentlyanalysed && empty($this->options['analyseall'])) {
             // Returning the previously created file.
             mtrace(' - Already analysed');
-            return \tool_research\dataset_manager::get_analysable_file($this->modelid, $analysable->get_id(), $rangeprocessor->get_codename());
+            return \tool_inspire\dataset_manager::get_analysable_file($this->modelid, $analysable->get_id(), $rangeprocessor->get_codename());
         }
 
         // What is a row is defined by the analyser, it can be an enrolment, a course, a user, a question
@@ -171,7 +171,7 @@ abstract class base {
         $rows = $this->get_rows($analysable);
         $rangeprocessor->set_rows($rows);
 
-        $dataset = new \tool_research\dataset_manager($this->modelid, $analysable->get_id(), $rangeprocessor->get_codename());
+        $dataset = new \tool_inspire\dataset_manager($this->modelid, $analysable->get_id(), $rangeprocessor->get_codename());
 
         // Flag the model + analysable + rangeprocessor as being analysed (prevent concurrent executions).
         $dataset->init_process();
@@ -196,7 +196,7 @@ abstract class base {
     }
 
     protected function recently_analysed($rangeprocessorcodename, $analysableid) {
-        $prevrun = \tool_research\dataset_manager::get_run($this->modelid, $analysableid, $rangeprocessorcodename);
+        $prevrun = \tool_inspire\dataset_manager::get_run($this->modelid, $analysableid, $rangeprocessorcodename);
         if (!$prevrun) {
             return false;
         }

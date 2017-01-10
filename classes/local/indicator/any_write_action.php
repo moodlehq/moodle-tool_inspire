@@ -17,19 +17,19 @@
 /**
  * Write actions indicator.
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_research\local\indicator;
+namespace tool_inspire\local\indicator;
 
 defined('MOODLE_INTERNAL') || die();
 
 /**
  * Write actions indicator.
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -39,7 +39,7 @@ class any_write_action extends base {
         return ['course', 'user'];
     }
 
-    public function calculate_row($row, \tool_research\analysable $analysable, $data, $starttime = false, $endtime = false) {
+    public function calculate_row($row, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
         global $DB;
         // Filter by context to use the db table index.
         $context = $analysable->get_context();

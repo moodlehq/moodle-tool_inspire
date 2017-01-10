@@ -17,7 +17,7 @@
 /**
  * Php predictions processor
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -42,9 +42,9 @@ use Phpml\Metric\Accuracy;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Research tool site manager.
+ * Inspire tool site manager.
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -91,12 +91,12 @@ die();
         return false;
         //die();
         if (!$result) {
-            throw new \moodle_exception('errornopredictresults', 'tool_research');
+            throw new \moodle_exception('errornopredictresults', 'tool_inspire');
         }
 
 
         if (!$resultobj = json_decode($result)) {
-            throw new \moodle_exception('errorpredictwrongformat', 'tool_research', '', json_last_error_msg());
+            throw new \moodle_exception('errorpredictwrongformat', 'tool_inspire', '', json_last_error_msg());
         }
 
         return $resultobj;

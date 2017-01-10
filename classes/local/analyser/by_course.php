@@ -16,18 +16,18 @@
 
 /**
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_research\local\analyser;
+namespace tool_inspire\local\analyser;
 
 defined('MOODLE_INTERNAL') || die();
 
 /**
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -50,7 +50,7 @@ abstract class by_course extends base {
 
         $analysables = [];
         foreach ($courseids as $courseid) {
-            $analysable = new \tool_research\course($courseid);
+            $analysable = new \tool_inspire\course($courseid);
             $analysables[$analysable->get_id()] = $analysable;
         }
 
@@ -65,13 +65,13 @@ abstract class by_course extends base {
         $messages = [];
         $filesbyrangeprocessor = [];
 
-        // This class and all children will iterate through a list of courses (\tool_research\course).
+        // This class and all children will iterate through a list of courses (\tool_inspire\course).
         $analysables = $this->get_courses($options);
         foreach ($analysables as $analysableid => $analysable) {
 
             list($status[$analysableid], $data) = $this->process_analysable($analysable);
 
-            if ($status[$analysableid] === \tool_research\model::ANALYSE_OK) {
+            if ($status[$analysableid] === \tool_inspire\model::ANALYSE_OK) {
                 // Later we will need to aggregate data by range processor.
                 foreach ($data as $rangeprocessorcodename => $file) {
                     $filesbyrangeprocessor[$rangeprocessorcodename][$analysableid] = $file;
@@ -89,10 +89,10 @@ abstract class by_course extends base {
         foreach ($filesbyrangeprocessor as $rangeprocessorcodename => $files) {
 
             // Delete the previous copy.
-            \tool_research\dataset_manager::delete_range_file($this->modelid, $rangeprocessorcodename);
+            \tool_inspire\dataset_manager::delete_range_file($this->modelid, $rangeprocessorcodename);
 
             // Merge all course files into one.
-            $rangeprocessorfiles[$rangeprocessorcodename] = \tool_research\dataset_manager::merge_datasets($files, $this->modelid,
+            $rangeprocessorfiles[$rangeprocessorcodename] = \tool_inspire\dataset_manager::merge_datasets($files, $this->modelid,
                 $rangeprocessorcodename);
         }
 

@@ -17,12 +17,12 @@
 /**
  * Model requirements exception.
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_research;
+namespace tool_inspire;
 
 defined('MOODLE_INTERNAL') || die;
 

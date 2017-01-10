@@ -17,12 +17,12 @@
 /**
  * Renderer.
  *
- * @package    tool_research
+ * @package    tool_inspire
  * @copyright  2016 David Monllao {@link http://www.davidmonllao.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_research\output;
+namespace tool_inspire\output;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -32,7 +32,7 @@ use templatable;
 /**
  * Renderer class.
  *
- * @package    tool_research
+ * @package    tool_inspire
  * @copyright  2016 David Monllao {@link http://www.davidmonllao.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -46,6 +46,6 @@ class renderer extends plugin_renderer_base {
      */
     public function render_info(templatable $renderable) {
         $data = $renderable->export_for_template($this);
-        return parent::render_from_template('tool_research/info', $data);
+        return parent::render_from_template('tool_inspire/info', $data);
     }
 }

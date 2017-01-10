@@ -16,25 +16,25 @@
 
 /**
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_research\local\analyser;
+namespace tool_inspire\local\analyser;
 
 defined('MOODLE_INTERNAL') || die();
 
 /**
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 abstract class sitewide extends base {
 
     protected function get_site() {
-        return new \tool_research\site();
+        return new \tool_inspire\site();
     }
 
     public function analyse($options) {
@@ -53,7 +53,7 @@ abstract class sitewide extends base {
             'messages' => array()
         );
 
-        if ($status === \tool_research\model::ANALYSE_OK) {
+        if ($status === \tool_inspire\model::ANALYSE_OK) {
             $return['files'] = $data;
         } else {
             // $data contains the error message if something went wrong.

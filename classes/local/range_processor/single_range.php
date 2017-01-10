@@ -17,12 +17,12 @@
 /**
  * Weekly range processor.
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_research\local\range_processor;
+namespace tool_inspire\local\range_processor;
 
 defined('MOODLE_INTERNAL') || die();
 

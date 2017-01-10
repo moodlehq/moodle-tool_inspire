@@ -17,7 +17,7 @@
 /**
  * Gather site courses indicators.
  *
- * @package    tool_research
+ * @package    tool_inspire
  * @copyright  2016 David Monllao {@link http://www.davidmonllao.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -34,7 +34,7 @@ Options:
 -h, --help   Print out this help
 
 Example:
-\$ sudo -u www-data /usr/bin/php admin/tool/research/cli/evaluate_dataset.php
+\$ sudo -u www-data /usr/bin/php admin/tool/inspire/cli/evaluate_dataset.php
 ";
 
 // Now get cli options.
@@ -53,15 +53,15 @@ if ($options['help']) {
     exit(0);
 }
 
-echo "\n".get_string('processingcourses', 'tool_research')."\n\n";
+echo "\n".get_string('processingcourses', 'tool_inspire')."\n\n";
 
 // TODO Set a DB table for this.
-//$modelobj = $DB->get_record('tool_research_models', array('id' => $options['model']);
+//$modelobj = $DB->get_record('tool_inspire_models', array('id' => $options['model']);
 
 $modelobj = new \stdClass();
 $modelobj->id = 1;
-$modelobj->target = '\tool_research\local\target\grade_pass';
-$model = new \tool_research\model($modelobj);
+$modelobj->target = '\tool_inspire\local\target\grade_pass';
+$model = new \tool_inspire\model($modelobj);
 
 $results = $model->evaluate();
 

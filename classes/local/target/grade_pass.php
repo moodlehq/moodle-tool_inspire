@@ -17,12 +17,12 @@
 /**
  * Grade pass target.
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_research\local\target;
+namespace tool_inspire\local\target;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -33,7 +33,7 @@ require_once($CFG->dirroot . '/lib/grade/constants.php');
 /**
  * Grade pass target.
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -50,10 +50,10 @@ class grade_pass extends base {
     }
 
     public function get_analyser_class() {
-        return '\\tool_research\\local\\analyser\\enrolment';
+        return '\\tool_inspire\\local\\analyser\\enrolment';
     }
 
-    public function check_analysable(\tool_research\analysable $analysable) {
+    public function check_analysable(\tool_inspire\analysable $analysable) {
         global $DB;
 
         // Not a valid target if there is no course grade item.
@@ -86,7 +86,7 @@ class grade_pass extends base {
         return true;
     }
 
-    public function calculate_row($row, \tool_research\analysable $analysable, $data) {
+    public function calculate_row($row, \tool_inspire\analysable $analysable, $data) {
 
         $params = array('userid' => $row, 'itemid' => self::$coursegradeitems[$data['course']->id]->id);
         $grade = \grade_grade::fetch($params);

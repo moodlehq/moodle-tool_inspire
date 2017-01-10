@@ -17,23 +17,23 @@
 /**
  * Abstract base indicator.
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_research\local\indicator;
+namespace tool_inspire\local\indicator;
 
 defined('MOODLE_INTERNAL') || die();
 
 /**
  * Abstract base indicator.
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-abstract class base extends \tool_research\calculable {
+abstract class base extends \tool_inspire\calculable {
 
     const MIN_VALUE = -1;
 
@@ -47,13 +47,13 @@ abstract class base extends \tool_research\calculable {
      * Return a value from self::MIN_VALUE to self::MAX_VALUE or null if the indicator can not be calculated for this row.
      *
      * @param int $row
-     * @param \tool_research\analysable $analysable
+     * @param \tool_inspire\analysable $analysable
      * @param array $data
      * @param integer $starttime Limit the calculation to this timestart
      * @param integer $endtime Limit the calculation to this timeend
      * @return float|null
      */
-    abstract protected function calculate_row($row, \tool_research\analysable $analysable, $data, $starttime, $endtime);
+    abstract protected function calculate_row($row, \tool_inspire\analysable $analysable, $data, $starttime, $endtime);
 
     public static function get_max_value() {
         return self::MAX_VALUE;
@@ -69,13 +69,13 @@ abstract class base extends \tool_research\calculable {
      * Returns an array of values which size matches $rows size.
      *
      * @param array $rows
-     * @param \tool_research\analysable $analysable
+     * @param \tool_inspire\analysable $analysable
      * @param array $data All required data.
      * @param integer $starttime Limit the calculation to this timestart
      * @param integer $endtime Limit the calculation to this timeend
      * @return array The format to follow is [userid] = scalar
      */
-    public function calculate($rows, \tool_research\analysable $analysable, $data, $starttime = false, $endtime = false) {
+    public function calculate($rows, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
         $calculations = [];
         foreach ($rows as $rowid => $row) {
 

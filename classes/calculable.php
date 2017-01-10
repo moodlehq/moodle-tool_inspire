@@ -17,19 +17,19 @@
 /**
  * Calculable dataset items abstract class.
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_research;
+namespace tool_inspire;
 
 defined('MOODLE_INTERNAL') || die();
 
 /**
  * Calculable dataset items abstract class.
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -64,10 +64,10 @@ abstract class calculable {
      *
      * IMPORTANT! No database writes are allowed here as we keep track of all different dataset items requirements.
      *
-     * @param \tool_research\local\analysable $analysable
+     * @param \tool_inspire\local\analysable $analysable
      * @return null|array The format to follow is [tablename][id] = stdClass(dbrecord)
      */
-    public function get_required_records(\tool_research\analysable $analysable) {
+    public function get_required_records(\tool_inspire\analysable $analysable) {
         return null;
     }
 

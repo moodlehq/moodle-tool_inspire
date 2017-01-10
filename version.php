@@ -17,7 +17,7 @@
 /**
  * Version details.
  *
- * @package tool_research
+ * @package tool_inspire
  * @copyright  2015 David Monllao {@link http://www.davidmonllao.com}
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -26,4 +26,4 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->version = 2016052303;
 $plugin->requires = 2016051900;
-$plugin->component = 'tool_research';
+$plugin->component = 'tool_inspire';

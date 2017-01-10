@@ -16,22 +16,22 @@
 
 /**
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_research;
+namespace tool_inspire;
 
 defined('MOODLE_INTERNAL') || die();
 
 /**
  *
- * @package   tool_research
+ * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class course implements \tool_research\analysable {
+class course implements \tool_inspire\analysable {
 
     // TODO Force people to access this through a method, we may want to change values in future
     // and allowing direct access to them restrict how we can manage backwards compatibility.
@@ -77,15 +77,15 @@ class course implements \tool_research\analysable {
 
         $this->coursecontext = \context_course::instance($this->course->id);
 
-        $this->studentroles = explode(',', get_config('tool_research', 'studentroles'));
+        $this->studentroles = explode(',', get_config('tool_inspire', 'studentroles'));
 
-        $this->teacherroles = explode(',', get_config('tool_research', 'teacherroles'));
+        $this->teacherroles = explode(',', get_config('tool_inspire', 'teacherroles'));
 
         $this->now = time();
 
         if (empty($this->studentroles) || empty($this->teacherroles)) {
             // Unexpected, site settings should be set with default values.
-            throw new \moodle_exception('errornoroles', 'tool_research');
+            throw new \moodle_exception('errornoroles', 'tool_inspire');
         }
 
         // Get the course users, including users assigned to student and teacher roles at an higher context.

@@ -17,7 +17,7 @@
 /**
  * Adds settings links to admin tree.
  *
- * @package tool_research
+ * @package tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -25,11 +25,11 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($hassiteconfig) {
-    $settings = new admin_settingpage('researchmanagement', new lang_string('pluginname', 'tool_research'));
+    $settings = new admin_settingpage('inspiremanagement', new lang_string('pluginname', 'tool_inspire'));
     $ADMIN->add('tools', $settings);
 
     $defaultmodeloutputdir = rtrim($CFG->dataroot, '/') . DIRECTORY_SEPARATOR . 'models';
-    $settings->add(new admin_setting_configtext('tool_research/modeloutputdir', new lang_string('modeloutputdir', 'tool_research'), '', $defaultmodeloutputdir, PARAM_PATH));
+    $settings->add(new admin_setting_configtext('tool_inspire/modeloutputdir', new lang_string('modeloutputdir', 'tool_inspire'), '', $defaultmodeloutputdir, PARAM_PATH));
     $studentdefaultroles = [];
     $teacherdefaultroles = [];
 
@@ -47,10 +47,10 @@ if ($hassiteconfig) {
         }
     }
 
-    $settings->add(new admin_setting_configmultiselect('tool_research/teacherroles', new lang_string('teacherroles', 'tool_research'),
+    $settings->add(new admin_setting_configmultiselect('tool_inspire/teacherroles', new lang_string('teacherroles', 'tool_inspire'),
        '', $teacherdefaultroles, $rolechoices));
 
-    $settings->add(new admin_setting_configmultiselect('tool_research/studentroles', new lang_string('studentroles', 'tool_research'),
+    $settings->add(new admin_setting_configmultiselect('tool_inspire/studentroles', new lang_string('studentroles', 'tool_inspire'),
        '', $studentdefaultroles, $rolechoices));
 
 }

@@ -1,1 +1,1 @@
-# moodle-tool_research
+# moodle-tool_inspire
