@@ -27,19 +27,27 @@ namespace predict_python;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Inspire tool site manager.
+ * Python predictions processor.
  *
  * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class processor {
+class processor implements \tool_inspire\predictor {
 
     const VALIDATION = 0.7;
     const DEVIATION = 0.02;
     const ITERATIONS = 30;
 
-    function evaluate_dataset($datasetpath, $outputdir) {
+    public function train($datasetpath, $outputdir) {
+        throw new \Exception('Not implemented');
+    }
+
+    public function predict($data, $outputdir) {
+        throw new \Exception('Not implemented');
+    }
+
+    public function evaluate($datasetpath, $outputdir) {
 
         mtrace('Evaluating ' . $datasetpath . ' dataset');
 
@@ -60,10 +68,12 @@ class processor {
             throw new \moodle_exception('errornopredictresults', 'tool_inspire');
         }
 
-
         if (!$resultobj = json_decode($result)) {
             throw new \moodle_exception('errorpredictwrongformat', 'tool_inspire', '', json_last_error_msg());
         }
+
+        // Phi goes from 0 to 1 so its value is the model score for this range processor.
+        $resultobj->score = $resultobj->phi;
 
         return $resultobj;
     }

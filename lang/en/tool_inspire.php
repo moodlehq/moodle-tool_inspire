@@ -22,6 +22,8 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+$string['errordisabledmodel'] = '{$a} model is disabled and can not be used to predict';
+$string['errorinvalidrangeprocessor'] = '{$a} range processor is not valid';
 $string['errorpredictwrongformat'] = 'The predictions processor return can not be decoded: "{$a}"';
 $string['errornopredictresults'] = 'No results returned from the predictions processor, check the output directory contents for more info';
 $string['errornorunrecord'] = 'Couldn\'t locate the current run record in the database';
@@ -29,6 +31,8 @@ $string['errornoindicators'] = 'This model does not have any indicator';
 $string['errornorangeprocessors'] = 'This model does not have any range processor';
 $string['errornoroles'] = 'Student or teacher roles have not been defined';
 $string['errornotarget'] = 'This model does not have any target';
+$string['errornottrainedmodel'] = '{$a} model has not been trained yet';
+$string['errorunexistingrangeprocessor'] = 'The selected range processor is not available';
 $string['modeloutputdir'] = 'Models output directory';
 $string['nocourses'] = 'No courses to analyse';
 $string['processingcourse'] = 'Processing course {$a}';
@@ -39,3 +43,4 @@ $string['studentroles'] = 'Student roles';
 $string['subplugintype_predict'] = 'Predictions processor';
 $string['subplugintype_predict_plural'] = 'Predictions processors';
 $string['teacherroles'] = 'Teacher roles';
+$string['trainandenablemodel'] = 'Select the model dataset';

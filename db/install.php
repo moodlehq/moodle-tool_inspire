@@ -15,15 +15,30 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Inspire subplugins.
+ * Tool inspire install function.
  *
- * @package   tool_inspire
- * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    tool_inspire
+ * @copyright  2017 David Monllao {@link http://www.davidmonllao.com}
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$subplugins = array(
-    'predict' => 'admin/tool/inspire/predict'
-);
+/**
+ * Tool inspire install function.
+ *
+ * @return void
+ */
+function xmldb_tool_inspire_install() {
+    global $DB, $USER;
+
+    $model = new stdClass();
+    $model->codename = 'dropout';
+    $model->target = '\tool_inspire\local\target\grade_pass';
+    $model->indicators = 'IGNORED, HARDCODED IN CODE';
+    $model->timecreated = time();
+    $model->timemodified = time();
+    $model->usermodified = $USER->id;
+
+    $DB->insert_record('tool_inspire_models', $model);
+}

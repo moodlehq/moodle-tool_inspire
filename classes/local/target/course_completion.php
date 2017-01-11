@@ -50,7 +50,7 @@ class course_completion extends base {
         return '\\tool_inspire\\local\\analyser\\enrolment';
     }
 
-    public function check_analysable(\tool_inspire\analysable $analysable) {
+    public function is_analysable(\tool_inspire\analysable $analysable) {
         global $DB;
 
         $completion = new completion_info($analysable->get_course_obj());

@@ -91,8 +91,14 @@ class dataset_manager {
         $run->timecompleted = 0;
         $run->id = $DB->insert_record('tool_inspire_runs', $run);
 
-        // We delete the in progress record if there is an error during the process.
-        \core_shutdown_manager::register_function(array($this, 'kill_in_progress'), $params);
+        $lockkey = 'modelid:' . $this->modelid . '-analysableid:' . $this->analysableid . '-rangeprocessor:' . $this->rangeprocessor;
+
+        // Large timeout as processes may be quite long.
+        $lockfactory = \core\lock\lock_config::get_lock_factory('tool_inspire');
+        $this->lock = $lockfactory->get_lock($lockkey, WEEKSECS);
+
+        // We release the lock if there is an error during the process.
+        \core_shutdown_manager::register_function(array($this, 'release_lock'), array($this->lock));
     }
 
     /**
@@ -147,30 +153,12 @@ class dataset_manager {
         $run->timecompleted = time();
         $run->inprogress = 0;
         $DB->update_record('tool_inspire_runs', $run);
+
+        $this->lock->release();
     }
 
-    /**
-     * Kill any analysis that didn't finish properly.
-     *
-     * @param int $analysableid
-     * @param string $rangeprocessor
-     * @return void
-     */
-    public function kill_in_progress($modelid, $analysableid, $rangeprocessorcodename) {
-        global $DB;
-
-        // Kill in-progress runs if there is any.
-        $params = array('modelid' => $modelid, 'analysableid' => $analysableid, 'rangeprocessor' => $rangeprocessorcodename,
-            'inprogress' => 1, 'timecompleted' => 0);
-        $DB->delete_records('tool_inspire_runs', $params);
-    }
-
-    public static function get_run($modelid, $analysableid, $rangeprocessorcodename) {
-        global $DB;
-
-        $params = array('modelid' => $modelid, 'analysableid' => $analysableid,
-            'rangeprocessor' => $rangeprocessorcodename);
-        return $DB->get_record('tool_inspire_runs', $params);
+    public function release_lock(\core\lock\lock $lock) {
+        $lock->release();
     }
 
     public static function get_analysable_file($modelid, $analysableid, $rangeprocessorcodename) {
@@ -213,7 +201,7 @@ class dataset_manager {
         // We could also do this with a single iteration gathering all files headers and appending them to the beginning of the file
         // once all file contents are merged.
         $varnames = '';
-        $analysablesvalues = '';
+        $analysablesvalues = array();
         foreach ($files as $file) {
             $rh = $file->get_content_file_handle();
 

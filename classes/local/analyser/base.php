@@ -114,7 +114,7 @@ abstract class base {
         $files = [];
         $message = null;
 
-        $result = $this->target->check_analysable($analysable);
+        $result = $this->target->is_analysable($analysable);
         if ($result !== true) {
             return [
                 \tool_inspire\model::ANALYSABLE_STATUS_INVALID_FOR_TARGET,
@@ -123,10 +123,8 @@ abstract class base {
         }
 
         foreach ($this->rangeprocessors as $rangeprocessor) {
-            // Until memory usage shouldn't be specially intensive, process_analysable should
-            // be where things start getting serious, memory usage at this point should remain
-            // more or less stable (only new \stored_file objects) as all objects should be
-            // garbage collected by php.
+            // Memory usage shouldn't be specially intensive at this point. process_analysable should
+            // be where things start getting serious.
 
             if ($file = $this->process_range($rangeprocessor, $analysable)) {
                 $files[$rangeprocessor->get_codename()] = $file;
@@ -159,8 +157,8 @@ abstract class base {
             return false;
         }
 
-        $recentlyanalysed = $this->recently_analysed($rangeprocessor->get_codename(), $analysable->get_id());
-        if ($recentlyanalysed && empty($this->options['analyseall'])) {
+        $alreadyanalysed = $this->already_analysed($rangeprocessor->get_codename(), $analysable->get_id());
+        if ($alreadyanalysed && empty($this->options['analyseall'])) {
             // Returning the previously created file.
             mtrace(' - Already analysed');
             return \tool_inspire\dataset_manager::get_analysable_file($this->modelid, $analysable->get_id(), $rangeprocessor->get_codename());
@@ -181,7 +179,7 @@ abstract class base {
         $data = $rangeprocessor->calculate($this->target, $this->indicators);
 
         if (!$data) {
-            mtrace(' - No data available');
+            mtrace(' - No new data available');
             return false;
         }
 
@@ -195,16 +193,11 @@ abstract class base {
         return $file;
     }
 
-    protected function recently_analysed($rangeprocessorcodename, $analysableid) {
-        $prevrun = \tool_inspire\dataset_manager::get_run($this->modelid, $analysableid, $rangeprocessorcodename);
-        if (!$prevrun) {
+    protected function already_analysed($rangeprocessorcodename, $analysableid) {
+        $analysedfile = \tool_inspire\dataset_manager::get_analysable_file($this->modelid, $analysableid, $rangeprocessorcodename);
+        if ($analysedfile === false) {
             return false;
         }
-
-        if (time() > $prevrun->timecompleted + WEEKSECS) {
-            return false;
-        }
-
         return true;
     }
 }

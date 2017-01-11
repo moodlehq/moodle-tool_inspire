@@ -39,7 +39,9 @@ abstract class base extends \tool_inspire\calculable {
 
     const MAX_VALUE = 1;
 
-    abstract static public function get_requirements();
+    public static function get_requirements() {
+        return array();
+    }
 
     /**
      * Calculates the row.

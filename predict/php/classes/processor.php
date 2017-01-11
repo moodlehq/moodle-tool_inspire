@@ -42,15 +42,23 @@ use Phpml\Metric\Accuracy;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Inspire tool site manager.
+ * PHP predictions processor.
  *
  * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class processor {
+class processor implements \tool_inspire\predictor {
 
-    function evaluate_dataset($datasetpath, $outputdir) {
+    public function train($datasetpath, $outputdir) {
+        throw new \Exception('Not implemented');
+    }
+
+    public function predict($data, $outputdir) {
+        throw new \Exception('Not implemented');
+    }
+
+    function evaluate($datasetpath, $outputdir) {
 
         mtrace('Evaluating ' . $datasetpath . ' dataset');
 

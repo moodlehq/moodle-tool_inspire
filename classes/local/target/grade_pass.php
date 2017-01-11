@@ -53,7 +53,7 @@ class grade_pass extends base {
         return '\\tool_inspire\\local\\analyser\\enrolment';
     }
 
-    public function check_analysable(\tool_inspire\analysable $analysable) {
+    public function is_analysable(\tool_inspire\analysable $analysable) {
         global $DB;
 
         // Not a valid target if there is no course grade item.

@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Gather site courses indicators.
+ * Evaluates the provided model.
  *
  * @package    tool_inspire
  * @copyright  2016 David Monllao {@link http://www.davidmonllao.com}
@@ -27,7 +27,7 @@ define('CLI_SCRIPT', true);
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->libdir.'/clilib.php');
 
-$help = "Creates a model dataset:
+$help = "Evaluates the provided model.
 
 Options:
 --model      Model code name
@@ -36,7 +36,7 @@ Options:
 -h, --help   Print out this help
 
 Example:
-\$ sudo -u www-data /usr/bin/php admin/tool/inspire/cli/model_dataset.php --filter=123,321
+\$ php admin/tool/inspire/cli/evaluate_model.php --filter=123,321
 ";
 
 // Now get cli options.
@@ -64,14 +64,11 @@ if ($options['filter'] !== false) {
 
 echo "\n".get_string('processingcourses', 'tool_inspire')."\n\n";
 
-// TODO Set a DB table for this.
-//$modelobj = $DB->get_record('tool_inspire_models', array('id' => $options['model']);
+$modelobj = $DB->get_record('tool_inspire_models', array('codename' => $options['model']), '*', MUST_EXIST);
 
-$modelobj = new \stdClass();
-$modelobj->id = 1;
-$modelobj->target = '\tool_inspire\local\target\grade_pass';
 $model = new \tool_inspire\model($modelobj);
 
+// Build the dataset.
 $analyseroptions = array('filter' => $options['filter'], 'analyseall' => $options['analyseall']);
 $results = $model->build_dataset($analyseroptions);
 
@@ -82,21 +79,35 @@ foreach ($results['status'] as $analysableid => $statuscode) {
     }
 }
 
+// Evaluate its suitability to predict accurately.
 $results = $model->evaluate();
 
-foreach ($results as $rangeprocessorcodename => $data) {
-    mtrace('Evaluating ' . $rangeprocessorcodename);
-
-    if (!empty($data['results']->phi)) {
-        mtrace('- phi: ' . $data['results']->phi);
-    }
-
-    if (!empty($data['results']->errors)) {
-        foreach ($data['results']->errors as $error) {
-            mtrace(' - ' . $error);
+foreach ($results as $rangeprocessorcodename => $result) {
+    mtrace($rangeprocessorcodename . ' results');
+    mtrace(' - status code: ' . $result->status);
+    mtrace(' - score: ' . $result->score);
+    if (!empty($result->errors)) {
+        mtrace(' - errors');
+        foreach ($result->errors as $error) {
+            mtrace('   - ' . $error);
         }
     }
 }
+
+// Select a dataset, train and enable the model.
+$input = cli_input(get_string('trainandenablemodel', 'tool_inspire'));
+$rangeprocessorcodename = clean_param($input, PARAM_ALPHANUMEXT);
+do {
+    mtrace(get_string('errorunexistingrangeprocessor', 'tool_inspire'));
+    $input = cli_input(get_string('trainandenablemodel', 'tool_inspire'));
+    $rangeprocessorcodename = clean_param($input, PARAM_ALPHANUMEXT);
+} while (empty($results[$rangeprocessorcodename]));
+
+// Set the range processor file and enable it.
+$model->enable($rangeprocessorcodename);
+
+// Train the model with the selected range processor.
+$model->train();
 
 cli_heading(get_string('success'));
 exit(0);
