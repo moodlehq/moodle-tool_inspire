@@ -25,22 +25,26 @@ np.set_printoptions(threshold=np.inf)
 # Simple run identifier (I want them ordered).
 runid = str(int(time.time()))
 
+# Provided moodle modelid.
+modelid = sys.argv[1]
+
 # Missing arguments.
-if len(sys.argv) < 4:
+if len(sys.argv) < 5:
     result = dict()
     result['id'] = int(runid)
+    result['modelid'] = modelid
     result['exitcode'] = 1
     result['errors'] = ['Missing arguments, you should set the minimum accuracy. Received: ' + ' '.join(sys.argv)]
     print(json.dumps(result))
     sys.exit(result['exitcode'])
 
 # Provided file dir.
-filepath = sys.argv[1]
+filepath = sys.argv[2]
 dirname = os.path.dirname(os.path.realpath(filepath))
 
 # Percent to consider this test a success. Defaults to 0.7, which is the strong association boundary.
-accepted_phi = float(sys.argv[2])
-accepted_deviation = float(sys.argv[3])
+accepted_phi = float(sys.argv[3])
+accepted_deviation = float(sys.argv[4])
 
 # Logging.
 logfile = os.path.join(dirname, runid + '.log')

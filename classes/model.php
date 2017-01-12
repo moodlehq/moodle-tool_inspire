@@ -41,7 +41,12 @@ class model {
     const ANALYSE_REJECTED_RANGE_PROCESSOR = 3;
     const ANALYSABLE_STATUS_INVALID_FOR_RANGEPROCESSORS = 4;
     const ANALYSABLE_STATUS_INVALID_FOR_TARGET = 5;
-    const EVALUATE_NO_DATASET = 6;
+
+    const EVALUATE_OK = 0;
+    const EVALUATE_NO_DATASET = 1;
+
+    const TRAIN_OK = 0;
+    const TRAIN_NO_DATASET = 1;
 
     protected $model = null;
 
@@ -73,14 +78,46 @@ class model {
         return $indicators;
     }
 
-    public function get_analyser($target, $indicators, $rangeprocessors) {
-        // TODO Select it from any component.
-        $classname = $target->get_analyser_class();
+    public function get_analyser($options) {
 
+        $target = $this->get_target();
+        $indicators = $this->get_indicators();
+
+        if ($options['evaluation'] === true) {
+            // We try all available range processors.
+            $rangeprocessors = $this->get_all_range_processors();
+        } else {
+
+            if (empty($this->model->rangeprocessor)) {
+                throw new \moodle_exception('invalidrangeprocessor', 'tool_inspire', '', $this->model->codename);
+            }
+
+            // TODO This may get range processors from different moodle components.
+            $fullclassname = '\\tool_inspire\\local\\range_processor\\' . $this->model->rangeprocessor;
+
+            // Returned as an array in case we decide to allow multiple range processors enabled for a single model.
+            $rangeprocessors = array($this->get_range_processor($fullclassname));
+        }
+
+        if (empty($target)) {
+            throw new \moodle_exception('errornotarget', 'tool_inspire');
+        }
+
+        if (empty($indicators)) {
+            throw new \moodle_exception('errornoindicators', 'tool_inspire');
+        }
+
+        if (empty($rangeprocessors)) {
+            throw new \moodle_exception('errornorangeprocessors', 'tool_inspire');
+        }
+
+        $classname = $target->get_analyser_class();
         if (!class_exists($classname)) {
             throw \coding_exception($classname . ' class does not exists');
         }
-        return new $classname($this->model->id, $target, $indicators, $rangeprocessors);
+
+        // Returns a \tool_inspire\local\analyser\base class.
+        return new $classname($this->model->id, $target, $indicators, $rangeprocessors, $options);
     }
 
     /**
@@ -130,29 +167,14 @@ class model {
      * @return array Status codes and generated files
      */
     public function build_dataset($options = array()) {
-
-        $target = $this->get_target();
-        $indicators = $this->get_indicators();
-        $rangeprocessors = $this->get_all_range_processors();
-
-        if (empty($target)) {
-            throw new \moodle_exception('errornotarget', 'tool_inspire');
-        }
-
-        if (empty($indicators)) {
-            throw new \moodle_exception('errornoindicators', 'tool_inspire');
-        }
-
-        if (empty($rangeprocessors)) {
-            throw new \moodle_exception('errornorangeprocessors', 'tool_inspire');
-        }
-
-        $analyser = $this->get_analyser($target, $indicators, $rangeprocessors);
-        return $analyser->analyse($options);
+        $analyser = $this->get_analyser($options);
+        return $analyser->analyse();
     }
 
     /**
-     * Evaluates the model.
+     * Evaluates the model datasets.
+     *
+     * Model datasets should already be available in Moodle's filesystem.
      *
      * @return stdClass[]
      */
@@ -164,7 +186,7 @@ class model {
 
             $result = new \stdClass();
 
-            $dataset = \tool_inspire\dataset_manager::get_range_file($this->model->id, $rangeprocessor->get_codename());
+            $dataset = \tool_inspire\dataset_manager::get_evaluation_range_file($this->model->id, $rangeprocessor->get_codename());
 
             if (!$dataset) {
 
@@ -186,12 +208,12 @@ class model {
             $result->dataset = $filepath;
 
             $outputdir = $this->get_output_dir($rangeprocessor->get_codename());
-            $predict = $this->get_predictions_processor();
+            $predictor = $this->get_predictions_processor();
 
             // Evaluate the dataset.
-            $processorresult = $predict->evaluate($filepath, $outputdir);
+            $processorresult = $predictor->evaluate($this->model->id, $filepath, $outputdir);
 
-            $result->status = self::ANALYSE_OK;
+            $result->status = self::EVALUATE_OK;
             $result->score = $processorresult->score;
             $result->errors = $processorresult->errors;
 
@@ -201,18 +223,74 @@ class model {
         return $results;
     }
 
-    public function enable($rangeprocessorcodename) {
+    public function enable($rangeprocessorcodename = false) {
         global $DB;
 
         if ($rangeprocessorcodename) {
             $this->model->rangeprocessor = $rangeprocessorcodename;
         }
-        $this->model->enabled = true;
+        $this->model->enabled = 1;
         $DB->update_record('tool_inspire_models', $this->model);
     }
 
-    public function train($filepath = false) {
-        throw new \Exception('Not implemented');
+    public function mark_as_trained() {
+        global $DB;
+
+        $this->model->trained = 1;
+        $DB->update_record('tool_inspire_models', $this->model);
+    }
+
+    public function train() {
+        global $DB;
+
+        if ($this->model->enabled == false || empty($this->model->rangeprocessor)) {
+            throw new \moodle_exception('invalidrangeprocessor', 'tool_inspire', '', $this->model->codename);
+        }
+
+        $results = array();
+
+        $analysed = $this->build_dataset(array('evaluation' => false));
+
+        // No training if no files have been provided.
+        if (empty($analysed['files'])) {
+            $result = new \stdClass();
+            $result->status = self::TRAIN_NO_DATASET;
+            $result->errors = array('No files suitable for training') + $analysed['messages'];
+
+            // Copy the result to all range processors.
+            foreach ($analysed as $rangeprocessorcodename => $unused) {
+                $results[$rangeprocessorcodename] = $result;
+            }
+            return $results;
+        }
+
+        foreach ($analysed['files'] as $rangeprocessorcodename => $dataset) {
+
+            $result = new \stdClass();
+
+            // From moodle filesystem to the file system.
+            // TODO This is not ideal, but it seems that there is no read access to moodle filesystem files.
+            $dir = make_request_directory();
+            $filepath = $dataset->copy_content_to_temp($dir);
+
+            $outputdir = $this->get_output_dir($rangeprocessorcodename);
+            $predictor = $this->get_predictions_processor();
+
+            // Train using the dataset.
+            $processorresult = $predictor->train($filepath, $outputdir);
+
+            $result->status = self::TRAIN_OK;
+            $result->errors = $processorresult->errors;
+
+            $results[$rangeprocessor->get_codename()] = $result;
+        }
+
+        // Mark the model as trained if it wasn't.
+        if ($this->model->trained == false) {
+            $this->mark_as_trained();
+        }
+
+        return $results;
     }
 
     protected function get_predictions_processor() {

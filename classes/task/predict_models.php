@@ -15,29 +15,28 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Python predictions processor
+ * Predict system models with new data available.
  *
- * @package   tool_inspire
- * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    tool_inspire
+ * @copyright  2017 David Monllao {@link http://www.davidmonllao.com}
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_inspire;
-
-defined('MOODLE_INTERNAL') || die();
+namespace tool_inspire\task;
 
 /**
- * Inspire tool predictors interface.
+ * Predict system models with new data available.
  *
- * @package   tool_inspire
- * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    tool_inspire
+ * @copyright  2017 David Monllao {@link http://www.davidmonllao.com}
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-interface predictor {
+class predict_models extends \core\task\scheduled_task {
 
-    public function train($modelid, $datasetpath, $outputdir);
+    public function get_name() {
+        return get_string('predictmodels', 'tool_inspire');
+    }
 
-    public function predict($modelid, $data, $outputdir);
-
-    public function evaluate($modelid, $datasetpath, $outputdir);
+    public function execute() {
+    }
 }

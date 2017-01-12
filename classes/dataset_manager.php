@@ -34,6 +34,7 @@ defined('MOODLE_INTERNAL') || die();
 class dataset_manager {
 
     const FILEAREA = 'datasets';
+    const EVALUATION_FILENAME = 'evaluation.csv';
 
     /**
      * The model id.
@@ -55,14 +56,22 @@ class dataset_manager {
     protected $analysableid;
 
     /**
+     * Whether this is a dataset for evaluation or not.
+     *
+     * @var bool
+     */
+    protected $evaluation;
+
+    /**
      * Simple constructor.
      *
      * @return void
      */
-    public function __construct($modelid, $analysableid, $rangeprocessorcodename) {
+    public function __construct($modelid, $analysableid, $rangeprocessorcodename, $evaluation = false) {
         $this->modelid = $modelid;
         $this->analysableid = $analysableid;
         $this->rangeprocessor = $rangeprocessorcodename;
+        $this->evaluation = $evaluation;
     }
 
     /**
@@ -71,27 +80,8 @@ class dataset_manager {
      * @return void
      */
     public function init_process() {
-        global $DB;
-
-        // Delete the previous record if there is any.
-        $params = array('modelid' => $this->modelid, 'analysableid' => $this->analysableid, 'rangeprocessor' => $this->rangeprocessor);
-        $run = $DB->get_record('tool_inspire_runs', $params);
-        if ($run) {
-            if ($run->inprogress) {
-                return \tool_inspire\model::ANALYSE_INPROGRESS;
-            }
-            $DB->delete_records('tool_inspire_runs', $params);
-        }
-
-        $run = new \stdClass();
-        $run->modelid = $this->modelid;
-        $run->analysableid = $this->analysableid;
-        $run->rangeprocessor = $this->rangeprocessor;
-        $run->inprogress = 1;
-        $run->timecompleted = 0;
-        $run->id = $DB->insert_record('tool_inspire_runs', $run);
-
-        $lockkey = 'modelid:' . $this->modelid . '-analysableid:' . $this->analysableid . '-rangeprocessor:' . $this->rangeprocessor;
+        $lockkey = 'modelid:' . $this->modelid . '-analysableid:' . $this->analysableid .
+            '-rangeprocessor:' . $this->rangeprocessor;
 
         // Large timeout as processes may be quite long.
         $lockfactory = \core\lock\lock_config::get_lock_factory('tool_inspire');
@@ -117,7 +107,7 @@ class dataset_manager {
             'itemid' => $this->analysableid,
             'contextid' => \context_system::instance()->id,
             'filepath' => '/' . $this->modelid . '/analysable/' . $this->rangeprocessor . '/',
-            'filename' => 'dataset.csv'
+            'filename' => self::get_file_name($this->evaluation)
         ];
 
         $select = " = {$filerecord['itemid']} AND filepath = :filepath";
@@ -141,19 +131,6 @@ class dataset_manager {
      * @return void
      */
     public function close_process() {
-        global $DB;
-
-        $params = array('modelid' => $this->modelid, 'analysableid' => $this->analysableid,
-            'rangeprocessor' => $this->rangeprocessor, 'inprogress' => 1);
-        if (!$run = $DB->get_record('tool_inspire_runs', $params)) {
-            throw new \moodle_exception('errornorunrecord', 'tool_inspire');
-        }
-
-        // Mark it as completed.
-        $run->timecompleted = time();
-        $run->inprogress = 0;
-        $DB->update_record('tool_inspire_runs', $run);
-
         $this->lock->release();
     }
 
@@ -161,21 +138,15 @@ class dataset_manager {
         $lock->release();
     }
 
-    public static function get_analysable_file($modelid, $analysableid, $rangeprocessorcodename) {
+    public static function get_evaluation_range_file($modelid, $rangeprocessorcodename) {
         $fs = get_file_storage();
         return $fs->get_file(\context_system::instance()->id, 'tool_inspire', self::FILEAREA,
-            $analysableid, '/' . $modelid . '/analysable/' . $rangeprocessorcodename . '/', 'dataset.csv');
+            self::convert_to_int($rangeprocessorcodename), '/' . $modelid . '/range/' . $rangeprocessorcodename . '/', self::EVALUATION_FILENAME);
     }
 
-    public static function get_range_file($modelid, $rangeprocessorcodename) {
+    public static function delete_evaluation_range_file($modelid, $rangeprocessorcodename) {
         $fs = get_file_storage();
-        return $fs->get_file(\context_system::instance()->id, 'tool_inspire', self::FILEAREA,
-            self::convert_to_int($rangeprocessorcodename), '/' . $modelid . '/range/' . $rangeprocessorcodename . '/', 'dataset.csv');
-    }
-
-    public static function delete_range_file($modelid, $rangeprocessorcodename) {
-        $fs = get_file_storage();
-        if ($file = self::get_range_file($modelid, $rangeprocessorcodename)) {
+        if ($file = self::get_evaluation_range_file($modelid, $rangeprocessorcodename)) {
             $file->delete();
             return true;
         }
@@ -189,11 +160,13 @@ class dataset_manager {
      * Important! It is the caller responsability to ensure that the datasets are compatible.
      *
      * @param array  $files
+     * @param bool   $evaluation
+     * @param string $filename
      * @param int    $modelid
      * @param string $rangeproceesorcodename
      * @return \stored_file
      */
-    public static function merge_datasets(array $files, $modelid, $rangeprocessorcodename) {
+    public static function merge_datasets(array $files, $evaluation, $modelid, $rangeprocessorcodename) {
 
         $tmpfilepath = make_request_directory() . DIRECTORY_SEPARATOR . 'tmpfile.csv';
 
@@ -256,7 +229,7 @@ class dataset_manager {
             'itemid' => self::convert_to_int($rangeprocessorcodename),
             'contextid' => \context_system::instance()->id,
             'filepath' => '/' . $modelid . '/range/' . $rangeprocessorcodename . '/',
-            'filename' => 'dataset.csv'
+            'filename' => self::get_file_name($evaluation)
         ];
 
         $fs = get_file_storage();
@@ -276,5 +249,17 @@ class dataset_manager {
             $sum += ord($string[$i]);
         }
         return $sum;
+    }
+
+    protected static function get_file_name($evaluation) {
+
+        if ($evaluation === true) {
+            $filename = self::EVALUATION_FILENAME;
+        } else {
+            // Incremental time, the lock will make sure we don't have concurrency problems.
+            $filename = time() . '.csv';
+        }
+
+        return $filename;
     }
 }

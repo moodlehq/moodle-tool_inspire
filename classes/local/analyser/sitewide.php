@@ -37,27 +37,24 @@ abstract class sitewide extends base {
         return new \tool_inspire\site();
     }
 
-    public function analyse($options) {
-
-        $this->options = $options;
+    public function analyse() {
 
         // Here there is a single analysable and it is the system.
         $analysable = $this->get_site();
 
-        list($status, $data) = $this->process_analysable($analysable);
+        $return = array();
+
+        list($status, $files, $message) = $this->process_analysable($analysable);
 
         // Needs to be an array of arrays to match the same interface we have when we deal with multiple analysables per site.
         $return = array(
             'status' => array($analysable->get_id() => $status),
             'files' => array(),
-            'messages' => array()
+            'messages' => array($analysable->get_id() => $message)
         );
 
         if ($status === \tool_inspire\model::ANALYSE_OK) {
-            $return['files'] = $data;
-        } else {
-            // $data contains the error message if something went wrong.
-            $return['messages'][$analysable->get_id()] = $data;
+            $return['files'] = $files;
         }
 
         return $return;

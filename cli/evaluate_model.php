@@ -31,12 +31,12 @@ $help = "Evaluates the provided model.
 
 Options:
 --model      Model code name
---analyseall Analyse all site or only non rencently analysed analysables
+--analyseall Analyse all site or only non rencently analysed analysables (Optional)
 --filter     Analyser dependant (Optional)
 -h, --help   Print out this help
 
 Example:
-\$ php admin/tool/inspire/cli/evaluate_model.php --filter=123,321
+\$ php admin/tool/inspire/cli/evaluate_model.php --model=dropout --filter=123,321
 ";
 
 // Now get cli options.
@@ -57,6 +57,11 @@ if ($options['help']) {
     exit(0);
 }
 
+if ($options['model'] === false) {
+    echo $help;
+    exit(0);
+}
+
 // Reformat them as an array.
 if ($options['filter'] !== false) {
     $options['filter'] = explode(',', $options['filter']);
@@ -68,8 +73,14 @@ $modelobj = $DB->get_record('tool_inspire_models', array('codename' => $options[
 
 $model = new \tool_inspire\model($modelobj);
 
+mtrace(get_string('evaluatingsitedata', 'tool_inspire'));
+
 // Build the dataset.
-$analyseroptions = array('filter' => $options['filter'], 'analyseall' => $options['analyseall']);
+$analyseroptions = array(
+    'evaluation' => true,
+    'filter' => $options['filter'],
+    'analyseall' => $options['analyseall']
+);
 $results = $model->build_dataset($analyseroptions);
 
 foreach ($results['status'] as $analysableid => $statuscode) {
@@ -97,14 +108,16 @@ foreach ($results as $rangeprocessorcodename => $result) {
 // Select a dataset, train and enable the model.
 $input = cli_input(get_string('trainandenablemodel', 'tool_inspire'));
 $rangeprocessorcodename = clean_param($input, PARAM_ALPHANUMEXT);
-do {
+while (empty($results[$rangeprocessorcodename])) {
     mtrace(get_string('errorunexistingrangeprocessor', 'tool_inspire'));
     $input = cli_input(get_string('trainandenablemodel', 'tool_inspire'));
     $rangeprocessorcodename = clean_param($input, PARAM_ALPHANUMEXT);
-} while (empty($results[$rangeprocessorcodename]));
+}
 
 // Set the range processor file and enable it.
 $model->enable($rangeprocessorcodename);
+
+mtrace(get_string('trainingmodel', 'tool_inspire', $rangeprocessorcodename));
 
 // Train the model with the selected range processor.
 $model->train();

@@ -33,12 +33,12 @@ defined('MOODLE_INTERNAL') || die();
  */
 abstract class by_course extends base {
 
-    public function get_courses($options) {
+    public function get_courses() {
         global $DB;
 
         // Default to all system courses.
-        if (!empty($options['filter'])) {
-            $courseids = $options['filter'];
+        if (!empty($this->options['filter'])) {
+            $courseids = $this->options['filter'];
         } else {
             // Iterate through all potentially valid courses.
             $courseids = $DB->get_fieldset_select('course', 'id', 'id != :frontpage', array('frontpage' => SITEID), 'sortorder ASC');
@@ -57,43 +57,38 @@ abstract class by_course extends base {
         return $analysables;
     }
 
-    public function analyse($options = array()) {
+    public function analyse() {
 
-        $this->options = $options;
-
-        $status = [];
-        $messages = [];
-        $filesbyrangeprocessor = [];
+        $status = array();
+        $messages = array();
+        $filesbyrangeprocessor = array();
 
         // This class and all children will iterate through a list of courses (\tool_inspire\course).
-        $analysables = $this->get_courses($options);
+        $analysables = $this->get_courses();
         foreach ($analysables as $analysableid => $analysable) {
 
-            list($status[$analysableid], $data) = $this->process_analysable($analysable);
+            list($status[$analysableid], $files, $messages[$analysableid]) = $this->process_analysable($analysable);
 
             if ($status[$analysableid] === \tool_inspire\model::ANALYSE_OK) {
                 // Later we will need to aggregate data by range processor.
-                foreach ($data as $rangeprocessorcodename => $file) {
+                foreach ($files as $rangeprocessorcodename => $file) {
                     $filesbyrangeprocessor[$rangeprocessorcodename][$analysableid] = $file;
                 }
-            } else {
-                // Store the message.
-                $messages[$analysableid] = $data;
             }
         }
 
         // We join the datasets by range processor.
-        $rangeprocessorfiles = [];
+        $rangeprocessorfiles = array();
         mtrace('Merging datasets');
 
         foreach ($filesbyrangeprocessor as $rangeprocessorcodename => $files) {
 
             // Delete the previous copy.
-            \tool_inspire\dataset_manager::delete_range_file($this->modelid, $rangeprocessorcodename);
+            \tool_inspire\dataset_manager::delete_evaluation_range_file($this->modelid, $rangeprocessorcodename);
 
             // Merge all course files into one.
-            $rangeprocessorfiles[$rangeprocessorcodename] = \tool_inspire\dataset_manager::merge_datasets($files, $this->modelid,
-                $rangeprocessorcodename);
+            $rangeprocessorfiles[$rangeprocessorcodename] = \tool_inspire\dataset_manager::merge_datasets($files,
+                $this->options['evaluation'], $this->modelid, $rangeprocessorcodename);
         }
 
         return array(

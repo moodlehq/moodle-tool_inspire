@@ -41,11 +41,12 @@ abstract class base {
 
     protected $options;
 
-    public function __construct($modelid, $target, $indicators, $rangeprocessors) {
+    public function __construct($modelid, \tool_inspire\local\target\base $target, $indicators, $rangeprocessors, $options) {
         $this->modelid = $modelid;
         $this->target = $target;
         $this->indicators = $indicators;
         $this->rangeprocessors = $rangeprocessors;
+        $this->options = $options;
 
         // Checks if the analyser satisfies the indicators requirements.
         $this->check_indicators_requirements();
@@ -74,10 +75,9 @@ abstract class base {
      * In most of the cases you should have enough extending from one of these classes so you don't need
      * to reimplement this method.
      *
-     * @param array $options
      * @return array Array containing a status codes for each analysable and a list of files, one for each range processor
      */
-    abstract function analyse($options);
+    abstract function analyse();
 
     /**
      * Checks if the analyser satisfies all the model indicators requirements.
@@ -111,35 +111,44 @@ abstract class base {
      */
     public function process_analysable($analysable) {
 
-        $files = [];
+        // Default returns.
+        $files = array();
         $message = null;
 
+        // Discard invalid analysables.
         $result = $this->target->is_analysable($analysable);
         if ($result !== true) {
             return [
                 \tool_inspire\model::ANALYSABLE_STATUS_INVALID_FOR_TARGET,
+                array(),
                 $result
             ];
         }
 
+        // Process all provided range processors.
+        $results = array();
         foreach ($this->rangeprocessors as $rangeprocessor) {
-            // Memory usage shouldn't be specially intensive at this point. process_analysable should
-            // be where things start getting serious.
+            $result = $this->process_range($rangeprocessor, $analysable);
+            if (!empty($result->file)) {
+                $files[$rangeprocessor->get_codename()] = $result->file;
+            }
+            $results[] = $result;
+        }
 
-            if ($file = $this->process_range($rangeprocessor, $analysable)) {
-                $files[$rangeprocessor->get_codename()] = $file;
+        // Set the staus code.
+        if (!empty($files)) {
+            $status = \tool_inspire\model::ANALYSE_OK;
+        } else {
+            if (count($this->rangeprocessors) === 1) {
+                // We can be more specific.
+                $status = $results[0]->status;
+                $message = $results[0]->message;
+            } else {
+                $status = \tool_inspire\model::ANALYSABLE_STATUS_INVALID_FOR_RANGEPROCESSORS;
+                $message = 'Analysable not valid for any of the range processors';
             }
         }
 
-        if (empty($files)) {
-            // Flag it as invalid if the analysable wasn't valid for any of the range processors.
-            $status = \tool_inspire\model::ANALYSABLE_STATUS_INVALID_FOR_RANGEPROCESSORS;
-            $message = 'Analysable not valid for any of the range processors';
-        } else {
-            $status = \tool_inspire\model::ANALYSE_OK;
-        }
-
-        // TODO This looks confusing 1 for range processor? 1 for all? Should be 1 for analysable.
         return [
             $status,
             $files,
@@ -151,25 +160,31 @@ abstract class base {
 
         mtrace($rangeprocessor->get_codename() . ' analysing analysable with id ' . $analysable->get_id());
 
+        $result = new \stdClass();
+
         $rangeprocessor->set_analysable($analysable);
         if (!$rangeprocessor->is_valid_analysable()) {
-            mtrace(' - Invalid analysable for this processor');
-            return false;
-        }
-
-        $alreadyanalysed = $this->already_analysed($rangeprocessor->get_codename(), $analysable->get_id());
-        if ($alreadyanalysed && empty($this->options['analyseall'])) {
-            // Returning the previously created file.
-            mtrace(' - Already analysed');
-            return \tool_inspire\dataset_manager::get_analysable_file($this->modelid, $analysable->get_id(), $rangeprocessor->get_codename());
+            $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;
+            $result->message = 'Invalid analysable for this processor';
+            return $result;
         }
 
         // What is a row is defined by the analyser, it can be an enrolment, a course, a user, a question
         // attempt... it is on what we will base indicators calculations.
         $rows = $this->get_rows($analysable);
+
+        // We skip all rows that have already been used.
+        $rows = $this->filter_out_analysed_rows($rows, $analysable, $rangeprocessor);
+
+        if (count($rows) === 0) {
+            $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;
+            $result->message = 'No new data available';
+            return $result;
+        }
+
         $rangeprocessor->set_rows($rows);
 
-        $dataset = new \tool_inspire\dataset_manager($this->modelid, $analysable->get_id(), $rangeprocessor->get_codename());
+        $dataset = new \tool_inspire\dataset_manager($this->modelid, $analysable->get_id(), $rangeprocessor->get_codename(), $this->options['evaluation']);
 
         // Flag the model + analysable + rangeprocessor as being analysed (prevent concurrent executions).
         $dataset->init_process();
@@ -179,8 +194,9 @@ abstract class base {
         $data = $rangeprocessor->calculate($this->target, $this->indicators);
 
         if (!$data) {
-            mtrace(' - No new data available');
-            return false;
+            $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;
+            $result->message = 'No valid data available';
+            return $result;
         }
 
         // Write all calculated data to a file.
@@ -189,15 +205,51 @@ abstract class base {
         // Flag the model + analysable + rangeprocessor as analysed.
         $dataset->close_process();
 
-        mtrace(' - Successfully analysed');
-        return $file;
+        // Save the rows that have been already analysed so they are not analysed again in future.
+        if ($this->options['evaluation'] === false) {
+            $this->save_analysed_rows($rows, $analysable, $rangeprocessor, $file);
+        }
+
+        $result->status = \tool_inspire\model::ANALYSE_OK;
+        $result->message = 'Successfully analysed';
+        $result->file = $file;
+        return $result;
     }
 
-    protected function already_analysed($rangeprocessorcodename, $analysableid) {
-        $analysedfile = \tool_inspire\dataset_manager::get_analysable_file($this->modelid, $analysableid, $rangeprocessorcodename);
-        if ($analysedfile === false) {
-            return false;
+    protected function filter_out_analysed_rows($rows, $analysable, $rangeprocessor) {
+        global $DB;
+
+        $params = array('modelid' => $this->modelid, 'analysableid' => $analysable->get_id(),
+            'rangeprocessor' => $rangeprocessor->get_codename());
+        $analysedrows = $DB->get_records('tool_inspire_file_rows', $params);
+
+        // Skip each file trained rows.
+        foreach ($analysedrows as $analysedfile) {
+
+            $alreadyanalysedrows = json_decode($analysedfile->rowids, true);
+
+            if (!empty($alreadyanalysedrows)) {
+                // Reset $rows to $rows - this field $alreadyanalysedrows.
+                $rows = array_diff_key($rows, $alreadyanalysedrows);
+            }
         }
-        return true;
+
+        return $rows;
+    }
+
+    protected function save_analysed_rows($rows, $analysable, $rangeprocessor, $file) {
+        global $DB;
+
+        $filerows = new \stdClass();
+        $filerows->modelid = $this->modelid;
+        $filerows->analysableid = $analysable->get_id();
+        $filerows->rangeprocessor = $rangeprocessor->get_codename();
+        $filerows->fileid = $file->get_id();
+
+        // TODO We just need the keys, we can save some space by removing the values.
+        $filerows->rowids = json_encode($rows);
+        $filerows->timeanalysed = time();
+
+        return $DB->insert_record('tool_inspire_file_rows', $filerows);
     }
 }

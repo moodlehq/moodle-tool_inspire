@@ -15,29 +15,35 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Python predictions processor
+ * Definition of editpdf scheduled tasks.
  *
  * @package   tool_inspire
- * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
+ * @category  task
+ * @copyright 2017 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-namespace tool_inspire;
 
 defined('MOODLE_INTERNAL') || die();
 
-/**
- * Inspire tool predictors interface.
- *
- * @package   tool_inspire
- * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-interface predictor {
+/* List of handlers */
 
-    public function train($modelid, $datasetpath, $outputdir);
-
-    public function predict($modelid, $data, $outputdir);
-
-    public function evaluate($modelid, $datasetpath, $outputdir);
-}
+$tasks = array(
+    array(
+        'classname' => 'tool_inspire\task\train_models',
+        'blocking' => 0,
+        'minute' => '0',
+        'hour' => 'R',
+        'day' => '*',
+        'dayofweek' => '*',
+        'month' => '*'
+    ),
+    array(
+        'classname' => 'tool_inspire\task\predict_models',
+        'blocking' => 0,
+        'minute' => '0',
+        'hour' => 'R',
+        'day' => '*',
+        'dayofweek' => '*',
+        'month' => '*'
+    )
+);

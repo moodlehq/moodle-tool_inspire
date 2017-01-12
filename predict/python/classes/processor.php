@@ -39,15 +39,15 @@ class processor implements \tool_inspire\predictor {
     const DEVIATION = 0.02;
     const ITERATIONS = 30;
 
-    public function train($datasetpath, $outputdir) {
+    public function train($modelid, $datasetpath, $outputdir) {
         throw new \Exception('Not implemented');
     }
 
-    public function predict($data, $outputdir) {
+    public function predict($modelid, $data, $outputdir) {
         throw new \Exception('Not implemented');
     }
 
-    public function evaluate($datasetpath, $outputdir) {
+    public function evaluate($modelid, $datasetpath, $outputdir) {
 
         mtrace('Evaluating ' . $datasetpath . ' dataset');
 
@@ -55,6 +55,7 @@ class processor implements \tool_inspire\predictor {
             'check-classification-singleclass.py');
 
         $cmd = 'python ' . $absolutescriptpath . ' ' .
+            escapeshellarg($modelid) . ' ' .
             escapeshellarg($datasetpath) . ' ' .
             escapeshellarg(self::VALIDATION) . ' ' .
             escapeshellarg(self::DEVIATION) . ' ' .
