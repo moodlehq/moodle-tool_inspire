@@ -58,7 +58,7 @@ abstract class base extends \tool_inspire\calculable {
      * @param \tool_inspire\analysable $analysable
      * @return true|string
      */
-    abstract public function is_analysable(\tool_inspire\analysable $analysable);
+    abstract public function is_valid_analysable(\tool_inspire\analysable $analysable);
 
     /**
      * Calculates this target for the provided row.

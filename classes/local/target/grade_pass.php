@@ -53,13 +53,18 @@ class grade_pass extends base {
         return '\\tool_inspire\\local\\analyser\\enrolment';
     }
 
-    public function is_analysable(\tool_inspire\analysable $analysable) {
+    public function is_valid_analysable(\tool_inspire\analysable $analysable) {
         global $DB;
 
         // Not a valid target if there is no course grade item.
         self::$coursegradeitems[$analysable->get_id()] = \grade_item::fetch(array('itemtype' => 'course', 'courseid' => $analysable->get_id()));
         if (empty(self::$coursegradeitems[$analysable->get_id()])) {
             return 'There is no course grade item';
+        }
+
+        // Ongoing courses data can not be used to train.
+        if ($analysable->get_end() > time()) {
+            return 'Course is not yet finished';
         }
 
         // Courses that last more than 1 year may not have a regular usage.

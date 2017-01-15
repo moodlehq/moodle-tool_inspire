@@ -41,7 +41,7 @@ class BinaryClassifier(Classifier):
         classifier = self.train(self.X, self.y)
 
 
-    def evaluate_dataset(self, modelid, filepath, accepted_phi=0.7, accepted_deviation=0.02, n_test_runs=1):
+    def evaluate_dataset(self, uniqueid, filepath, accepted_phi=0.7, accepted_deviation=0.02, n_test_runs=1):
 
         [self.X, self.y] = self.get_examples(filepath)
         self.scale_x()

@@ -33,14 +33,14 @@ defined('MOODLE_INTERNAL') || die();
  */
 class enrolment extends by_course {
 
-    public function rows_info() {
+    protected function rows_info() {
         return array(
             'user' => 'userid',
             'course' => 'courseid'
         );
     }
 
-    public function get_rows(\tool_inspire\analysable $course) {
+    public function get_all_rows(\tool_inspire\analysable $course) {
         return $course->get_students();
     }
 }

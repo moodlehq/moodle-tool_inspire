@@ -50,15 +50,15 @@ defined('MOODLE_INTERNAL') || die();
  */
 class processor implements \tool_inspire\predictor {
 
-    public function train($modelid, $datasetpath, $outputdir) {
+    public function train($uniqueid, $datasetpath, $outputdir) {
         throw new \Exception('Not implemented');
     }
 
-    public function predict($modelid, $data, $outputdir) {
+    public function predict($uniqueid, $data, $outputdir) {
         throw new \Exception('Not implemented');
     }
 
-    function evaluate($modelid, $datasetpath, $outputdir) {
+    function evaluate($uniqueid, $datasetpath, $outputdir) {
 
         mtrace('Evaluating ' . $datasetpath . ' dataset');
 

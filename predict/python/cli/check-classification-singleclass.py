@@ -21,14 +21,14 @@ binary_classifier = BinaryClassifier()
 #from BinaryClassifierDNN import BinaryClassifierDNN
 #binary_classifier = BinaryClassifierDNN()
 
-# Provided moodle modelid.
-modelid = int(sys.argv[1])
+# Provided moodle uniqueid.
+uniqueid = int(sys.argv[1])
 
 # Missing arguments.
 if len(sys.argv) < 6:
     result = dict()
     result['id'] = int(binary_classifier.get_id())
-    result['modelid'] = modelid
+    result['uniqueid'] = uniqueid
     result['exitcode'] = 1
     result['errors'] = ['Missing arguments, you should set: \
 The file, the minimum phi value to consider the model as valid, \
@@ -37,7 +37,7 @@ the number of times the evaluation will run. Received: ' + ' '.join(sys.argv)]
     print(json.dumps(result))
     sys.exit(result['exitcode'])
 
-result = binary_classifier.evaluate_dataset(modelid, sys.argv[2],
+result = binary_classifier.evaluate_dataset(uniqueid, sys.argv[2],
     float(sys.argv[3]), float(sys.argv[4]), int(sys.argv[5]))
 
 # If we consider the classification as valid we store coeficients and intercepts.

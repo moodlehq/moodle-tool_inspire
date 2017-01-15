@@ -57,7 +57,7 @@ abstract class by_course extends base {
         return $analysables;
     }
 
-    public function analyse() {
+    public function get_analysable_data($includetarget) {
 
         $status = array();
         $messages = array();
@@ -67,7 +67,7 @@ abstract class by_course extends base {
         $analysables = $this->get_courses();
         foreach ($analysables as $analysableid => $analysable) {
 
-            list($status[$analysableid], $files, $messages[$analysableid]) = $this->process_analysable($analysable);
+            list($status[$analysableid], $files, $messages[$analysableid]) = $this->process_analysable($analysable, $includetarget);
 
             if ($status[$analysableid] === \tool_inspire\model::ANALYSE_OK) {
                 // Later we will need to aggregate data by range processor.
@@ -77,19 +77,10 @@ abstract class by_course extends base {
             }
         }
 
-        // We join the datasets by range processor.
-        $rangeprocessorfiles = array();
         mtrace('Merging datasets');
 
-        foreach ($filesbyrangeprocessor as $rangeprocessorcodename => $files) {
-
-            // Delete the previous copy.
-            \tool_inspire\dataset_manager::delete_evaluation_range_file($this->modelid, $rangeprocessorcodename);
-
-            // Merge all course files into one.
-            $rangeprocessorfiles[$rangeprocessorcodename] = \tool_inspire\dataset_manager::merge_datasets($files,
-                $this->options['evaluation'], $this->modelid, $rangeprocessorcodename);
-        }
+        // We join the datasets by range processor.
+        $rangeprocessorfiles = $this->merge_analysable_files($filesbyrangeprocessor, $includetarget);
 
         return array(
             'status' => $status,
@@ -98,4 +89,21 @@ abstract class by_course extends base {
         );
     }
 
+    protected function merge_analysable_files($filesbyrangeprocessor, $includetarget) {
+
+        $rangeprocessorfiles = array();
+        foreach ($filesbyrangeprocessor as $rangeprocessorcodename => $files) {
+
+            if ($this->options['evaluation'] === true) {
+                // Delete the previous copy. Only when evaluating.
+                \tool_inspire\dataset_manager::delete_evaluation_range_file($this->modelid, $rangeprocessorcodename);
+            }
+
+            // Merge all course files into one.
+            $rangeprocessorfiles[$rangeprocessorcodename] = \tool_inspire\dataset_manager::merge_datasets($files,
+                $this->modelid, $rangeprocessorcodename, $this->options['evaluation'], $includetarget);
+        }
+
+        return $rangeprocessorfiles;
+    }
 }

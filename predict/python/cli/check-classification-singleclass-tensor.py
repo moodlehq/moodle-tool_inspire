@@ -25,14 +25,14 @@ np.set_printoptions(threshold=np.inf)
 # Simple run identifier (I want them ordered).
 runid = str(int(time.time()))
 
-# Provided moodle modelid.
-modelid = sys.argv[1]
+# Provided moodle uniqueid.
+uniqueid = sys.argv[1]
 
 # Missing arguments.
 if len(sys.argv) < 5:
     result = dict()
     result['id'] = int(runid)
-    result['modelid'] = modelid
+    result['uniqueid'] = uniqueid
     result['exitcode'] = 1
     result['errors'] = ['Missing arguments, you should set the minimum accuracy. Received: ' + ' '.join(sys.argv)]
     print(json.dumps(result))

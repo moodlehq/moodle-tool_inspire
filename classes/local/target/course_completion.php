@@ -50,12 +50,17 @@ class course_completion extends base {
         return '\\tool_inspire\\local\\analyser\\enrolment';
     }
 
-    public function is_analysable(\tool_inspire\analysable $analysable) {
+    public function is_valid_analysable(\tool_inspire\analysable $analysable) {
         global $DB;
 
         $completion = new completion_info($analysable->get_course_obj());
         if ($completion->is_enabled() === COMPLETION_DISABLED) {
             return 'Course completion is disabled';
+        }
+
+        // Ongoing courses data can not be used to train.
+        if ($analysable->get_end() > time()) {
+            return 'Course is not yet finished';
         }
 
         // Courses that last more than 1 year may not have a regular usage.

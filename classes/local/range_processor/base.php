@@ -97,12 +97,19 @@ abstract class base {
         return true;
     }
 
+    public function ready_to_predict($range) {
+        if ($range['end'] < time()) {
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Calculates the course students indicators and targets.
      *
      * @return void
      */
-    public function calculate($target, $indicators) {
+    public function calculate($indicators, $ranges, $target = false) {
 
         // We load the usual data required to analyse the analyser (e.g. if it is a course teachers and students may be a
         // popular requirement.
@@ -119,20 +126,27 @@ abstract class base {
                 $this->merge_into_storage($requiredrecords);
             }
         }
-        if ($requiredrecords = $target->get_required_records($this->analysable)) {
-            $this->merge_into_storage($requiredrecords);
+
+        // We only add target required records if we calculate the target.
+        if ($target) {
+            if ($requiredrecords = $target->get_required_records($this->analysable)) {
+                $this->merge_into_storage($requiredrecords);
+            }
         }
 
-        // We first calculate the target because analysable data may still be invalid, we need to stop if it is not.
-        $calculatedtarget = $target->calculate($this->rows, $this->analysable, $this->storage);
+        $calculatedtarget = false;
+        if ($target) {
+            // We first calculate the target because analysable data may still be invalid, we need to stop if it is not.
+            $calculatedtarget = $target->calculate($this->rows, $this->analysable, $this->storage);
 
-        // We remove rows we can not calculate their target.
-        $this->rows = array_filter($this->rows, function($row) use ($calculatedtarget) {
-            if (is_null($calculatedtarget[$row])) {
-                return false;
-            }
-            return true;
-        });
+            // We remove rows we can not calculate their target.
+            $this->rows = array_filter($this->rows, function($row) use ($calculatedtarget) {
+                if (is_null($calculatedtarget[$row])) {
+                    return false;
+                }
+                return true;
+            });
+        }
 
         // No need to continue calculating if the target couldn't be calculated for any row.
         if (empty($this->rows)) {
@@ -142,12 +156,12 @@ abstract class base {
         // Empty dataset, passed by reference below.
         $dataset = [];
 
-        $this->calculate_indicators($dataset, $indicators);
+        $this->calculate_indicators($dataset, $indicators, $ranges);
 
-        // Now that we have the indicators in place we can add the target and the range indicators to each of them.
-        $this->fill_dataset($dataset, $calculatedtarget);
+        // Now that we have the indicators in place we can add the range indicators (and target if provided) to each of them.
+        $this->fill_dataset($dataset, $ranges, $calculatedtarget);
 
-        $this->add_metadata($dataset, $indicators, $target);
+        $this->add_metadata($dataset, $indicators, $ranges, $target);
 
         return $dataset;
     }
@@ -157,9 +171,7 @@ abstract class base {
      *
      * @return void
      */
-    protected function calculate_indicators(&$dataset, $indicators) {
-
-        $ranges = $this->get_ranges();
+    protected function calculate_indicators(&$dataset, $indicators, $ranges) {
 
         // Fill the dataset rows with indicators data.
         foreach ($indicators as $indicator) {
@@ -194,16 +206,18 @@ abstract class base {
      *
      * @return void
      */
-    protected function fill_dataset(&$dataset, $calculatedtarget) {
+    protected function fill_dataset(&$dataset, $ranges, $calculatedtarget = false) {
 
-        $nranges = count($this->get_ranges());
+        $nranges = count($ranges);
 
         foreach ($dataset as $uniquerowid => $row) {
 
             list($analyserrowid, $rangeindex) = $this->infer_row_info($uniquerowid);
 
-            // Add this rowid's calculated target.
-            $dataset[$uniquerowid][] = $calculatedtarget[$analyserrowid];
+            if ($calculatedtarget) {
+                // Add this rowid's calculated target.
+                $dataset[$uniquerowid][] = $calculatedtarget[$analyserrowid];
+            }
 
             // No need to add range features if there is only 1 range.
             if ($nranges > 1) {
@@ -234,7 +248,7 @@ abstract class base {
      *
      * @return void
      */
-    protected function add_metadata(&$dataset, $indicators, $target) {
+    protected function add_metadata(&$dataset, $indicators, $ranges, $target = false) {
 
         // Metadata is mainly provided by the analysable.
         $metadata = array(
@@ -253,7 +267,7 @@ abstract class base {
             $metadatavalues[] = $value;
         }
 
-        $headers = $this->get_columns_headers($indicators, $target);
+        $headers = $this->get_columns_headers($indicators, $ranges, $target);
 
         // This will also reset examples' dataset keys.
         array_unshift($dataset, $metadatacolumns, $metadatavalues, $headers);
@@ -264,7 +278,7 @@ abstract class base {
      *
      * @return array
      */
-    protected function get_ranges() {
+    public function get_all_ranges() {
         if (empty($this->ranges)) {
             $this->ranges = $this->define_ranges();
             $this->validate_ranges();
@@ -280,15 +294,14 @@ abstract class base {
         return explode('-', $rowid);
     }
 
-    protected function get_columns_headers($indicators, $target) {
+    protected function get_columns_headers($indicators, $ranges, $target = false) {
         // 3rd column will be empty (dataset readability).
         // 4th column will contain the indicators codenames.
         $headers = [];
 
         // Range indicators.
-        $nranges = count($this->get_ranges());
-        if ($nranges > 1) {
-            foreach ($this->get_ranges() as $rangeindex => $range) {
+        if (count($ranges) > 1) {
+            foreach ($ranges as $rangeindex => $range) {
                 // Starting from 1 when displaying it.
                 $headers[] = 'range-' . ($rangeindex + 1);
             }
@@ -300,7 +313,9 @@ abstract class base {
         }
 
         // The target as well.
-        $headers[] = clean_param($target::get_name(), PARAM_ALPHANUMEXT);
+        if ($target) {
+            $headers[] = clean_param($target::get_name(), PARAM_ALPHANUMEXT);
+        }
 
         return $headers;
     }

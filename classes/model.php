@@ -48,7 +48,11 @@ class model {
     const TRAIN_OK = 0;
     const TRAIN_NO_DATASET = 1;
 
+    const PREDICT_OK = 0;
+
     protected $model = null;
+
+    protected $uniqueid = null;
 
     public function __construct($model) {
         $this->model = $model;
@@ -83,7 +87,7 @@ class model {
         $target = $this->get_target();
         $indicators = $this->get_indicators();
 
-        if ($options['evaluation'] === true) {
+        if (!empty($options['evaluation'])) {
             // We try all available range processors.
             $rangeprocessors = $this->get_all_range_processors();
         } else {
@@ -132,7 +136,7 @@ class model {
 
         $rangeprocessors = [];
         foreach ($classes as $fullclassname => $classpath) {
-            if (self::is_a_valid_range_processor($fullclassname)) {
+            if (self::is_valid_range_processor($fullclassname)) {
                 $instance = $this->get_range_processor($fullclassname);
                 $rangeprocessors[$instance->get_codename()] = $instance;
             }
@@ -146,12 +150,12 @@ class model {
     }
 
     /**
-     * is_a_valid_range_processor
+     * is_valid_range_processor
      *
      * @param string $fullclassname
      * @return bool
      */
-    protected static function is_a_valid_range_processor($fullclassname) {
+    protected static function is_valid_range_processor($fullclassname) {
         if (is_subclass_of($fullclassname, '\tool_inspire\local\range_processor\base')) {
             if ((new \ReflectionClass($fullclassname))->isInstantiable()) {
                 return true;
@@ -168,7 +172,7 @@ class model {
      */
     public function build_dataset($options = array()) {
         $analyser = $this->get_analyser($options);
-        return $analyser->analyse();
+        return $analyser->get_labelled_data();
     }
 
     /**
@@ -178,7 +182,17 @@ class model {
      *
      * @return stdClass[]
      */
-    public function evaluate() {
+    public function evaluate($options) {
+
+        $options['evaluation'] = true;
+        $analysisresults = $this->build_dataset($options);
+
+        foreach ($analysisresults['status'] as $analysableid => $statuscode) {
+            mtrace('Analysable ' . $analysableid . ': Status code ' . $statuscode . '. ');
+            if (!empty($analysisresults['messages'][$analysableid])) {
+                mtrace(' - ' . $analysisresults['messages'][$analysableid]);
+            }
+        }
 
         $results = array();
 
@@ -211,33 +225,16 @@ class model {
             $predictor = $this->get_predictions_processor();
 
             // Evaluate the dataset.
-            $processorresult = $predictor->evaluate($this->model->id, $filepath, $outputdir);
+            $predictorresult = $predictor->evaluate($this->model->id, $filepath, $outputdir);
 
             $result->status = self::EVALUATE_OK;
-            $result->score = $processorresult->score;
-            $result->errors = $processorresult->errors;
+            $result->score = $predictorresult->score;
+            $result->errors = $predictorresult->errors;
 
             $results[$rangeprocessor->get_codename()] = $result;
         }
 
         return $results;
-    }
-
-    public function enable($rangeprocessorcodename = false) {
-        global $DB;
-
-        if ($rangeprocessorcodename) {
-            $this->model->rangeprocessor = $rangeprocessorcodename;
-        }
-        $this->model->enabled = 1;
-        $DB->update_record('tool_inspire_models', $this->model);
-    }
-
-    public function mark_as_trained() {
-        global $DB;
-
-        $this->model->trained = 1;
-        $DB->update_record('tool_inspire_models', $this->model);
     }
 
     public function train() {
@@ -249,7 +246,7 @@ class model {
 
         $results = array();
 
-        $analysed = $this->build_dataset(array('evaluation' => false));
+        $analysed = $this->build_dataset();
 
         // No training if no files have been provided.
         if (empty($analysed['files'])) {
@@ -277,12 +274,14 @@ class model {
             $predictor = $this->get_predictions_processor();
 
             // Train using the dataset.
-            $processorresult = $predictor->train($filepath, $outputdir);
+            $predictorresult = $predictor->train($this->get_unique_id(), $filepath, $outputdir);
 
             $result->status = self::TRAIN_OK;
-            $result->errors = $processorresult->errors;
+            $result->errors = $predictorresult->errors;
 
-            $results[$rangeprocessor->get_codename()] = $result;
+            $results[$rangeprocessorcodename] = $result;
+
+            // TODO Mark the file as trained.
         }
 
         // Mark the model as trained if it wasn't.
@@ -291,6 +290,61 @@ class model {
         }
 
         return $results;
+    }
+
+    public function predict() {
+
+        if ($this->model->enabled == false || empty($this->model->rangeprocessor)) {
+            throw new \moodle_exception('invalidrangeprocessor', 'tool_inspire', '', $this->model->codename);
+        }
+
+        $analyser = $this->get_analyser();
+        $samplesdata = $analyser->get_unlabelled_data();
+
+        $results = array();
+
+        foreach ($samplesdata['files'] as $rangeprocessorcodename => $samples) {
+
+            // From moodle filesystem to the file system.
+            // TODO This is not ideal, but it seems that there is no read access to moodle filesystem files.
+            $dir = make_request_directory();
+            $filepath = $samples->copy_content_to_temp($dir);
+
+            $outputdir = $this->get_output_dir($rangeprocessorcodename);
+
+            $predictor = $this->get_predictions_processor();
+            $predictorresult = $predictor->predict($this->get_unique_id(), $filepath);
+
+            $result = new \stdClass();
+            $result->status = self::PREDICT_OK;
+            $result->errors = $predictorresult->errors;
+            $result->predictions = $predictorresult->predictions;
+
+            $results[$rangeprocessorcodename] = $result;
+
+            // TODO Mark the file as predicted.
+        }
+var_dump($results);
+    }
+
+    public function enable($rangeprocessorcodename = false) {
+        global $DB;
+
+        if ($rangeprocessorcodename) {
+            $this->model->rangeprocessor = $rangeprocessorcodename;
+            $this->model->timemodified = time();
+        }
+        $this->model->enabled = 1;
+
+        // We don't always update timemodified intentionally as we reserve it for target, indicators or rangeprocessor updates.
+        $DB->update_record('tool_inspire_models', $this->model);
+    }
+
+    public function mark_as_trained() {
+        global $DB;
+
+        $this->model->trained = 1;
+        $DB->update_record('tool_inspire_models', $this->model);
     }
 
     protected function get_predictions_processor() {
@@ -308,7 +362,7 @@ class model {
             $outputdir = rtrim($CFG->dataroot, '/') . DIRECTORY_SEPARATOR . 'models';
         }
 
-        $outputdir = $outputdir . DIRECTORY_SEPARATOR . $this->model->id;
+        $outputdir = $outputdir . DIRECTORY_SEPARATOR . $this->get_unique_id();
 
         if ($subdir) {
             $outputdir = $outputdir . DIRECTORY_SEPARATOR . $subdir;
@@ -319,5 +373,20 @@ class model {
         }
 
         return $outputdir;
+    }
+
+    protected function get_unique_id() {
+        global $CFG;
+
+        if (!is_null($this->uniqueid)) {
+            return $this->uniqueid;
+        }
+
+        // Generate a unique id for this site, this model and this range processor, considering the last time
+        // that the model target and indicators were updated.
+        $ids = array($CFG->wwwroot, $CFG->dirroot, $CFG->prefix, $this->model->id, $this->model->timemodified);
+        $this->uniqueid = sha1(implode('$$', $ids));
+
+        return $this->uniqueid;
     }
 }

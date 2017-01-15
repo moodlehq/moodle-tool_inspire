@@ -46,6 +46,10 @@ abstract class base {
         $this->target = $target;
         $this->indicators = $indicators;
         $this->rangeprocessors = $rangeprocessors;
+
+        if (empty($options['evaluation'])) {
+            $options['evaluation'] = false;
+        }
         $this->options = $options;
 
         // Checks if the analyser satisfies the indicators requirements.
@@ -57,15 +61,15 @@ abstract class base {
      *
      * @return string[]
      */
-    abstract function rows_info();
+    abstract protected function rows_info();
 
     /**
-     * This function returns the list of rows that will be calculated.
+     * This function returns the list of rows that can be calculated.
      *
      * @param \tool_inspire\analysable $analysable
      * @return array
      */
-    abstract function get_rows(\tool_inspire\analysable $analysable);
+    abstract public function get_all_rows(\tool_inspire\analysable $analysable);
 
     /**
      * Main analyser method which processes the site analysables.
@@ -77,7 +81,15 @@ abstract class base {
      *
      * @return array Array containing a status codes for each analysable and a list of files, one for each range processor
      */
-    abstract function analyse();
+    abstract public function get_analysable_data($includetarget);
+
+    public function get_labelled_data() {
+        return $this->get_analysable_data(true);
+    }
+
+    public function get_unlabelled_data() {
+        return $this->get_analysable_data(false);
+    }
 
     /**
      * Checks if the analyser satisfies all the model indicators requirements.
@@ -107,16 +119,18 @@ abstract class base {
      * but shown, through mtrace(), debugging() or through exceptions depending on the case.
      *
      * @param \tool_inspire\analysable $analysable
+     * @param bool $includetarget
      * @return array Analysable general status code AND (files by range processor OR error code)
      */
-    public function process_analysable($analysable) {
+    public function process_analysable($analysable, $includetarget) {
 
         // Default returns.
         $files = array();
         $message = null;
 
-        // Discard invalid analysables.
-        $result = $this->target->is_analysable($analysable);
+        // We need to check that the analysable is valid for the target even if we don't include targets
+        // as we still need to discard invalid analysables for the target.
+        $result = $this->target->is_valid_analysable($analysable);
         if ($result !== true) {
             return [
                 \tool_inspire\model::ANALYSABLE_STATUS_INVALID_FOR_TARGET,
@@ -128,14 +142,14 @@ abstract class base {
         // Process all provided range processors.
         $results = array();
         foreach ($this->rangeprocessors as $rangeprocessor) {
-            $result = $this->process_range($rangeprocessor, $analysable);
+            $result = $this->process_range($rangeprocessor, $analysable, $includetarget);
             if (!empty($result->file)) {
                 $files[$rangeprocessor->get_codename()] = $result->file;
             }
             $results[] = $result;
         }
 
-        // Set the staus code.
+        // Set the status code.
         if (!empty($files)) {
             $status = \tool_inspire\model::ANALYSE_OK;
         } else {
@@ -156,7 +170,7 @@ abstract class base {
         ];
     }
 
-    protected function process_range($rangeprocessor, $analysable) {
+    protected function process_range($rangeprocessor, $analysable, $includetarget) {
 
         mtrace($rangeprocessor->get_codename() . ' analysing analysable with id ' . $analysable->get_id());
 
@@ -171,27 +185,68 @@ abstract class base {
 
         // What is a row is defined by the analyser, it can be an enrolment, a course, a user, a question
         // attempt... it is on what we will base indicators calculations.
-        $rows = $this->get_rows($analysable);
-
-        // We skip all rows that have already been used.
-        $rows = $this->filter_out_analysed_rows($rows, $analysable, $rangeprocessor);
+        $rows = $this->get_all_rows($analysable);
 
         if (count($rows) === 0) {
             $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;
-            $result->message = 'No new data available';
+            $result->message = 'No data available';
             return $result;
+        }
+
+        if ($includetarget) {
+            // All ranges are used when we are calculating data for training.
+            $ranges = $rangeprocessor->get_all_ranges();
+        } else {
+            // Only some ranges can be used for prediction (it depends on the time range where we are right now).
+            $ranges = $this->get_prediction_ranges($rangeprocessor);
+        }
+
+        // There is no need to keep track of the evaluated rows and ranges as we always evaluate the whole dataset.
+        if ($this->options['evaluation'] === false) {
+
+            if (empty($ranges)) {
+                $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;
+                $result->message = 'No new data available';
+                return $result;
+            }
+
+            // We skip all rows that are already part of a training dataset, even if they have noe been used for training yet.
+            $rows = $this->filter_out_training_rows($rows, $analysable, $rangeprocessor);
+
+            if (count($rows) === 0) {
+                $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;
+                $result->message = 'No new data available';
+                return $result;
+            }
+
+            // Only when processing data for predictions.
+            if ($includetarget === false) {
+                // We also filter out ranges that have already been used for predictions.
+                $ranges = $this->filter_out_prediction_ranges($ranges, $analysable, $rangeprocessor);
+            }
+
+            if (count($ranges) === 0) {
+                $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;
+                $result->message = 'No new ranges to process';
+                return $result;
+            }
         }
 
         $rangeprocessor->set_rows($rows);
 
-        $dataset = new \tool_inspire\dataset_manager($this->modelid, $analysable->get_id(), $rangeprocessor->get_codename(), $this->options['evaluation']);
+        $dataset = new \tool_inspire\dataset_manager($this->modelid, $analysable->get_id(), $rangeprocessor->get_codename(),
+            $this->options['evaluation'], $includetarget);
 
         // Flag the model + analysable + rangeprocessor as being analysed (prevent concurrent executions).
         $dataset->init_process();
 
         // Here we start the memory intensive process that will last until $data var is
         // unset (until the method is finished basically).
-        $data = $rangeprocessor->calculate($this->target, $this->indicators);
+        if ($includetarget) {
+            $data = $rangeprocessor->calculate($this->indicators, $ranges, $this->target);
+        } else {
+            $data = $rangeprocessor->calculate($this->indicators, $ranges);
+        }
 
         if (!$data) {
             $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;
@@ -205,9 +260,15 @@ abstract class base {
         // Flag the model + analysable + rangeprocessor as analysed.
         $dataset->close_process();
 
-        // Save the rows that have been already analysed so they are not analysed again in future.
+        // No need to keep track of analysed stuff when evaluating.
         if ($this->options['evaluation'] === false) {
-            $this->save_analysed_rows($rows, $analysable, $rangeprocessor, $file);
+            // Save the rows that have been already analysed so they are not analysed again in future.
+
+            if ($includetarget) {
+                $this->save_training_rows($rows, $analysable, $rangeprocessor, $file);
+            } else {
+                $this->save_prediction_ranges($ranges, $analysable, $rangeprocessor);
+            }
         }
 
         $result->status = \tool_inspire\model::ANALYSE_OK;
@@ -216,40 +277,89 @@ abstract class base {
         return $result;
     }
 
-    protected function filter_out_analysed_rows($rows, $analysable, $rangeprocessor) {
+    protected function get_prediction_ranges($rangeprocessor) {
+
+        $now = time();
+
+        // We already provided the analysable to the range processor, there is no need to feed it back.
+        $predictionranges = array();
+        foreach ($rangeprocessor->get_all_ranges() as $rangeindex => $range) {
+            if ($rangeprocessor->ready_to_predict($range)) {
+                // We need to maintain the same indexes.
+                $predictionranges[$rangeindex] = $range;
+            }
+        }
+
+        return $predictionranges;
+    }
+
+    protected function filter_out_training_rows($rows, $analysable, $rangeprocessor) {
         global $DB;
 
         $params = array('modelid' => $this->modelid, 'analysableid' => $analysable->get_id(),
             'rangeprocessor' => $rangeprocessor->get_codename());
-        $analysedrows = $DB->get_records('tool_inspire_file_rows', $params);
+
+        $trainingrows = $DB->get_records('tool_inspire_training_rows', $params);
 
         // Skip each file trained rows.
-        foreach ($analysedrows as $analysedfile) {
+        foreach ($trainingrows as $trainingfile) {
 
-            $alreadyanalysedrows = json_decode($analysedfile->rowids, true);
+            $usedrows = json_decode($trainingfile->rowids, true);
 
-            if (!empty($alreadyanalysedrows)) {
-                // Reset $rows to $rows - this field $alreadyanalysedrows.
-                $rows = array_diff_key($rows, $alreadyanalysedrows);
+            if (!empty($usedrows)) {
+                // Reset $rows to $rows - this field $alreadytrainingrows.
+                $rows = array_diff_key($rows, $usedrows);
             }
         }
 
         return $rows;
     }
 
-    protected function save_analysed_rows($rows, $analysable, $rangeprocessor, $file) {
+    protected function filter_out_prediction_ranges($ranges, $analysable, $rangeprocessor) {
         global $DB;
 
-        $filerows = new \stdClass();
-        $filerows->modelid = $this->modelid;
-        $filerows->analysableid = $analysable->get_id();
-        $filerows->rangeprocessor = $rangeprocessor->get_codename();
-        $filerows->fileid = $file->get_id();
+        $params = array('modelid' => $this->modelid, 'analysableid' => $analysable->get_id(),
+            'rangeprocessor' => $rangeprocessor->get_codename());
+
+        $predictedranges = $DB->get_records('tool_inspire_predict_ranges', $params);
+        foreach ($predictedranges as $predictedrange) {
+            if (!empty($ranges[$predictedrange->rangeindex])) {
+                unset($ranges[$predictedrange->rangeindex]);
+            }
+        }
+
+        return $ranges;
+
+    }
+
+    protected function save_training_rows($rows, $analysable, $rangeprocessor, $file) {
+        global $DB;
+
+        $trainingrows = new \stdClass();
+        $trainingrows->modelid = $this->modelid;
+        $trainingrows->analysableid = $analysable->get_id();
+        $trainingrows->rangeprocessor = $rangeprocessor->get_codename();
+        $trainingrows->fileid = $file->get_id();
 
         // TODO We just need the keys, we can save some space by removing the values.
-        $filerows->rowids = json_encode($rows);
-        $filerows->timeanalysed = time();
+        $trainingrows->rowids = json_encode($rows);
+        $trainingrows->timecreated = time();
 
-        return $DB->insert_record('tool_inspire_file_rows', $filerows);
+        return $DB->insert_record('tool_inspire_training_rows', $trainingrows);
+    }
+
+    protected function save_prediction_ranges($ranges, $analysable, $rangeprocessor) {
+        global $DB;
+
+        $predictionrange = new \stdClass();
+        $predictionrange->modelid = $this->modelid;
+        $predictionrange->analysableid = $analysable->get_id();
+        $predictionrange->rangeprocessor = $rangeprocessor->get_codename();
+        $predictionrange->timecreated = time();
+
+        foreach ($ranges as $rangeindex => $unused) {
+            $predictionrange->rangeindex = $rangeindex;
+            $DB->insert_record('tool_inspire_predict_ranges', $predictionrange);
+        }
     }
 }

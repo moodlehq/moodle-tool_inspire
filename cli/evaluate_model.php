@@ -75,23 +75,12 @@ $model = new \tool_inspire\model($modelobj);
 
 mtrace(get_string('evaluatingsitedata', 'tool_inspire'));
 
-// Build the dataset.
 $analyseroptions = array(
-    'evaluation' => true,
     'filter' => $options['filter'],
     'analyseall' => $options['analyseall']
 );
-$results = $model->build_dataset($analyseroptions);
-
-foreach ($results['status'] as $analysableid => $statuscode) {
-    mtrace('Analysable ' . $analysableid . ': Status code ' . $statuscode . '. ');
-    if (!empty($results['messages'][$analysableid])) {
-        mtrace(' - ' . $results['messages'][$analysableid]);
-    }
-}
-
 // Evaluate its suitability to predict accurately.
-$results = $model->evaluate();
+$results = $model->evaluate($analyseroptions);
 
 foreach ($results as $rangeprocessorcodename => $result) {
     mtrace($rangeprocessorcodename . ' results');

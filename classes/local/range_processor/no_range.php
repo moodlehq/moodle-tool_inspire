@@ -15,7 +15,9 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Single range processor.
+ * No range processor.
+ *
+ * Used when time is not a factor to consider into the equation.
  *
  * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
@@ -26,13 +28,17 @@ namespace tool_inspire\local\range_processor;
 
 defined('MOODLE_INTERNAL') || die();
 
-class single_range extends base {
+class no_range extends base {
+
+    public function ready_to_predict($range) {
+        return true;
+    }
 
     protected function define_ranges() {
         return [
             [
-                'start' => $this->analysable->get_start(),
-                'end' => $this->analysable->get_end()
+                'start' => 0,
+                'end' => 999999999
             ]
         ];
     }

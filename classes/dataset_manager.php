@@ -33,7 +33,8 @@ defined('MOODLE_INTERNAL') || die();
  */
 class dataset_manager {
 
-    const FILEAREA = 'datasets';
+    const LABELLED_FILEAREA = 'labelled';
+    const UNLABELLED_FILEAREA = 'unlabelled';
     const EVALUATION_FILENAME = 'evaluation.csv';
 
     /**
@@ -63,15 +64,23 @@ class dataset_manager {
     protected $evaluation;
 
     /**
+     * Labelled (true) or unlabelled data (false).
+     *
+     * @var bool
+     */
+    protected $includetarget;
+
+    /**
      * Simple constructor.
      *
      * @return void
      */
-    public function __construct($modelid, $analysableid, $rangeprocessorcodename, $evaluation = false) {
+    public function __construct($modelid, $analysableid, $rangeprocessorcodename, $evaluation = false, $includetarget = false) {
         $this->modelid = $modelid;
         $this->analysableid = $analysableid;
         $this->rangeprocessor = $rangeprocessorcodename;
         $this->evaluation = $evaluation;
+        $this->includetarget = $includetarget;
     }
 
     /**
@@ -81,7 +90,7 @@ class dataset_manager {
      */
     public function init_process() {
         $lockkey = 'modelid:' . $this->modelid . '-analysableid:' . $this->analysableid .
-            '-rangeprocessor:' . $this->rangeprocessor;
+            '-rangeprocessor:' . $this->rangeprocessor . '-includetarget:' . (int)$this->includetarget;
 
         // Large timeout as processes may be quite long.
         $lockfactory = \core\lock\lock_config::get_lock_factory('tool_inspire');
@@ -103,11 +112,11 @@ class dataset_manager {
         $fs = get_file_storage();
         $filerecord = [
             'component' => 'tool_inspire',
-            'filearea' => self::FILEAREA,
+            'filearea' => self::get_filearea($this->includetarget),
             'itemid' => $this->analysableid,
             'contextid' => \context_system::instance()->id,
             'filepath' => '/' . $this->modelid . '/analysable/' . $this->rangeprocessor . '/',
-            'filename' => self::get_file_name($this->evaluation)
+            'filename' => self::get_filename($this->evaluation)
         ];
 
         $select = " = {$filerecord['itemid']} AND filepath = :filepath";
@@ -140,7 +149,8 @@ class dataset_manager {
 
     public static function get_evaluation_range_file($modelid, $rangeprocessorcodename) {
         $fs = get_file_storage();
-        return $fs->get_file(\context_system::instance()->id, 'tool_inspire', self::FILEAREA,
+        // Evaluation data is always labelled.
+        return $fs->get_file(\context_system::instance()->id, 'tool_inspire', self::LABELLED_FILEAREA,
             self::convert_to_int($rangeprocessorcodename), '/' . $modelid . '/range/' . $rangeprocessorcodename . '/', self::EVALUATION_FILENAME);
     }
 
@@ -160,13 +170,14 @@ class dataset_manager {
      * Important! It is the caller responsability to ensure that the datasets are compatible.
      *
      * @param array  $files
-     * @param bool   $evaluation
      * @param string $filename
      * @param int    $modelid
      * @param string $rangeproceesorcodename
+     * @param bool   $evaluation
+     * @param bool   $includetarget
      * @return \stored_file
      */
-    public static function merge_datasets(array $files, $evaluation, $modelid, $rangeprocessorcodename) {
+    public static function merge_datasets(array $files, $modelid, $rangeprocessorcodename, $evaluation, $includetarget) {
 
         $tmpfilepath = make_request_directory() . DIRECTORY_SEPARATOR . 'tmpfile.csv';
 
@@ -225,11 +236,11 @@ class dataset_manager {
 
         $filerecord = [
             'component' => 'tool_inspire',
-            'filearea' => self::FILEAREA,
+            'filearea' => self::get_filearea($includetarget),
             'itemid' => self::convert_to_int($rangeprocessorcodename),
             'contextid' => \context_system::instance()->id,
             'filepath' => '/' . $modelid . '/range/' . $rangeprocessorcodename . '/',
-            'filename' => self::get_file_name($evaluation)
+            'filename' => self::get_filename($evaluation)
         ];
 
         $fs = get_file_storage();
@@ -251,7 +262,7 @@ class dataset_manager {
         return $sum;
     }
 
-    protected static function get_file_name($evaluation) {
+    protected static function get_filename($evaluation) {
 
         if ($evaluation === true) {
             $filename = self::EVALUATION_FILENAME;
@@ -262,4 +273,16 @@ class dataset_manager {
 
         return $filename;
     }
+
+    protected static function get_filearea($includetarget) {
+
+        if ($includetarget === true) {
+            $filearea = self::LABELLED_FILEAREA;
+        } else {
+            $filearea = self::UNLABELLED_FILEAREA;
+        }
+
+        return $filearea;
+    }
+
 }

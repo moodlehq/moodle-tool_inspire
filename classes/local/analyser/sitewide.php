@@ -37,14 +37,14 @@ abstract class sitewide extends base {
         return new \tool_inspire\site();
     }
 
-    public function analyse() {
+    public function get_analysable_data($includetarget) {
 
         // Here there is a single analysable and it is the system.
         $analysable = $this->get_site();
 
         $return = array();
 
-        list($status, $files, $message) = $this->process_analysable($analysable);
+        list($status, $files, $message) = $this->process_analysable($analysable, $includetarget);
 
         // Needs to be an array of arrays to match the same interface we have when we deal with multiple analysables per site.
         $return = array(
