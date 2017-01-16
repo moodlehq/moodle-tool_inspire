@@ -9,6 +9,7 @@ from sklearn.cross_validation import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve, auc
 from sklearn.linear_model import LogisticRegressionCV
+from sklearn.externals import joblib
 
 from Classifier import Classifier
 from RocCurve import RocCurve
@@ -16,9 +17,9 @@ from LearningCurve import LearningCurve
 
 class BinaryClassifier(Classifier):
 
-    def __init__(self):
+    def __init__(self, modelid, directory):
 
-        super(BinaryClassifier, self).__init__()
+        super(BinaryClassifier, self).__init__(modelid, directory)
 
         self.aucs = []
         self.classes = [1, 0]
@@ -31,17 +32,44 @@ class BinaryClassifier(Classifier):
     def get_log_filename(self):
         if self.log_into_file == False:
             return False
-        return os.path.join(self.dirname, self.get_id() + '.log')
+        return os.path.join(self.dirname, self.get_runid() + '.log')
+
+
+    def train(self, X_train, y_train, classifier=False):
+
+        if classifier == False:
+            # Init the classifier.
+            classifier = self.get_classifier(X_train, y_train)
+
+        # Fit the training set. y should be an array-like.
+        classifier.fit(X_train, y_train[:,0])
+
+        # Returns the trained classifier.
+        return classifier
 
 
     def train_dataset(self, filepath):
 
         [self.X, self.y] = self.get_examples(filepath)
 
-        classifier = self.train(self.X, self.y)
+        # Load the loaded model if it exists.
+        classifierfilepath = os.path.join(self.directory, Classifier.PERSIST_FILENAME)
+        if os.path.isfile(classifierfilepath):
+            classifier = joblib.load(classifierfilepath)
+        else:
+            classifier = False
+
+        trained_classifier = self.train(self.X, self.y, classifier)
+
+        joblib.dump(trained_classifier, classifierfilepath)
+
+        result = dict()
+        result['exitcode'] = 0
+        result['errors'] = []
+        return result
 
 
-    def evaluate_dataset(self, uniqueid, filepath, accepted_phi=0.7, accepted_deviation=0.02, n_test_runs=1):
+    def evaluate_dataset(self, filepath, accepted_phi=0.7, accepted_deviation=0.02, n_test_runs=1):
 
         [self.X, self.y] = self.get_examples(filepath)
         self.scale_x()
@@ -74,14 +102,14 @@ class BinaryClassifier(Classifier):
 
         # Store the roc curve.
         if self.log_into_file:
-            fig_filepath = self.roc_curve_plot.store(self.get_id())
+            fig_filepath = self.roc_curve_plot.store(self.get_runid())
             logging.info("Figure stored in " + fig_filepath)
 
         # Return results.
-        result = self.get_bin_results(accepted_phi, accepted_deviation)
+        result = self.get_evaluation_results(accepted_phi, accepted_deviation)
 
         # Add the run id to identify it in the caller.
-        result['id'] = int(self.get_id())
+        result['runid'] = int(self.get_runid())
 
         logging.info("Accuracy: %.2f%%" % (result['accuracy'] * 100))
         logging.info("Precision (predicted elements that are real): %.2f%%" % (result['precision'] * 100))
@@ -90,17 +118,6 @@ class BinaryClassifier(Classifier):
         logging.info("AUC standard desviation: %.4f" % (result['auc_deviation']))
 
         return result
-
-
-    def train(self, X_train, y_train):
-
-        # Init the classifier.
-        classifier = self.get_classifier(X_train, y_train)
-
-        # Fit the training set. y should be an array-like.
-        classifier.fit(X_train, y_train[:,0])
-
-        return classifier
 
 
     def rate_prediction(self, classifier, X_test, y_test):
@@ -139,8 +156,6 @@ class BinaryClassifier(Classifier):
     def store_model(self):
         # Train the model again now with all the dataset and store the results.
         classifier = self.train(self.X, self.y)
-        np.savetxt(os.path.join(self.dirname, self.get_id() + '.coef.txt'), classifier.coef_)
-        np.savetxt(os.path.join(self.dirname, self.get_id() + '.intercept.txt'), classifier.intercept_)
 
 
     def calculate_metrics(self, y_test_true, y_pred_true):
@@ -177,7 +192,7 @@ class BinaryClassifier(Classifier):
         return [accuracy, precision, recall, phi]
 
 
-    def get_bin_results(self, accepted_phi, accepted_deviation):
+    def get_evaluation_results(self, accepted_phi, accepted_deviation):
 
         avg_accuracy = np.mean(self.accuracies)
         avg_precision = np.mean(self.precisions)
@@ -218,7 +233,7 @@ class BinaryClassifier(Classifier):
 
 
     def store_learning_curve(self):
-        lc = LearningCurve(self.get_id())
+        lc = LearningCurve(self.get_runid())
         lc.set_classifier(self.get_classifier(self.X, self.y))
         lc_filepath = lc.save(self.X, self.y, self.dirname)
         if lc_filepath != False:

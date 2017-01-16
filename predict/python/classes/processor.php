@@ -40,10 +40,38 @@ class processor implements \tool_inspire\predictor {
     const ITERATIONS = 30;
 
     public function train($uniqueid, $datasetpath, $outputdir) {
-        throw new \Exception('Not implemented');
+
+        mtrace('Training ' . $datasetpath . ' dataset');
+
+        $absolutescriptpath = escapeshellarg(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'cli' . DIRECTORY_SEPARATOR .
+            'train-classification-singleclass.py');
+
+        $cmd = 'python ' . $absolutescriptpath . ' ' .
+            escapeshellarg($uniqueid) . ' ' .
+            escapeshellarg($outputdir) . ' ' .
+            escapeshellarg($datasetpath);
+
+        if (debugging()) {
+            mtrace($cmd);
+        }
+
+        $output = null;
+        $exitcode = null;
+        $result = exec($cmd, $output, $exitcode);
+
+        if (!$result) {
+            throw new \moodle_exception('errornopredictresults', 'tool_inspire');
+        }
+
+        if (!$resultobj = json_decode($result)) {
+            throw new \moodle_exception('errorpredictwrongformat', 'tool_inspire', '', json_last_error_msg());
+        }
+
+        return $resultobj;
+
     }
 
-    public function predict($uniqueid, $data, $outputdir) {
+    public function predict($uniqueid, $datasetpath, $outputdir) {
         throw new \Exception('Not implemented');
     }
 
@@ -56,6 +84,7 @@ class processor implements \tool_inspire\predictor {
 
         $cmd = 'python ' . $absolutescriptpath . ' ' .
             escapeshellarg($uniqueid) . ' ' .
+            escapeshellarg($outputdir) . ' ' .
             escapeshellarg($datasetpath) . ' ' .
             escapeshellarg(self::VALIDATION) . ' ' .
             escapeshellarg(self::DEVIATION) . ' ' .

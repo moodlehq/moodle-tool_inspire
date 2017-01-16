@@ -8,13 +8,18 @@ from sklearn import preprocessing
 
 class Classifier(object):
 
+    PERSIST_FILENAME = 'classifier.pkl'
+
     log_into_file = True
 
-    def __init__(self):
+    def __init__(self, modelid, directory):
 
         self.classes = None
 
-        self.runid = str(int(time.time()))
+        self.modelid = modelid
+        self.directory = directory
+
+        self.runid = modelid + '.' + str(int(time.time()))
 
         # We define dirname even though we may not use it.
         self.dirname = os.path.join(os.path.expanduser('~'), self.__class__.__name__)
@@ -32,7 +37,7 @@ class Classifier(object):
         np.set_printoptions(threshold=np.inf)
         np.seterr(all='raise')
 
-    def get_id(self):
+    def get_runid(self):
         return self.runid
 
     def get_examples(self, filepath):

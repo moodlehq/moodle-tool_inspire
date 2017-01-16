@@ -17,16 +17,14 @@ from BinaryClassifierSkflow import BinaryClassifierSkflow
 from BinaryClassifierDNN import BinaryClassifierDNN
 
 # Missing arguments.
-if len(sys.argv) < 7:
+if len(sys.argv) < 4:
     result = dict()
+    result['runid'] = int(binary_classifier.get_runid())
     result['exitcode'] = 1
     result['errors'] = ['Missing arguments, you should set:\
 - The model unique identifier\
 - The directory to store all generated outputs\
 - The training file\
-- The minimum phi value to consider the model as valid\
-- The minimum deviation to accept the model as valid\
-- The number of times the evaluation will run\
 Received: ' + ' '.join(sys.argv)]
 
     # Add the provided unique id.
@@ -50,7 +48,7 @@ binary_classifier = BinaryClassifier(modelid, directory)
 # TensorFlow binary classifier - deep neural network.
 #binary_classifier = BinaryClassifierDNN(modelid, directory)
 
-result = binary_classifier.evaluate_dataset(sys.argv[3], float(sys.argv[4]), float(sys.argv[5]), int(sys.argv[6]))
+result = binary_classifier.train_dataset(sys.argv[3])
 
 print(json.dumps(result))
 sys.exit(result['exitcode'])
