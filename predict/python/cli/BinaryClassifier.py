@@ -49,19 +49,20 @@ class BinaryClassifier(Classifier):
 
 
     def train_dataset(self, filepath):
+        # TODO Move this to Classifier and make it multiple classes compatible.
 
-        [self.X, self.y] = self.get_examples(filepath)
+        [self.X, self.y] = self.get_labelled_samples(filepath)
 
         # Load the loaded model if it exists.
-        classifierfilepath = os.path.join(self.directory, Classifier.PERSIST_FILENAME)
-        if os.path.isfile(classifierfilepath):
-            classifier = joblib.load(classifierfilepath)
+        classifier_filepath = os.path.join(self.directory, Classifier.PERSIST_FILENAME)
+        if os.path.isfile(classifier_filepath) == True:
+            classifier = joblib.load(classifier_filepath)
         else:
             classifier = False
 
         trained_classifier = self.train(self.X, self.y, classifier)
 
-        joblib.dump(trained_classifier, classifierfilepath)
+        joblib.dump(trained_classifier, classifier_filepath)
 
         result = dict()
         result['exitcode'] = 0
@@ -69,9 +70,39 @@ class BinaryClassifier(Classifier):
         return result
 
 
-    def evaluate_dataset(self, filepath, accepted_phi=0.7, accepted_deviation=0.02, n_test_runs=1):
+    def predict_dataset(self, filepath):
+        # TODO Move this to Classifier and make it multiple classes compatible.
 
-        [self.X, self.y] = self.get_examples(filepath)
+        [sampleids, x] = self.get_unlabelled_samples(filepath)
+
+        classifier_filepath = os.path.join(self.directory, Classifier.PERSIST_FILENAME)
+        if os.path.isfile(classifier_filepath) == False:
+            result = dict()
+            result['exitcode'] = 1
+            result['errors'] = ['Provided model have not been trained yet']
+            return result
+
+        classifier = joblib.load(classifier_filepath)
+
+        # Prediction and calculated probability of each of the labels.
+        y_proba = classifier.predict_proba(x)
+        y_pred = classifier.predict(x)
+        # Probabilities of the predicted response being correct.
+        probabilities = y_proba[range(len(y_proba)), y_pred]
+
+        result = dict()
+        result['exitcode'] = 0
+        result['errors'] = []
+        # First column sampleids, second the prediction and third how reliable is the prediction (from 0 to 1).
+        result['predictions'] = np.vstack((sampleids[:,0], y_pred, probabilities)).T.tolist()
+
+        return result
+
+
+    def evaluate_dataset(self, filepath, accepted_phi=0.7, accepted_deviation=0.02, n_test_runs=1):
+        # TODO Move this to Classifier and make it multiple classes compatible.
+
+        [self.X, self.y] = self.get_labelled_samples(filepath)
         self.scale_x()
 
         # Classes balance check.
@@ -79,7 +110,7 @@ class BinaryClassifier(Classifier):
         y_array = np.array(self.y.T[0])
         counts.append(np.count_nonzero(y_array))
         counts.append(len(y_array) - np.count_nonzero(y_array))
-        logging.info('Number of examples by y value: %s' % str(counts))
+        logging.info('Number of samples by y value: %s' % str(counts))
         balanced_classes = self.check_classes_balance(counts)
         if balanced_classes != False:
             logging.warning(balanced_classes)
@@ -93,7 +124,7 @@ class BinaryClassifier(Classifier):
 
         for i in range(0, n_test_runs):
 
-            # Split examples into training set and test set (80% - 20%)
+            # Split samples into training set and test set (80% - 20%)
             X_train, X_test, y_train, y_test = train_test_split(self.X, self.y, test_size=0.2)
 
             classifier = self.train(X_train, y_train)
@@ -147,10 +178,10 @@ class BinaryClassifier(Classifier):
 
         probs = classifier.predict_proba(X_test)
 
-        n_examples = len(y_test)
+        n_samples = len(y_test)
 
-        # Calculated probabilities of the correct response being true.
-        return probs[range(n_examples), y_test]
+        # Calculated probabilities of the correct response.
+        return probs[range(n_samples), y_test]
 
 
     def store_model(self):
@@ -218,7 +249,7 @@ class BinaryClassifier(Classifier):
         auc_deviation = np.std(self.aucs)
         if auc_deviation > accepted_deviation:
             result['errors'].append('The results obtained varied too much,'
-                + ' we need more examples to check if this model is valid.'
+                + ' we need more samples to check if this model is valid.'
                 + ' Model deviation = %f, accepted deviation = %f' \
                 % (auc_deviation, accepted_deviation))
             result['exitcode'] = 1
@@ -254,7 +285,7 @@ class BinaryClassifier(Classifier):
             if len(lgcv.C_) == 1:
                 self.C = lgcv.C_[0]
             else:
-                # Chose the best C = the class with more examples.
+                # Chose the best C = the class with more samples.
                 # Ideally multiclass problems will be multinomial.
                 [values, counts] = np.unique(y[:,0], return_counts=True)
                 self.C = lgcv.C_[np.argmax(counts)]

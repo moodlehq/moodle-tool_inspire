@@ -64,7 +64,7 @@ class processor implements \tool_inspire\predictor {
 
         $fh = fopen($datasetpath, 'r');
 
-        // The first rows are var names and the second one values.
+        // The first lines are var names and the second one values.
         $metadata = fgetcsv($fh);
         $metadata = array_combine($metadata, fgetcsv($fh));
 
@@ -77,8 +77,8 @@ class processor implements \tool_inspire\predictor {
         $samples = array();
         $targets = array();
         while (($data = fgetcsv($fh)) !== false) {
-            $rowdata = array_map('floatval', $data);
-            $samples[] = array_slice($rowdata, 0, $metadata['nfeatures']);
+            $sampledata = array_map('floatval', $data);
+            $samples[] = array_slice($sampledata, 0, $metadata['nfeatures']);
             $targets[] = array(intval($data[$metadata['nfeatures']]));
         }
         fclose($fh);

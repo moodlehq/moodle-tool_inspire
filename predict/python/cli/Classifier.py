@@ -19,7 +19,7 @@ class Classifier(object):
         self.modelid = modelid
         self.directory = directory
 
-        self.runid = modelid + '.' + str(int(time.time()))
+        self.runid = str(int(time.time()))
 
         # We define dirname even though we may not use it.
         self.dirname = os.path.join(os.path.expanduser('~'), self.__class__.__name__)
@@ -40,18 +40,30 @@ class Classifier(object):
     def get_runid(self):
         return self.runid
 
-    def get_examples(self, filepath):
+    def get_labelled_samples(self, filepath):
 
-        examples = np.loadtxt(filepath, delimiter=',', dtype='float', skiprows=4)
-        examples = shuffle(examples)
+        samples = np.loadtxt(filepath, delimiter=',', dtype='float', skiprows=4)
+        samples = shuffle(samples)
 
         # All columns but the last one.
-        X = np.array(examples[:,0:-1])
+        X = np.array(samples[:,0:-1])
 
         # Only the last one and as integer.
-        y = np.array(examples[:,-1:]).astype(int)
+        y = np.array(samples[:,-1:]).astype(int)
 
         return [X, y]
+
+    def get_unlabelled_samples(self, filepath):
+
+        samples = np.loadtxt(filepath, delimiter=',', dtype='float', skiprows=4)
+
+        # Only the first column and as an integer
+        sampleids = np.array(samples[:,0:1]).astype(int)
+
+        # All columns but the first one.
+        x = np.array(samples[:,1:])
+
+        return [sampleids, x]
 
     def check_classes_balance(self, counts):
         for item1 in counts:
@@ -83,7 +95,7 @@ class Classifier(object):
         for i, values in enumerate(Xf):
             Xf[i] = [self.limit_value(x, lower_bounds[i], upper_bounds[i]) for x in Xf[i]]
 
-        # Return to an array by examples.
+        # Return to an array by samples.
         self.X = np.rollaxis(Xf, axis=1)
 
         # Reduce values.
