@@ -40,13 +40,13 @@ class any_access_before_start extends base {
         return CONTEXT_SYSTEM;
     }
 
-    public function calculate_row($row, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
+    public function calculate_sample($sample, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
         global $DB;
         // Filter by context to use the db table index.
         $context = $analysable->get_context();
         $select = "userid = :userid AND contextlevel = :contextlevel AND contextinstanceid = :contextinstanceid AND " .
             "timecreated < :start";
-        $params = array('userid' => $row, 'contextlevel' => $context->contextlevel,
+        $params = array('userid' => $sample, 'contextlevel' => $context->contextlevel,
             'contextinstanceid' => $context->instanceid, 'start' => $analysable->get_start());
         return $DB->record_exists_select('logstore_standard_log', $select, $params) ? self::get_max_value() : self::get_min_value();
     }

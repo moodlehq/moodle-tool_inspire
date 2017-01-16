@@ -36,16 +36,16 @@ defined('MOODLE_INTERNAL') || die();
 abstract class calculable {
 
     /**
-     * Calculation for all provided rows.
+     * Calculation for all provided samples.
      *
-     * @param int $row
+     * @param int $sample
      * @param \tool_inspire\analysable $analysable
      * @param array $data
      * @param int $starttime
      * @param int $endtime
      * @return int[]|float[]
      */
-    abstract public function calculate($rows, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false);
+    abstract public function calculate($samples, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false);
 
     /**
      * Return database records required to perform a calculation, for all course students.

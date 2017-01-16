@@ -57,19 +57,19 @@ abstract class base {
     }
 
     /**
-     * This function is used to check calculables needs against the info provided in the analyser rows.
+     * This function is used to check calculables needs against the info provided in the analyser samples.
      *
      * @return string[]
      */
-    abstract protected function rows_info();
+    abstract protected function samples_info();
 
     /**
-     * This function returns the list of rows that can be calculated.
+     * This function returns the list of samples that can be calculated.
      *
      * @param \tool_inspire\analysable $analysable
      * @return array
      */
-    abstract public function get_all_rows(\tool_inspire\analysable $analysable);
+    abstract public function get_all_samples(\tool_inspire\analysable $analysable);
 
     /**
      * Main analyser method which processes the site analysables.
@@ -99,11 +99,11 @@ abstract class base {
      */
     protected function check_indicators_requirements() {
 
-        $rowsinfo = $this->rows_info();
+        $samplesinfo = $this->samples_info();
 
         foreach ($this->indicators as $indicator) {
             foreach ($indicator::get_requirements() as $requirement) {
-                if (empty($rowsinfo[$requirement])) {
+                if (empty($samplesinfo[$requirement])) {
                     throw new \tool_inspire\requirements_exception($indicator->get_codename() . ' indicator requires ' .
                         $requirement . ' which is not provided by ' . get_class($this));
                 }
@@ -183,11 +183,11 @@ abstract class base {
             return $result;
         }
 
-        // What is a row is defined by the analyser, it can be an enrolment, a course, a user, a question
+        // What is a sample is defined by the analyser, it can be an enrolment, a course, a user, a question
         // attempt... it is on what we will base indicators calculations.
-        $rows = $this->get_all_rows($analysable);
+        $samples = $this->get_all_samples($analysable);
 
-        if (count($rows) === 0) {
+        if (count($samples) === 0) {
             $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;
             $result->message = 'No data available';
             return $result;
@@ -201,7 +201,7 @@ abstract class base {
             $ranges = $this->get_prediction_ranges($rangeprocessor);
         }
 
-        // There is no need to keep track of the evaluated rows and ranges as we always evaluate the whole dataset.
+        // There is no need to keep track of the evaluated samples and ranges as we always evaluate the whole dataset.
         if ($this->options['evaluation'] === false) {
 
             if (empty($ranges)) {
@@ -210,10 +210,10 @@ abstract class base {
                 return $result;
             }
 
-            // We skip all rows that are already part of a training dataset, even if they have noe been used for training yet.
-            $rows = $this->filter_out_training_rows($rows, $analysable, $rangeprocessor);
+            // We skip all samples that are already part of a training dataset, even if they have noe been used for training yet.
+            $samples = $this->filter_out_train_samples($samples, $analysable, $rangeprocessor);
 
-            if (count($rows) === 0) {
+            if (count($samples) === 0) {
                 $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;
                 $result->message = 'No new data available';
                 return $result;
@@ -232,7 +232,7 @@ abstract class base {
             }
         }
 
-        $rangeprocessor->set_rows($rows);
+        $rangeprocessor->set_samples($samples);
 
         $dataset = new \tool_inspire\dataset_manager($this->modelid, $analysable->get_id(), $rangeprocessor->get_codename(),
             $this->options['evaluation'], $includetarget);
@@ -262,10 +262,10 @@ abstract class base {
 
         // No need to keep track of analysed stuff when evaluating.
         if ($this->options['evaluation'] === false) {
-            // Save the rows that have been already analysed so they are not analysed again in future.
+            // Save the samples that have been already analysed so they are not analysed again in future.
 
             if ($includetarget) {
-                $this->save_training_rows($rows, $analysable, $rangeprocessor, $file);
+                $this->save_train_samples($samples, $analysable, $rangeprocessor, $file);
             } else {
                 $this->save_prediction_ranges($ranges, $analysable, $rangeprocessor);
             }
@@ -293,26 +293,26 @@ abstract class base {
         return $predictionranges;
     }
 
-    protected function filter_out_training_rows($rows, $analysable, $rangeprocessor) {
+    protected function filter_out_train_samples($samples, $analysable, $rangeprocessor) {
         global $DB;
 
         $params = array('modelid' => $this->modelid, 'analysableid' => $analysable->get_id(),
             'rangeprocessor' => $rangeprocessor->get_codename());
 
-        $trainingrows = $DB->get_records('tool_inspire_training_rows', $params);
+        $trainingsamples = $DB->get_records('tool_inspire_train_samples', $params);
 
-        // Skip each file trained rows.
-        foreach ($trainingrows as $trainingfile) {
+        // Skip each file trained samples.
+        foreach ($trainingsamples as $trainingfile) {
 
-            $usedrows = json_decode($trainingfile->rowids, true);
+            $usedsamples = json_decode($trainingfile->sampleids, true);
 
-            if (!empty($usedrows)) {
-                // Reset $rows to $rows - this field $alreadytrainingrows.
-                $rows = array_diff_key($rows, $usedrows);
+            if (!empty($usedsamples)) {
+                // Reset $samples to $samples minus this file's $usedsamples.
+                $samples = array_diff_key($samples, $usedsamples);
             }
         }
 
-        return $rows;
+        return $samples;
     }
 
     protected function filter_out_prediction_ranges($ranges, $analysable, $rangeprocessor) {
@@ -332,20 +332,20 @@ abstract class base {
 
     }
 
-    protected function save_training_rows($rows, $analysable, $rangeprocessor, $file) {
+    protected function save_train_samples($samples, $analysable, $rangeprocessor, $file) {
         global $DB;
 
-        $trainingrows = new \stdClass();
-        $trainingrows->modelid = $this->modelid;
-        $trainingrows->analysableid = $analysable->get_id();
-        $trainingrows->rangeprocessor = $rangeprocessor->get_codename();
-        $trainingrows->fileid = $file->get_id();
+        $trainingsamples = new \stdClass();
+        $trainingsamples->modelid = $this->modelid;
+        $trainingsamples->analysableid = $analysable->get_id();
+        $trainingsamples->rangeprocessor = $rangeprocessor->get_codename();
+        $trainingsamples->fileid = $file->get_id();
 
         // TODO We just need the keys, we can save some space by removing the values.
-        $trainingrows->rowids = json_encode($rows);
-        $trainingrows->timecreated = time();
+        $trainingsamples->sampleids = json_encode($samples);
+        $trainingsamples->timecreated = time();
 
-        return $DB->insert_record('tool_inspire_training_rows', $trainingrows);
+        return $DB->insert_record('tool_inspire_train_samples', $trainingsamples);
     }
 
     protected function save_prediction_ranges($ranges, $analysable, $rangeprocessor) {

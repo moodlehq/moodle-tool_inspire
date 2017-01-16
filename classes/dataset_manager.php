@@ -126,8 +126,8 @@ class dataset_manager {
         // Write all this stuff to a tmp file.
         $filepath = make_request_directory() . DIRECTORY_SEPARATOR . $filerecord['filename'];
         $fh = fopen($filepath, 'w+');
-        foreach ($data as $row) {
-            fputcsv($fh, $row);
+        foreach ($data as $line) {
+            fputcsv($fh, $line);
         }
         fclose($fh);
 

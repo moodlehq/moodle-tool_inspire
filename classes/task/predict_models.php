@@ -38,5 +38,28 @@ class predict_models extends \core\task\scheduled_task {
     }
 
     public function execute() {
+        global $DB;
+
+        $models = $DB->get_records_select('tool_inspire_models', 'enabled = 1 AND trained = 1 AND rangeprocessor IS NOT NULL');
+        if (!$models) {
+            mtrace(get_string('errornoenabledandtrainedmodels', 'tool_inspire'));
+            return;
+        }
+
+        foreach ($models as $modelobj) {
+            $model = new \tool_inspire\model($modelobj);
+            $results = $model->predict();
+
+            foreach ($results as $rangeprocessorcodename => $result) {
+                mtrace($rangeprocessorcodename . ' results:');
+                mtrace(' - Status code: ' . $result->status);
+                if (!empty($result->errors)) {
+                    foreach ($result->errors as $error) {
+                        mtrace('   - ' . $error);
+                    }
+                }
+            }
+        }
+
     }
 }

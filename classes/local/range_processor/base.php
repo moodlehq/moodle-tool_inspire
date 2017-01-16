@@ -42,7 +42,7 @@ abstract class base {
     /**
      * @var array
      */
-    protected $rows;
+    protected $samples;
 
     /**
      * @var array
@@ -84,8 +84,8 @@ abstract class base {
         $this->analysable = $analysable;
     }
 
-    public function set_rows($rows) {
-        $this->rows = $rows;
+    public function set_samples($samples) {
+        $this->samples = $samples;
     }
 
     /**
@@ -137,19 +137,19 @@ abstract class base {
         $calculatedtarget = false;
         if ($target) {
             // We first calculate the target because analysable data may still be invalid, we need to stop if it is not.
-            $calculatedtarget = $target->calculate($this->rows, $this->analysable, $this->storage);
+            $calculatedtarget = $target->calculate($this->samples, $this->analysable, $this->storage);
 
-            // We remove rows we can not calculate their target.
-            $this->rows = array_filter($this->rows, function($row) use ($calculatedtarget) {
-                if (is_null($calculatedtarget[$row])) {
+            // We remove samples we can not calculate their target.
+            $this->samples = array_filter($this->samples, function($sample) use ($calculatedtarget) {
+                if (is_null($calculatedtarget[$sample])) {
                     return false;
                 }
                 return true;
             });
         }
 
-        // No need to continue calculating if the target couldn't be calculated for any row.
-        if (empty($this->rows)) {
+        // No need to continue calculating if the target couldn't be calculated for any sample.
+        if (empty($this->samples)) {
             return false;
         }
 
@@ -173,36 +173,36 @@ abstract class base {
      */
     protected function calculate_indicators(&$dataset, $indicators, $ranges) {
 
-        // Fill the dataset rows with indicators data.
+        // Fill the dataset samples with indicators data.
         foreach ($indicators as $indicator) {
 
             // Per-range calculations.
             foreach ($ranges as $rangeindex => $range) {
 
-                // Calculate the indicator for each example in this time range.
-                $calculated = $indicator->calculate($this->rows, $this->analysable, $this->storage, $range['start'], $range['end']);
+                // Calculate the indicator for each sample in this time range.
+                $calculated = $indicator->calculate($this->samples, $this->analysable, $this->storage, $range['start'], $range['end']);
 
                 // Copy the calculated data to the dataset.
-                foreach ($calculated as $analyserrowid => $calculatedvalue) {
+                foreach ($calculated as $analysersampleid => $calculatedvalue) {
 
-                    $uniquerowid = $this->append_rangeindex($analyserrowid, $rangeindex);
+                    $uniquesampleid = $this->append_rangeindex($analysersampleid, $rangeindex);
 
-                    // Init the row if it is still empty.
-                    if (!isset($dataset[$uniquerowid])) {
-                        $dataset[$uniquerowid] = [];
+                    // Init the sample if it is still empty.
+                    if (!isset($dataset[$uniquesampleid])) {
+                        $dataset[$uniquesampleid] = [];
                     }
 
-                    // Append the indicator at the end of the row.
-                    $dataset[$uniquerowid][] = $calculatedvalue;
+                    // Append the indicator at the end of the sample.
+                    $dataset[$uniquesampleid][] = $calculatedvalue;
                 }
             }
         }
     }
 
     /**
-     * Adds time range indicators and the target to each row.
+     * Adds time range indicators and the target to each sample.
      *
-     * This will identify the row as belonging to a specific range.
+     * This will identify the sample as belonging to a specific range.
      *
      * @return void
      */
@@ -210,13 +210,13 @@ abstract class base {
 
         $nranges = count($ranges);
 
-        foreach ($dataset as $uniquerowid => $row) {
+        foreach ($dataset as $uniquesampleid => $sample) {
 
-            list($analyserrowid, $rangeindex) = $this->infer_row_info($uniquerowid);
+            list($analysersampleid, $rangeindex) = $this->infer_sample_info($uniquesampleid);
 
             if ($calculatedtarget) {
-                // Add this rowid's calculated target.
-                $dataset[$uniquerowid][] = $calculatedtarget[$analyserrowid];
+                // Add this sampleid's calculated target.
+                $dataset[$uniquesampleid][] = $calculatedtarget[$analysersampleid];
             }
 
             // No need to add range features if there is only 1 range.
@@ -227,7 +227,7 @@ abstract class base {
 
                 $rangeindicators[$rangeindex] = 1;
 
-                $dataset[$uniquerowid] = array_merge($rangeindicators, $dataset[$uniquerowid]);
+                $dataset[$uniquesampleid] = array_merge($rangeindicators, $dataset[$uniquesampleid]);
             }
         }
     }
@@ -253,13 +253,13 @@ abstract class base {
         // Metadata is mainly provided by the analysable.
         $metadata = array(
             'rangeprocessor' => $this->get_codename(),
-            'nfeatures' => count(current($dataset)) - 1, // We skip the target row.
+            'nfeatures' => count(current($dataset)) - 1, // We skip the target column.
             'targetclasses' => json_encode($target->get_classes()),
             'targettype' => ($target->is_linear()) ? 'linear' : 'discrete'
         );
         $metadata = array_merge($metadata, $this->analysable->get_metadata());
 
-        // The first 2 rows will be used to store metadata about the dataset.
+        // The first 2 samples will be used to store metadata about the dataset.
         $metadatacolumns = [];
         $metadatavalues = [];
         foreach ($metadata as $key => $value) {
@@ -269,7 +269,7 @@ abstract class base {
 
         $headers = $this->get_columns_headers($indicators, $ranges, $target);
 
-        // This will also reset examples' dataset keys.
+        // This will also reset samples' dataset keys.
         array_unshift($dataset, $metadatacolumns, $metadatavalues, $headers);
     }
 
@@ -286,12 +286,12 @@ abstract class base {
         return $this->ranges;
     }
 
-    protected function append_rangeindex($rowid, $rangeindex) {
-        return $rowid . '-' . $rangeindex;
+    protected function append_rangeindex($sampleid, $rangeindex) {
+        return $sampleid . '-' . $rangeindex;
     }
 
-    protected function infer_row_info($rowid) {
-        return explode('-', $rowid);
+    protected function infer_sample_info($sampleid) {
+        return explode('-', $sampleid);
     }
 
     protected function get_columns_headers($indicators, $ranges, $target = false) {

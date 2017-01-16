@@ -87,8 +87,8 @@ class course_completion extends base {
         return true;
     }
 
-    public function calculate_row($row, \tool_inspire\analysable $analysable, $data) {
-        $ccompletion = new completion_completion(array('userid' => $row, 'course' => $analysable->get_id()));
+    public function calculate_sample($sample, \tool_inspire\analysable $analysable, $data) {
+        $ccompletion = new completion_completion(array('userid' => $sample, 'course' => $analysable->get_id()));
         return $ccompletion->is_complete() ? 1 : 0;
     }
 }

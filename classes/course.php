@@ -77,16 +77,18 @@ class course implements \tool_inspire\analysable {
 
         $this->coursecontext = \context_course::instance($this->course->id);
 
-        $this->studentroles = explode(',', get_config('tool_inspire', 'studentroles'));
+        $studentroles = get_config('tool_inspire', 'studentroles');
+        $teacherroles = get_config('tool_inspire', 'teacherroles');
 
-        $this->teacherroles = explode(',', get_config('tool_inspire', 'teacherroles'));
-
-        $this->now = time();
-
-        if (empty($this->studentroles) || empty($this->teacherroles)) {
+        if (empty($studentroles) || empty($teacherroles)) {
             // Unexpected, site settings should be set with default values.
             throw new \moodle_exception('errornoroles', 'tool_inspire');
         }
+
+        $this->studentroles = explode(',', $studentroles);
+        $this->teacherroles = explode(',', $teacherroles);
+
+        $this->now = time();
 
         // Get the course users, including users assigned to student and teacher roles at an higher context.
         $this->studentids = $this->get_user_ids($this->studentroles);

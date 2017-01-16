@@ -301,8 +301,6 @@ class model {
         $analyser = $this->get_analyser();
         $samplesdata = $analyser->get_unlabelled_data();
 
-        $results = array();
-
         foreach ($samplesdata['files'] as $rangeprocessorcodename => $samples) {
 
             // From moodle filesystem to the file system.
@@ -320,11 +318,11 @@ class model {
             $result->errors = $predictorresult->errors;
             $result->predictions = $predictorresult->predictions;
 
-            $results[$rangeprocessorcodename] = $result;
-
+            foreach ($result->predictions as $predictionline) {
+                list($sampleid, $prediction, $predictionscore) = $predictionline;
+            }
             // TODO Mark the file as predicted.
         }
-var_dump($results);
     }
 
     public function enable($rangeprocessorcodename = false) {

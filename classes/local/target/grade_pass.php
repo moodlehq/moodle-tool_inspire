@@ -91,9 +91,9 @@ class grade_pass extends base {
         return true;
     }
 
-    public function calculate_row($row, \tool_inspire\analysable $analysable, $data) {
+    public function calculate_sample($sample, \tool_inspire\analysable $analysable, $data) {
 
-        $params = array('userid' => $row, 'itemid' => self::$coursegradeitems[$data['course']->id]->id);
+        $params = array('userid' => $sample, 'itemid' => self::$coursegradeitems[$data['course']->id]->id);
         $grade = \grade_grade::fetch($params);
         if (!$grade || !$grade->finalgrade) {
             // Not valid.
