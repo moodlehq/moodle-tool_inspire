@@ -46,6 +46,10 @@ class course_completion extends base {
         return array(0, 1);
     }
 
+    protected function get_callback_classes() {
+        return array(0);
+    }
+
     public function get_analyser_class() {
         return '\\tool_inspire\\local\\analyser\\enrolment';
     }

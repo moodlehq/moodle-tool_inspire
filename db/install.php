@@ -36,6 +36,7 @@ function xmldb_tool_inspire_install() {
     $model->codename = 'dropout';
     $model->target = '\tool_inspire\local\target\grade_pass';
     $model->indicators = 'IGNORED, HARDCODED IN CODE';
+    $model->predictionminscore = 0.7;
     $model->timecreated = time();
     $model->timemodified = time();
     $model->usermodified = $USER->id;

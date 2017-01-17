@@ -73,15 +73,52 @@ abstract class base extends \tool_inspire\calculable {
     abstract protected function calculate_sample($sample, \tool_inspire\analysable $analysable, $data);
 
     /**
+     * Callback to execute once a prediction has been returned from the predictions processor.
+     *
+     * @param int $sampleid
+     * @param float $prediction
+     * @return void
+     */
+    abstract public function callback($sampleid, $prediction);
+
+    /**
      * Returns the target discrete values.
      *
      * Only useful for targets using discrete values, must be overwriten if it is the case.
      *
      * @return array
      */
-    protected function get_classes() {
+    public function get_classes() {
         // Coding exception as this will only be called if this target have non-linear values.
         throw new \coding_exception('Overwrite get_classes() and return an array with the different target classes');
+    }
+
+    /**
+     * Returns the classes that will trigger a callback.
+     *
+     * Better be keen to add more than less classes here, the callback is always able to discard some classes. As an example
+     * a target with classes 'grade 0-3', 'grade 3-6', 'grade 6-8' and 'grade 8-10' is interested in flagging both 'grade 0-3'
+     * and 'grade 3-6'. On the other hand, a target like dropout risk with classes 'yes', 'no' may just be interested in 'yes'.
+     *
+     * @return array
+     */
+    protected function get_callback_classes() {
+        // Coding exception as this will only be called if this target have non-linear values.
+        throw new \coding_exception('Overwrite get_callback_classes() and return an array with the classes that triggers ' .
+            'the callback');
+    }
+
+    /**
+     * Should the model callback be triggered?
+     *
+     * @param mixed $class
+     * @return bool
+     */
+    public function triggers_callback($class) {
+        if (in_array($class, $this->get_callback_classes())) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -102,6 +139,17 @@ abstract class base extends \tool_inspire\calculable {
     protected static function get_min_value() {
         // Coding exception as this will only be called if this target have linear values.
         throw new \coding_exception('Overwrite get_min_value() and return the target min value');
+    }
+
+    /**
+     * Returns the minimum value that triggers the callback.
+     *
+     * @return float
+     */
+    protected function get_callback_boundary() {
+        // Coding exception as this will only be called if this target have linear values.
+        throw new \coding_exception('Overwrite get_callback_boundary() and return the min value that ' .
+            'should trigger the callback');
     }
 
     protected function is_a_class($class) {

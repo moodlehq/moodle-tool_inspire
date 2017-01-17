@@ -52,6 +52,19 @@ class model {
 
     protected $model = null;
 
+    /**
+     * @var \tool_inspire\local\target\base
+     */
+    protected $target = null;
+
+    /**
+     * Unique Model id created from site info and last model modification time.
+     *
+     * It is the id that is passed to prediction processors so the same prediction
+     * processor can be used for multiple moodle sites.
+     *
+     * @var string
+     */
     protected $uniqueid = null;
 
     public function __construct($model) {
@@ -59,8 +72,11 @@ class model {
     }
 
     protected function get_target() {
-        $classname = $this->model->target;
-        return new $classname();
+        if ($this->target === null) {
+            $classname = $this->model->target;
+            $this->target = new $classname();
+        }
+        return $this->target;
     }
 
     protected function get_indicators() {
@@ -82,7 +98,7 @@ class model {
         return $indicators;
     }
 
-    public function get_analyser($options) {
+    public function get_analyser($options = array()) {
 
         $target = $this->get_target();
         $indicators = $this->get_indicators();
@@ -311,15 +327,43 @@ class model {
             $outputdir = $this->get_output_dir($rangeprocessorcodename);
 
             $predictor = $this->get_predictions_processor();
-            $predictorresult = $predictor->predict($this->get_unique_id(), $filepath);
+            $predictorresult = $predictor->predict($this->get_unique_id(), $filepath, $outputdir);
 
             $result = new \stdClass();
             $result->status = self::PREDICT_OK;
             $result->errors = $predictorresult->errors;
             $result->predictions = $predictorresult->predictions;
 
-            foreach ($result->predictions as $predictionline) {
-                list($sampleid, $prediction, $predictionscore) = $predictionline;
+            foreach ($result->predictions as $sampleinfo) {
+
+                switch (count($sampleinfo)) {
+                    case 1:
+                        // For whatever reason the predictions processor could not process this sample, we
+                        // skip it and do nothing with it.
+                        debugging($this->model->id . ' model predictions processor could not process the sample with id ' .
+                            $sampleinfo[0], DEBUG_DEVELOPER);
+                        continue;
+                    case 2:
+                        // Prediction processors that do not return a prediction score will have the maximum prediction
+                        // score.
+                        list($sampleid, $prediction) = $sampleinfo;
+                        $predictionscore = 1;
+                        break;
+                    case 3:
+                        list($sampleid, $prediction, $predictionscore) = $sampleinfo;
+                        break;
+                    default:
+                        break;
+                }
+
+                // The prediction should be reliable enough according to how the model was designed.
+                if (floatval($predictionscore) < floatval($this->model->predictionminscore)) {
+                    continue;
+                }
+
+                if ($this->get_target()->triggers_callback($prediction)) {
+                    $this->get_target()->callback($sampleid, $prediction);
+                }
             }
             // TODO Mark the file as predicted.
         }
