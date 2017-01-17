@@ -36,7 +36,7 @@ require_once($CFG->dirroot . '/completion/completion_completion.php');
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class course_completion extends base {
+class course_completion extends discrete {
 
     public function is_linear() {
         return false;

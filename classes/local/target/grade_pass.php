@@ -37,7 +37,7 @@ require_once($CFG->dirroot . '/lib/grade/constants.php');
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class grade_pass extends base {
+class grade_pass extends discrete {
 
     protected static $coursegradeitems = array();
 
