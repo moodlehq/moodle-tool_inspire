@@ -39,8 +39,8 @@ class user_profile_set extends base {
         return ['user'];
     }
 
-    public function calculate_sample($sample, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
-        $user = $data['user'][$sample];
+    public function calculate_sample($sampleid, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
+        $user = $data['user'][$sampleid];
 
         // Nothing set results in -1.
         $calculatedvalue = self::MIN_VALUE;

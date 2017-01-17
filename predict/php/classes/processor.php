@@ -54,11 +54,11 @@ class processor implements \tool_inspire\predictor {
         throw new \Exception('Not implemented');
     }
 
-    public function predict($uniqueid, $data, $outputdir) {
+    public function predict($uniqueid, $datasetpath, $outputdir) {
         throw new \Exception('Not implemented');
     }
 
-    function evaluate($uniqueid, $datasetpath, $outputdir) {
+    public function evaluate($uniqueid, $datasetpath, $outputdir) {
 
         mtrace('Evaluating ' . $datasetpath . ' dataset');
 

@@ -95,9 +95,9 @@ class grade_pass extends discrete {
         return true;
     }
 
-    public function calculate_sample($sample, \tool_inspire\analysable $analysable, $data) {
+    public function calculate_sample($sampleid, \tool_inspire\analysable $analysable, $data) {
 
-        $params = array('userid' => $sample, 'itemid' => self::$coursegradeitems[$data['course']->id]->id);
+        $params = array('userid' => $sampleid, 'itemid' => self::$coursegradeitems[$data['course']->id]->id);
         $grade = \grade_grade::fetch($params);
         if (!$grade || !$grade->finalgrade) {
             // Not valid.
@@ -131,7 +131,7 @@ class grade_pass extends discrete {
         return $class;
     }
 
-    public static function callback($sampleid, $prediction) {
+    public function callback($sampleid, $prediction) {
         var_dump('AAAAAAAAAAAAAAA: ' . $sampleid . '-' . $prediction);
     }
 }

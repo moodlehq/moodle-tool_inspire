@@ -39,7 +39,7 @@ class user_track_forums extends base {
         return ['user'];
     }
 
-    public function calculate_sample($sample, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
-        return ($data['user'][$sample]->trackforums) ? self::get_max_value() : self::get_min_value();
+    public function calculate_sample($sampleid, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
+        return ($data['user'][$sampleid]->trackforums) ? self::get_max_value() : self::get_min_value();
     }
 }

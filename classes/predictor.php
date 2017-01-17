@@ -37,7 +37,7 @@ interface predictor {
 
     public function train($modelid, $datasetpath, $outputdir);
 
-    public function predict($modelid, $data, $outputdir);
+    public function predict($modelid, $datasetpath, $outputdir);
 
     public function evaluate($modelid, $datasetpath, $outputdir);
 }

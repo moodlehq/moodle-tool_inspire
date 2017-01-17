@@ -39,13 +39,13 @@ class any_write_action extends base {
         return ['course', 'user'];
     }
 
-    public function calculate_sample($sample, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
+    public function calculate_sample($sampleid, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
         global $DB;
         // Filter by context to use the db table index.
         $context = $analysable->get_context();
         $select = "userid = :userid AND contextlevel = :contextlevel AND contextinstanceid = :contextinstanceid AND " .
             "(crud = 'c' OR crud = 'u') AND timecreated > :starttime AND timecreated <= :endtime";
-        $params = array('userid' => $sample, 'contextlevel' => $context->contextlevel,
+        $params = array('userid' => $sampleid, 'contextlevel' => $context->contextlevel,
             'contextinstanceid' => $context->instanceid, 'starttime' => $starttime, 'endtime' => $endtime);
         return $DB->record_exists_select('logstore_standard_log', $select, $params) ? self::get_max_value() : self::get_min_value();
     }

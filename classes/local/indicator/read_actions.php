@@ -39,13 +39,13 @@ class read_actions extends base {
         return ['course', 'user'];
     }
 
-    public function calculate_sample($sample, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
+    public function calculate_sample($sampleid, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
         global $DB;
         // Filter by context to use the db table index.
         $context = $analysable->get_context();
         $select = "userid = :userid AND contextlevel = :contextlevel AND contextinstanceid = :contextinstanceid AND " .
             "crud = 'r' AND timecreated > :starttime AND timecreated <= :endtime";
-        $params = array('userid' => $sample, 'contextlevel' => $context->contextlevel,
+        $params = array('userid' => $sampleid, 'contextlevel' => $context->contextlevel,
             'contextinstanceid' => $context->instanceid, 'starttime' => $starttime, 'endtime' => $endtime);
         $nrecords = $DB->count_records_select('logstore_standard_log', $select, $params);
 

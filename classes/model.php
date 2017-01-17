@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Inspire tool manager
+ * Inspire tool model representation.
  *
  * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
@@ -27,7 +27,7 @@ namespace tool_inspire;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Inspire tool site manager.
+ * Inspire tool model representation.
  *
  * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
@@ -79,19 +79,18 @@ class model {
         return $this->target;
     }
 
-    protected function get_indicators() {
+    public function get_indicators() {
+        $fullclassnames = json_decode($this->model->indicators);
 
-        $indicators = [];
+        if (!$fullclassnames || !is_array($fullclassnames)) {
+            throw new \coding_exception('Model ' . $this->model->codename . ' indicators can not be read');
+        }
 
-        // TODO Read the model indicators instead of read all indicators in the folder.
-        $classes = \core_component::get_component_classes_in_namespace('tool_inspire', 'local\\indicator');
-        foreach ($classes as $fullclassname => $classpath) {
-
-            // Discard abstract classes and others.
-            if (is_subclass_of($fullclassname, 'tool_inspire\local\indicator\base')) {
-                if ((new \ReflectionClass($fullclassname))->isInstantiable()) {
-                    $indicators[$fullclassname] = new $fullclassname();
-                }
+        $indicators = array();
+        foreach ($fullclassnames as $fullclassname) {
+            $instance = \tool_inspire\manager::get_indicator($fullclassname);
+            if ($instance) {
+                $indicators[$fullclassname] = $instance;
             }
         }
 
@@ -105,7 +104,7 @@ class model {
 
         if (!empty($options['evaluation'])) {
             // We try all available range processors.
-            $rangeprocessors = $this->get_all_range_processors();
+            $rangeprocessors = \tool_inspire\manager::get_all_range_processors();
         } else {
 
             if (empty($this->model->rangeprocessor)) {
@@ -116,7 +115,7 @@ class model {
             $fullclassname = '\\tool_inspire\\local\\range_processor\\' . $this->model->rangeprocessor;
 
             // Returned as an array in case we decide to allow multiple range processors enabled for a single model.
-            $rangeprocessors = array($this->get_range_processor($fullclassname));
+            $rangeprocessors = array(\tool_inspire\manager::get_range_processor($fullclassname));
         }
 
         if (empty($target)) {
@@ -138,46 +137,6 @@ class model {
 
         // Returns a \tool_inspire\local\analyser\base class.
         return new $classname($this->model->id, $target, $indicators, $rangeprocessors, $options);
-    }
-
-    /**
-     * Get all available range processors.
-     *
-     * @return \tool_inspire\range_processor\base[]
-     */
-    protected function get_all_range_processors() {
-
-        // TODO: It should be able to search range processors in other plugins.
-        $classes = \core_component::get_component_classes_in_namespace('tool_inspire', 'local\\range_processor');
-
-        $rangeprocessors = [];
-        foreach ($classes as $fullclassname => $classpath) {
-            if (self::is_valid_range_processor($fullclassname)) {
-                $instance = $this->get_range_processor($fullclassname);
-                $rangeprocessors[$instance->get_codename()] = $instance;
-            }
-        }
-
-        return $rangeprocessors;
-    }
-
-    protected function get_range_processor($fullclassname) {
-        return new $fullclassname();
-    }
-
-    /**
-     * is_valid_range_processor
-     *
-     * @param string $fullclassname
-     * @return bool
-     */
-    protected static function is_valid_range_processor($fullclassname) {
-        if (is_subclass_of($fullclassname, '\tool_inspire\local\range_processor\base')) {
-            if ((new \ReflectionClass($fullclassname))->isInstantiable()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
@@ -212,7 +171,7 @@ class model {
 
         $results = array();
 
-        foreach ($this->get_all_range_processors() as $rangeprocessor) {
+        foreach (\tool_inspire\manager::get_all_range_processors() as $rangeprocessor) {
 
             $result = new \stdClass();
 
@@ -238,7 +197,7 @@ class model {
             $result->dataset = $filepath;
 
             $outputdir = $this->get_output_dir($rangeprocessor->get_codename());
-            $predictor = $this->get_predictions_processor();
+            $predictor = \tool_inspire\manager::get_predictions_processor();
 
             // Evaluate the dataset.
             $predictorresult = $predictor->evaluate($this->model->id, $filepath, $outputdir);
@@ -287,7 +246,7 @@ class model {
             $filepath = $dataset->copy_content_to_temp($dir);
 
             $outputdir = $this->get_output_dir($rangeprocessorcodename);
-            $predictor = $this->get_predictions_processor();
+            $predictor = \tool_inspire\manager::get_predictions_processor();
 
             // Train using the dataset.
             $predictorresult = $predictor->train($this->get_unique_id(), $filepath, $outputdir);
@@ -297,7 +256,7 @@ class model {
 
             $results[$rangeprocessorcodename] = $result;
 
-            // TODO Mark the file as trained.
+            $this->flag_file_as_used($dataset, 'trained');
         }
 
         // Mark the model as trained if it wasn't.
@@ -317,16 +276,16 @@ class model {
         $analyser = $this->get_analyser();
         $samplesdata = $analyser->get_unlabelled_data();
 
-        foreach ($samplesdata['files'] as $rangeprocessorcodename => $samples) {
+        foreach ($samplesdata['files'] as $rangeprocessorcodename => $samplesfile) {
 
             // From moodle filesystem to the file system.
             // TODO This is not ideal, but it seems that there is no read access to moodle filesystem files.
             $dir = make_request_directory();
-            $filepath = $samples->copy_content_to_temp($dir);
+            $filepath = $samplesfile->copy_content_to_temp($dir);
 
             $outputdir = $this->get_output_dir($rangeprocessorcodename);
 
-            $predictor = $this->get_predictions_processor();
+            $predictor = \tool_inspire\manager::get_predictions_processor();
             $predictorresult = $predictor->predict($this->get_unique_id(), $filepath, $outputdir);
 
             $result = new \stdClass();
@@ -365,7 +324,8 @@ class model {
                     $this->get_target()->callback($sampleid, $prediction);
                 }
             }
-            // TODO Mark the file as predicted.
+
+            $this->flag_file_as_used($samplesfile, 'predicted');
         }
     }
 
@@ -387,12 +347,6 @@ class model {
 
         $this->model->trained = 1;
         $DB->update_record('tool_inspire_models', $this->model);
-    }
-
-    protected function get_predictions_processor() {
-        // TODO Select it based on a config setting.
-        return new \predict_python\processor();
-        //return new \predict_php\processor();
     }
 
     protected function get_output_dir($subdir = false) {
@@ -430,5 +384,16 @@ class model {
         $this->uniqueid = sha1(implode('$$', $ids));
 
         return $this->uniqueid;
+    }
+
+    protected function flag_file_as_used(\stored_file $file, $action) {
+        global $DB;
+
+        $usedfile = new \stdClass();
+        $usedfile->modelid = $this->model->id;
+        $usedfile->fileid = $file->get_id();
+        $usedfile->action = $action;
+        $usedfile->time = time();
+        $DB->insert_record('tool_inspire_used_files', $usedfile);
     }
 }

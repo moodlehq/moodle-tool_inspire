@@ -70,7 +70,7 @@ abstract class base extends \tool_inspire\calculable {
      * @param array $data
      * @return float|null
      */
-    abstract protected function calculate_sample($sample, \tool_inspire\analysable $analysable, $data);
+    abstract protected function calculate_sample($sampleid, \tool_inspire\analysable $analysable, $data);
 
     /**
      * Callback to execute once a prediction has been returned from the predictions processor.
@@ -116,7 +116,7 @@ abstract class base extends \tool_inspire\calculable {
 
         $calculations = [];
         foreach ($samples as $sampleid => $sample) {
-            $calculatedvalue = $this->calculate_sample($sample, $analysable, $data);
+            $calculatedvalue = $this->calculate_sample($sampleid, $analysable, $data);
 
             if (!is_null($calculatedvalue)) {
                 if ($this->is_linear() && ($calculatedvalue > self::get_max_value() || $calculatedvalue < self::get_min_value())) {

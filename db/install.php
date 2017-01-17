@@ -32,10 +32,13 @@ defined('MOODLE_INTERNAL') || die();
 function xmldb_tool_inspire_install() {
     global $DB, $USER;
 
+    // TODO All of them for the moment, we will define a limited set once ready to release.
+    $indicators = \tool_inspire\manager::get_all_indicators();
+
     $model = new stdClass();
     $model->codename = 'dropout';
     $model->target = '\tool_inspire\local\target\grade_pass';
-    $model->indicators = 'IGNORED, HARDCODED IN CODE';
+    $model->indicators = json_encode(array_keys($indicators));
     $model->predictionminscore = 0.7;
     $model->timecreated = time();
     $model->timemodified = time();
