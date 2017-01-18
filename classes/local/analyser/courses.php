@@ -17,7 +17,7 @@
 /**
  *
  * @package   tool_inspire
- * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
+ * @copyright 2017 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -28,8 +28,24 @@ defined('MOODLE_INTERNAL') || die();
 /**
  *
  * @package   tool_inspire
- * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
+ * @copyright 2017 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class course extends sitewide {
+class courses extends sitewide {
+
+    protected function samples_info() {
+        return array(
+            'course' => 'courseid'
+        );
+    }
+
+    public function get_all_samples(\tool_inspire\analysable $site) {
+        global $DB;
+
+        // Getting courses from DB instead of from the site as these samples
+        // will be stored in memory and we just want the id.
+        $select = 'id != 1';
+        return array_keys($DB->get_records_select('course', $select, null, 'sortorder', 'id'));
+    }
+
 }
