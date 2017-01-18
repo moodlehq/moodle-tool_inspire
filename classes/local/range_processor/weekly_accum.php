@@ -28,6 +28,16 @@ defined('MOODLE_INTERNAL') || die();
 
 class weekly_accum extends base {
 
+    public function is_valid_analysable(\tool_inspire\analysable $analysable) {
+        $diff = $analysable->get_end() - $analysable->get_start();
+        $nweeks = round($diff / WEEKSECS);
+        if ($nweeks > 520) {
+            // More than 10 years...
+            return false;
+        }
+        return parent::is_valid_analysable($analysable);
+    }
+
     protected function define_ranges() {
 
         $ranges = array();
