@@ -110,26 +110,11 @@ class manager {
      * @param string $fullclassname
      * @return \tool_inspire\local\range_processor\base|false False if it is not valid.
      */
-    protected static function get_range_processor($fullclassname) {
+    public static function get_range_processor($fullclassname) {
         if (!self::is_valid($fullclassname, '\tool_inspire\local\range_processor\base')) {
             return false;
         }
         return new $fullclassname();
-    }
-
-    /**
-     * Returns whether a range processor is valid or not.
-     *
-     * @param string $fullclassname
-     * @return bool
-     */
-    protected static function is_valid($fullclassname, $baseclass) {
-        if (is_subclass_of($fullclassname, $baseclass)) {
-            if ((new \ReflectionClass($fullclassname))->isInstantiable()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
@@ -167,4 +152,20 @@ class manager {
         }
         return new $fullclassname;
     }
+
+    /**
+     * Returns whether a range processor is valid or not.
+     *
+     * @param string $fullclassname
+     * @return bool
+     */
+    protected static function is_valid($fullclassname, $baseclass) {
+        if (is_subclass_of($fullclassname, $baseclass)) {
+            if ((new \ReflectionClass($fullclassname))->isInstantiable()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

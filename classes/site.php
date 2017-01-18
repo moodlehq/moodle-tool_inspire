@@ -42,12 +42,7 @@ class site implements \tool_inspire\analysable {
     }
 
     public function get_usual_required_records() {
-        global $DB;
-
-        return [
-            'config' => $DB->get_records('config'),
-            'config_plugins' => $DB->get_records('config_plugins')
-        ];
+        return array();
     }
 
     public function get_metadata() {

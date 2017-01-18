@@ -51,7 +51,7 @@ class course_completion extends discrete {
     }
 
     public function get_analyser_class() {
-        return '\\tool_inspire\\local\\analyser\\enrolment';
+        return '\\tool_inspire\\local\\analyser\\enrolments';
     }
 
     public function is_valid_analysable(\tool_inspire\analysable $analysable) {

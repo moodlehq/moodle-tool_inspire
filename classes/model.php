@@ -71,7 +71,7 @@ class model {
         $this->model = $model;
     }
 
-    protected function get_target() {
+    public function get_target() {
         if ($this->target === null) {
             $classname = $this->model->target;
             $this->target = new $classname();
@@ -140,17 +140,6 @@ class model {
     }
 
     /**
-     * Builds the model dataset.
-     *
-     * @param  array   $options
-     * @return array Status codes and generated files
-     */
-    public function build_dataset($options = array()) {
-        $analyser = $this->get_analyser($options);
-        return $analyser->get_labelled_data();
-    }
-
-    /**
      * Evaluates the model datasets.
      *
      * Model datasets should already be available in Moodle's filesystem.
@@ -160,7 +149,7 @@ class model {
     public function evaluate($options) {
 
         $options['evaluation'] = true;
-        $analysisresults = $this->build_dataset($options);
+        $analysisresults = $this->get_analyser($options)->get_labelled_data();
 
         foreach ($analysisresults['status'] as $analysableid => $statuscode) {
             mtrace('Analysable ' . $analysableid . ': Status code ' . $statuscode . '. ');
@@ -221,7 +210,7 @@ class model {
 
         $results = array();
 
-        $analysed = $this->build_dataset();
+        $analysed = $this->get_analyser()->get_labelled_data();
 
         // No training if no files have been provided.
         if (empty($analysed['files'])) {
@@ -273,8 +262,7 @@ class model {
             throw new \moodle_exception('invalidrangeprocessor', 'tool_inspire', '', $this->model->codename);
         }
 
-        $analyser = $this->get_analyser();
-        $samplesdata = $analyser->get_unlabelled_data();
+        $samplesdata = $this->get_analyser()->get_unlabelled_data();
 
         foreach ($samplesdata['files'] as $rangeprocessorcodename => $samplesfile) {
 
@@ -371,7 +359,7 @@ class model {
         return $outputdir;
     }
 
-    protected function get_unique_id() {
+    public function get_unique_id() {
         global $CFG;
 
         if (!is_null($this->uniqueid)) {

@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Unit tests for course manager.
+ * Unit tests for course.
  *
  * @package   tool_inspire
  * @copyright 2016 David Monllaó {@link http://www.davidmonllao.com}
@@ -25,13 +25,13 @@
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Unit tests for course manager.
+ * Unit tests for course.
  *
  * @package   tool_inspire
  * @copyright 2016 David Monllaó {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class tool_inspire_testcase extends advanced_testcase {
+class tool_inspire_course_testcase extends advanced_testcase {
 
     public function setUp() {
         global $DB;
@@ -68,14 +68,14 @@ class tool_inspire_testcase extends advanced_testcase {
 
         $this->resetAfterTest(true);
 
-        $coursemanager = new \tool_inspire\course_manager($this->course);
-        $this->assertCount(3, $coursemanager->get_user_ids(array($this->studentroleid)));
-        $this->assertCount(2, $coursemanager->get_user_ids(array($this->editingteacherroleid)));
-        $this->assertCount(1, $coursemanager->get_user_ids(array($this->teacherroleid)));
+        $courseman = new \tool_inspire\course($this->course->id);
+        $this->assertCount(3, $courseman->get_user_ids(array($this->studentroleid)));
+        $this->assertCount(2, $courseman->get_user_ids(array($this->editingteacherroleid)));
+        $this->assertCount(1, $courseman->get_user_ids(array($this->teacherroleid)));
 
         // Distinct is applied
-        $this->assertCount(3, $coursemanager->get_user_ids(array($this->editingteacherroleid, $this->teacherroleid)));
-        $this->assertCount(4, $coursemanager->get_user_ids(array($this->editingteacherroleid, $this->studentroleid)));
+        $this->assertCount(3, $courseman->get_user_ids(array($this->editingteacherroleid, $this->teacherroleid)));
+        $this->assertCount(4, $courseman->get_user_ids(array($this->editingteacherroleid, $this->studentroleid)));
     }
 
     /**
@@ -88,7 +88,7 @@ class tool_inspire_testcase extends advanced_testcase {
 
         $this->resetAfterTest(true);
 
-        $courseman = new \tool_inspire\course_manager($this->course);
+        $courseman = new \tool_inspire\course($this->course->id);
         $this->assertFalse($courseman->has_enough_students());
         $this->assertFalse($courseman->was_started());
         $this->assertFalse($courseman->is_finished());
@@ -99,7 +99,7 @@ class tool_inspire_testcase extends advanced_testcase {
             $user = $this->getDataGenerator()->create_user();
             $this->getDataGenerator()->enrol_user($user->id, $this->course->id, $this->teacherroleid);
         }
-        $courseman = new \tool_inspire\course_manager($this->course);
+        $courseman = new \tool_inspire\course($this->course->id);
         $this->assertFalse($courseman->has_enough_students());
         $this->assertFalse($courseman->is_valid());
 
@@ -108,14 +108,14 @@ class tool_inspire_testcase extends advanced_testcase {
             $user = $this->getDataGenerator()->create_user();
             $this->getDataGenerator()->enrol_user($user->id, $this->course->id, $this->studentroleid);
         }
-        $courseman = new \tool_inspire\course_manager($this->course);
+        $courseman = new \tool_inspire\course($this->course->id);
         $this->assertTrue($courseman->has_enough_students());
         $this->assertFalse($courseman->is_valid());
 
         // Valid start date unknown end date.
         $this->course->startdate = gmmktime('0', '0', '0', 10, 24, 2015);
         $DB->update_record('course', $this->course);
-        $courseman = new \tool_inspire\course_manager($this->course);
+        $courseman = new \tool_inspire\course($this->course->id);
         $this->assertTrue($courseman->was_started());
         $this->assertFalse($courseman->is_finished());
         $this->assertFalse($courseman->is_valid());
@@ -123,7 +123,7 @@ class tool_inspire_testcase extends advanced_testcase {
         // Valid start and end date.
         $this->course->enddate = gmmktime('0', '0', '0', 8, 27, 2016);
         $DB->update_record('course', $this->course);
-        $courseman = new \tool_inspire\course_manager($this->course);
+        $courseman = new \tool_inspire\course($this->course->id);
         $this->assertTrue($courseman->was_started());
         $this->assertTrue($courseman->is_finished());
         $this->assertTrue($courseman->is_valid());
@@ -131,7 +131,7 @@ class tool_inspire_testcase extends advanced_testcase {
         // Valid start and ongoing course.
         $this->course->enddate = gmmktime('0', '0', '0', 8, 27, 2286);
         $DB->update_record('course', $this->course);
-        $courseman = new \tool_inspire\course_manager($this->course);
+        $courseman = new \tool_inspire\course($this->course->id);
         $this->assertTrue($courseman->was_started());
         $this->assertFalse($courseman->is_finished());
         $this->assertFalse($courseman->is_valid());
@@ -148,14 +148,14 @@ class tool_inspire_testcase extends advanced_testcase {
         $this->resetAfterTest(true);
 
         // Unknown.
-        $courseman = new \tool_inspire\course_manager($this->course);
+        $courseman = new \tool_inspire\course($this->course->id);
         $this->assertEquals(0, $courseman->get_start());
         $this->assertEquals(0, $courseman->get_end());
 
         // Guess the start date based on the first student course log.
         $time = gmmktime('0', '0', '0', 10, 24, 2015);
         $this->generate_log($time);
-        $courseman = new \tool_inspire\course_manager($this->course);
+        $courseman = new \tool_inspire\course($this->course->id);
 
         // It should match the first log.
         $this->assertEquals($time, $courseman->get_start());
@@ -170,7 +170,7 @@ class tool_inspire_testcase extends advanced_testcase {
         // A course where start date was set.
         $this->course->startdate = $time;
         $DB->update_record('course', $this->course);
-        $courseman = new \tool_inspire\course_manager($this->course);
+        $courseman = new \tool_inspire\course($this->course->id);
         $this->assertEquals($this->course->startdate, $courseman->get_start());
         $this->assertGreaterThan($this->time_greater_than($time), $courseman->get_end());
         $this->assertLessThan($this->time_less_than($time), $courseman->get_end());
@@ -184,14 +184,14 @@ class tool_inspire_testcase extends advanced_testcase {
         $this->generate_log($time + WEEKSECS);
         $this->generate_log(time() - WEEKSECS);
 
-        $courseman = new \tool_inspire\course_manager($this->course);
+        $courseman = new \tool_inspire\course($this->course->id);
         $this->assertEquals(9999999999, $courseman->get_end());
 
 
         // Explanation about get_end logic and how are we testing it:
         // - get_end_date calculates the approximate course end time using the course start time
         //   and the current time by searching for a time that contains the 95% of the student
-        //   logs (\tool_inspire\course_manager::MIN_STUDENT_LOGS_PERCENT) so we need to add at
+        //   logs (\tool_inspire\course::MIN_STUDENT_LOGS_PERCENT) so we need to add at
         //   least 20 logs so get_end can work as expected.
         // - we will try different combinations and we will check the returned course end time
         //   against a time range of 2 weeks.
@@ -203,7 +203,7 @@ class tool_inspire_testcase extends advanced_testcase {
                 $this->generate_log($time + (WEEKSECS * $j) + rand(10000, 99999));
             }
         }
-        $courseman = new \tool_inspire\course_manager($this->course);
+        $courseman = new \tool_inspire\course($this->course->id);
         $approximateend = $time + (WEEKSECS * 8) + 50000;
         $endtime = $courseman->get_end();
         $this->assertGreaterThan($this->time_greater_than($approximateend), $endtime);
@@ -217,7 +217,7 @@ class tool_inspire_testcase extends advanced_testcase {
                 $this->generate_log($monthsago - (WEEKSECS * $j) + rand(10000, 99999));
             }
         }
-        $courseman = new \tool_inspire\course_manager($this->course);
+        $courseman = new \tool_inspire\course($this->course->id);
         $endtime = $courseman->get_end();
         $this->assertGreaterThan($this->time_greater_than($monthsago), $endtime);
         $this->assertLessThan($this->time_less_than($monthsago), $endtime);
