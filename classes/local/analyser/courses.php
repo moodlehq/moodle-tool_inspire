@@ -45,7 +45,8 @@ class courses extends sitewide {
         // Getting courses from DB instead of from the site as these samples
         // will be stored in memory and we just want the id.
         $select = 'id != 1';
-        return array_keys($DB->get_records_select('course', $select, null, 'sortorder', 'id'));
+        $courseids = array_keys($DB->get_records_select('course', $select, null, 'sortorder', 'id'));
+        return array_combine($courseids, $courseids);
     }
 
 }

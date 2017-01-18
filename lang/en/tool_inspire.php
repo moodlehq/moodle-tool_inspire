@@ -33,6 +33,7 @@ $string['errornorangeprocessors'] = 'This model does not have any range processo
 $string['errornoroles'] = 'Student or teacher roles have not been defined. Define them in inspire plugin settings page.';
 $string['errornotarget'] = 'This model does not have any target';
 $string['errornottrainedmodel'] = '{$a} model has not been trained yet';
+$string['errorpredictionsprocessor'] = 'Predictions processor error: {$a}';
 $string['errorpredictwrongformat'] = 'The predictions processor return can not be decoded: "{$a}"';
 $string['errorunexistingrangeprocessor'] = 'The selected range processor is not available';
 $string['evaluatingsitedata'] = 'Evaluating site data';

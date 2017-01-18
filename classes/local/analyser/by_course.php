@@ -77,8 +77,6 @@ abstract class by_course extends base {
             }
         }
 
-        mtrace('Merging datasets');
-
         // We join the datasets by range processor.
         $rangeprocessorfiles = $this->merge_analysable_files($filesbyrangeprocessor, $includetarget);
 

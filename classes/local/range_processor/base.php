@@ -93,7 +93,7 @@ abstract class base {
      *
      * @return bool
      */
-    public function is_valid_analysable() {
+    public function is_valid_analysable(\tool_inspire\analysable $analysable) {
         return true;
     }
 
@@ -376,7 +376,7 @@ abstract class base {
         foreach ($this->ranges as $key => $range) {
             if (!isset($this->ranges[$key]['start']) || !isset($this->ranges[$key]['end'])) {
                 throw new \coding_exception($this->get_codename() . ' range processor "' . $key .
-                    '" range is not fully defined. We need an id, a start and an end.');
+                    '" range is not fully defined. We need a start timestamp and an end timestamp.');
             }
         }
     }

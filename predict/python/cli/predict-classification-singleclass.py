@@ -20,7 +20,7 @@ from BinaryClassifierDNN import BinaryClassifierDNN
 if len(sys.argv) < 4:
     result = dict()
     result['runid'] = int(binary_classifier.get_runid())
-    result['exitcode'] = 1
+    result['status'] = 1
     result['errors'] = ['Missing arguments, you should set:\
 - The model unique identifier\
 - The directory to store all generated outputs\
@@ -32,7 +32,7 @@ Received: ' + ' '.join(sys.argv)]
         result['modelid'] = sys.argv[1]
 
     print(json.dumps(result))
-    sys.exit(result['exitcode'])
+    sys.exit(result['status'])
 
 modelid = sys.argv[1]
 directory = sys.argv[2]
@@ -51,4 +51,4 @@ binary_classifier = BinaryClassifier(modelid, directory)
 result = binary_classifier.predict_dataset(sys.argv[3])
 
 print(json.dumps(result))
-sys.exit(result['exitcode'])
+sys.exit(result['status'])

@@ -60,8 +60,6 @@ class processor implements \tool_inspire\predictor {
 
     public function evaluate($uniqueid, $datasetpath, $outputdir) {
 
-        mtrace('Evaluating ' . $datasetpath . ' dataset');
-
         $fh = fopen($datasetpath, 'r');
 
         // The first lines are var names and the second one values.

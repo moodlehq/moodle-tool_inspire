@@ -55,11 +55,19 @@ class site implements \tool_inspire\analysable {
 
     public function get_start() {
         global $DB;
-        return $DB->get_record_sql("SELECT MIN(timecreated) AS time FROM {logstore_standard_log}");
+        $start = $DB->get_record_sql("SELECT MIN(timecreated) AS time FROM {logstore_standard_log}");
+        if (!empty($start) && !empty($start->time)) {
+            return $start->time;
+        }
+        return 0;
     }
 
     public function get_end() {
         global $DB;
-        return $DB->get_record_sql("SELECT MAX(timecreated) AS time FROM {logstore_standard_log}");
+        $end = $DB->get_record_sql("SELECT MAX(timecreated) AS time FROM {logstore_standard_log}");
+        if (!empty($end) && !empty($end->time)) {
+            return $end->time;
+        }
+        return time();
     }
 }

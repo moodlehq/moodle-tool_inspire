@@ -33,9 +33,6 @@ defined('MOODLE_INTERNAL') || die();
  */
 class course implements \tool_inspire\analysable {
 
-    // TODO Force people to access this through a method, we may want to change values in future
-    // and allowing direct access to them restrict how we can manage backwards compatibility.
-    const MAX_TIME = 9999999999;
     const MIN_NUMBER_STUDENTS = 10;
     const MIN_NUMBER_LOGS = 100;
     const MIN_STUDENT_LOGS_PERCENT = 90;
@@ -161,7 +158,7 @@ class course implements \tool_inspire\analysable {
     /**
      * Get the course end timestamp.
      *
-     * @return int Timestamp, self::MAX_TIME if we don't know but ongoing and 0 if we can not work it out.
+     * @return int Timestamp, \tool_inspire\analysable::MAX_TIME if we don't know but ongoing and 0 if we can not work it out.
      */
     public function get_end() {
         global $DB;
@@ -205,7 +202,7 @@ class course implements \tool_inspire\analysable {
         // If more than 1/4 of the students accessed the course in the last 4 weeks we can consider that
         // the course is still ongoing and we can not determine when it will finish.
         if ($ntotallastmonth > count($this->studentids) / 4) {
-            $this->endtime = self::MAX_TIME;
+            $this->endtime = \tool_inspire\analysable::MAX_TIME;
             return $this->endtime;
         }
 
@@ -217,7 +214,7 @@ class course implements \tool_inspire\analysable {
         //
         // Default to ongoing. This may not be the best choice for courses with not much accesses, we
         // may want to update self::MIN_STUDENT_LOGS_PERCENT in those cases.
-        $bestcandidate = self::MAX_TIME;
+        $bestcandidate = \tool_inspire\analysable::MAX_TIME;
 
         // We also store the percents so we can evaluate the algorithm and constants used.
         $logspercents = [];
@@ -257,7 +254,7 @@ class course implements \tool_inspire\analysable {
 
         // We couldn't work out any date with more logs than self::MIN_STUDENT_LOGS_PERCENT, notify the admin running
         // the script about it.
-        if ($bestcandidate === self::MAX_TIME) {
+        if ($bestcandidate === \tool_inspire\analysable::MAX_TIME) {
             debugging(json_encode($logspercents));
         }
 

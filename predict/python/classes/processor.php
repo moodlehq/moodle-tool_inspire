@@ -41,8 +41,6 @@ class processor implements \tool_inspire\predictor {
 
     public function train($uniqueid, $datasetpath, $outputdir) {
 
-        mtrace('Training ' . $datasetpath . ' dataset');
-
         $absolutescriptpath = escapeshellarg(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'cli' . DIRECTORY_SEPARATOR .
             'train-classification-singleclass.py');
 
@@ -51,7 +49,7 @@ class processor implements \tool_inspire\predictor {
             escapeshellarg($outputdir) . ' ' .
             escapeshellarg($datasetpath);
 
-        if (debugging()) {
+        if (debugging() && !PHPUNIT_TEST) {
             mtrace($cmd);
         }
 
@@ -67,12 +65,14 @@ class processor implements \tool_inspire\predictor {
             throw new \moodle_exception('errorpredictwrongformat', 'tool_inspire', '', json_last_error_msg());
         }
 
+        if ($exitcode != 0) {
+            throw new \moodle_exception('errorpredictionsprocessor', 'tool_inspire', '', implode(', ', $resultobj->errors));
+        }
+
         return $resultobj;
     }
 
     public function predict($uniqueid, $datasetpath, $outputdir) {
-
-        mtrace('Predicting ' . $datasetpath . ' dataset');
 
         $absolutescriptpath = escapeshellarg(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'cli' . DIRECTORY_SEPARATOR .
             'predict-classification-singleclass.py');
@@ -82,7 +82,7 @@ class processor implements \tool_inspire\predictor {
             escapeshellarg($outputdir) . ' ' .
             escapeshellarg($datasetpath);
 
-        if (debugging()) {
+        if (debugging() && !PHPUNIT_TEST) {
             mtrace($cmd);
         }
 
@@ -98,12 +98,14 @@ class processor implements \tool_inspire\predictor {
             throw new \moodle_exception('errorpredictwrongformat', 'tool_inspire', '', json_last_error_msg());
         }
 
+        if ($exitcode != 0) {
+            throw new \moodle_exception('errorpredictionsprocessor', 'tool_inspire', '', implode(', ', $resultobj->errors));
+        }
+
         return $resultobj;
     }
 
     public function evaluate($uniqueid, $datasetpath, $outputdir) {
-
-        mtrace('Evaluating ' . $datasetpath . ' dataset');
 
         $absolutescriptpath = escapeshellarg(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'cli' . DIRECTORY_SEPARATOR .
             'check-classification-singleclass.py');
@@ -116,6 +118,10 @@ class processor implements \tool_inspire\predictor {
             escapeshellarg(self::DEVIATION) . ' ' .
             escapeshellarg(self::ITERATIONS);
 
+        if (debugging() && !PHPUNIT_TEST) {
+            mtrace($cmd);
+        }
+
         $output = null;
         $exitcode = null;
         $result = exec($cmd, $output, $exitcode);
@@ -126,6 +132,10 @@ class processor implements \tool_inspire\predictor {
 
         if (!$resultobj = json_decode($result)) {
             throw new \moodle_exception('errorpredictwrongformat', 'tool_inspire', '', json_last_error_msg());
+        }
+
+        if ($exitcode != 0) {
+            throw new \moodle_exception('errorpredictionsprocessor', 'tool_inspire', '', implode(', ', $resultobj->errors));
         }
 
         // Phi goes from 0 to 1 so its value is the model score for this range processor.

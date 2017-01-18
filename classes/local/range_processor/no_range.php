@@ -38,7 +38,7 @@ class no_range extends base {
         return [
             [
                 'start' => 0,
-                'end' => 999999999
+                'end' => \tool_inspire\analysable::MAX_TIME
             ]
         ];
     }

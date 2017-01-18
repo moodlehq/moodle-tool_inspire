@@ -146,15 +146,19 @@ class model {
      *
      * @return stdClass[]
      */
-    public function evaluate($options) {
+    public function evaluate($options = array()) {
 
         $options['evaluation'] = true;
         $analysisresults = $this->get_analyser($options)->get_labelled_data();
 
-        foreach ($analysisresults['status'] as $analysableid => $statuscode) {
-            mtrace('Analysable ' . $analysableid . ': Status code ' . $statuscode . '. ');
-            if (!empty($analysisresults['messages'][$analysableid])) {
-                mtrace(' - ' . $analysisresults['messages'][$analysableid]);
+        // Yeah, a bit hacky, but we are really interested in these messages when running evaluation in CLI so we know why
+        // a course is not suitable.
+        if (!PHPUNIT_TEST) {
+            foreach ($analysisresults['status'] as $analysableid => $statuscode) {
+                mtrace('Analysable ' . $analysableid . ': Status code ' . $statuscode . '. ');
+                if (!empty($analysisresults['messages'][$analysableid])) {
+                    mtrace(' - ' . $analysisresults['messages'][$analysableid]);
+                }
             }
         }
 

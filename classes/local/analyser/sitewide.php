@@ -53,6 +53,21 @@ abstract class sitewide extends base {
             'messages' => array($analysable->get_id() => $message)
         );
 
+        // Copy to range files as there is just one analysable.
+        // TODO Not abstracted as we should ideally directly store it as range-scope file.
+        foreach ($files as $rangeprocessorcodename => $file) {
+
+            if ($this->options['evaluation'] === true) {
+                // Delete the previous copy. Only when evaluating.
+                \tool_inspire\dataset_manager::delete_evaluation_range_file($this->modelid, $rangeprocessorcodename);
+            }
+
+            // We use merge but it is just a copy
+            // TODO use copy or move if there are performance issues.
+            $files[$rangeprocessorcodename] = \tool_inspire\dataset_manager::merge_datasets(array($file), $this->modelid,
+                $rangeprocessorcodename, $this->options['evaluation'], $includetarget);
+        }
+
         if ($status === \tool_inspire\model::ANALYSE_OK) {
             $return['files'] = $files;
         }

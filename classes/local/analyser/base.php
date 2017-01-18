@@ -114,9 +114,8 @@ abstract class base {
     /**
      * Processes an analysable
      *
-     * This method returns the general analysable status and an array of files by range processor
-     * all error & status reporting at analysable + range processor level should not be returned
-     * but shown, through mtrace(), debugging() or through exceptions depending on the case.
+     * This method returns the general analysable status, an array of files by range processor and
+     * an error message if there is any problem.
      *
      * @param \tool_inspire\analysable $analysable
      * @param bool $includetarget
@@ -172,16 +171,14 @@ abstract class base {
 
     protected function process_range($rangeprocessor, $analysable, $includetarget) {
 
-        mtrace($rangeprocessor->get_codename() . ' analysing analysable with id ' . $analysable->get_id());
-
         $result = new \stdClass();
 
-        $rangeprocessor->set_analysable($analysable);
-        if (!$rangeprocessor->is_valid_analysable()) {
+        if (!$rangeprocessor->is_valid_analysable($analysable)) {
             $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;
             $result->message = 'Invalid analysable for this processor';
             return $result;
         }
+        $rangeprocessor->set_analysable($analysable);
 
         // What is a sample is defined by the analyser, it can be an enrolment, a course, a user, a question
         // attempt... it is on what we will base indicators calculations.

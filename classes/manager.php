@@ -36,9 +36,9 @@ defined('MOODLE_INTERNAL') || die();
 class manager {
 
     /**
-     * @var \tool_inspire\predictor
+     * @var \tool_inspire\predictor[]
      */
-    protected static $predictionsprocessor = null;
+    protected static $predictionprocessors = null;
 
     /**
      * @var \tool_inspire\local\indicator\base[]
@@ -55,29 +55,47 @@ class manager {
      *
      * @return \tool_inspire\predictor
      */
-    public static function get_predictions_processor() {
-        if (self::$predictionsprocessor !== null) {
-            return self::$predictionsprocessor;
+    public static function get_predictions_processor($predictionclass = false) {
+
+        if ($predictionclass === false) {
+            $predictionclass = get_config('tool_inspire', 'predictionprocessor');
         }
 
-        $predictionsprocessor = get_config('tool_inspire', 'predictionsprocessor');
-        if (empty($predictionsprocessor)) {
+        if (empty($predictionclass)) {
             // Use the default one if nothing set.
-            $predictionsprocessor = '\predict_php\processor';
+            $predictionclass = '\predict_php\processor';
         }
 
-        if (!class_exists($predictionsprocessor)) {
-            throw new \coding_exception('Invalid predictions processor ' . $predictionsprocessor . '.');
+        // Return it from the cached list.
+        if (isset(self::$predictionprocessors[$predictionclass])) {
+            return self::$predictionprocessors[$predictionclass];
         }
 
-        $interfaces = class_implements($predictionsprocessor);
-        if (empty($interfaces['\tool_inspire\predictor'])) {
-            throw new \coding_exception($predictionsprocessor . ' should implement \tool_inspire\predictor.');
+        if (!class_exists($predictionclass)) {
+            throw new \coding_exception('Invalid predictions processor ' . $predictionclass . '.');
         }
 
-        self::$predictionsprocessor = new $predictionsprocessor();
+        $interfaces = class_implements($predictionclass);
+        if (empty($interfaces['tool_inspire\predictor'])) {
+            throw new \coding_exception($predictionclass . ' should implement \tool_inspire\predictor.');
+        }
 
-        return self::$predictionsprocessor;
+        self::$predictionprocessors[$predictionclass] = new $predictionclass();
+
+        return self::$predictionprocessors[$predictionclass];
+    }
+
+    public static function get_all_prediction_processors() {
+        $subplugins = \core_component::get_subplugins('tool_inspire');
+
+        $predictionprocessors = array();
+        if (!empty($subplugins['predict'])) {
+            foreach ($subplugins['predict'] as $subplugin) {
+                $classfullpath = '\\predict_' . $subplugin . '\\processor';
+                $predictionprocessors[$classfullpath] = self::get_predictions_processor($classfullpath);
+            }
+        }
+        return $predictionprocessors;
     }
 
     /**

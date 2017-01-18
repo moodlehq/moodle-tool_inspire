@@ -65,7 +65,7 @@ class BinaryClassifier(Classifier):
         joblib.dump(trained_classifier, classifier_filepath)
 
         result = dict()
-        result['exitcode'] = 0
+        result['status'] = 0
         result['errors'] = []
         return result
 
@@ -78,7 +78,7 @@ class BinaryClassifier(Classifier):
         classifier_filepath = os.path.join(self.directory, Classifier.PERSIST_FILENAME)
         if os.path.isfile(classifier_filepath) == False:
             result = dict()
-            result['exitcode'] = 1
+            result['status'] = 1
             result['errors'] = ['Provided model have not been trained yet']
             return result
 
@@ -91,7 +91,7 @@ class BinaryClassifier(Classifier):
         probabilities = y_proba[range(len(y_proba)), y_pred]
 
         result = dict()
-        result['exitcode'] = 0
+        result['status'] = 0
         result['errors'] = []
         # First column sampleids, second the prediction and third how reliable is the prediction (from 0 to 1).
         result['predictions'] = np.vstack((sampleids[:,0], y_pred, probabilities)).T.tolist()
@@ -241,7 +241,7 @@ class BinaryClassifier(Classifier):
         result['accepted_phi'] = accepted_phi
         result['accepted_deviation'] = accepted_deviation
 
-        result['exitcode'] = 0
+        result['status'] = 0
         result['errors'] = []
 
         # If deviation is too high we may need more records to report if
@@ -252,13 +252,13 @@ class BinaryClassifier(Classifier):
                 + ' we need more samples to check if this model is valid.'
                 + ' Model deviation = %f, accepted deviation = %f' \
                 % (auc_deviation, accepted_deviation))
-            result['exitcode'] = 1
+            result['status'] = 1
 
         if avg_phi < accepted_phi:
             result['errors'].append('The model is not good enough. Model phi ='
                 + ' %f, accepted phi = %f' \
                 % (avg_phi, accepted_phi))
-            result['exitcode'] = 1
+            result['status'] = 1
 
         return result
 

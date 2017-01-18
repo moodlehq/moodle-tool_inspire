@@ -33,6 +33,8 @@ defined('MOODLE_INTERNAL') || die();
  */
 interface analysable {
 
+    const MAX_TIME = 9999999999;
+
     public function get_id();
 
     public function get_context();
