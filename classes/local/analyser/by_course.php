@@ -69,7 +69,7 @@ abstract class by_course extends base {
 
             list($status[$analysableid], $files, $messages[$analysableid]) = $this->process_analysable($analysable, $includetarget);
 
-            if ($status[$analysableid] === \tool_inspire\model::ANALYSE_OK) {
+            if ($status[$analysableid] === \tool_inspire\model::OK) {
                 // Later we will need to aggregate data by range processor.
                 foreach ($files as $rangeprocessorcodename => $file) {
                     $filesbyrangeprocessor[$rangeprocessorcodename][$analysableid] = $file;

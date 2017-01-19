@@ -134,10 +134,6 @@ class processor implements \tool_inspire\predictor {
             throw new \moodle_exception('errorpredictwrongformat', 'tool_inspire', '', json_last_error_msg());
         }
 
-        if ($exitcode != 0) {
-            throw new \moodle_exception('errorpredictionsprocessor', 'tool_inspire', '', implode(', ', $resultobj->errors));
-        }
-
         // Phi goes from 0 to 1 so its value is the model score for this range processor.
         $resultobj->score = $resultobj->phi;
 

@@ -68,7 +68,7 @@ abstract class sitewide extends base {
                 $rangeprocessorcodename, $this->options['evaluation'], $includetarget);
         }
 
-        if ($status === \tool_inspire\model::ANALYSE_OK) {
+        if ($status === \tool_inspire\model::OK) {
             $return['files'] = $files;
         }
 

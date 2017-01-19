@@ -150,7 +150,7 @@ abstract class base {
 
         // Set the status code.
         if (!empty($files)) {
-            $status = \tool_inspire\model::ANALYSE_OK;
+            $status = \tool_inspire\model::OK;
         } else {
             if (count($this->rangeprocessors) === 1) {
                 // We can be more specific.
@@ -268,7 +268,7 @@ abstract class base {
             }
         }
 
-        $result->status = \tool_inspire\model::ANALYSE_OK;
+        $result->status = \tool_inspire\model::OK;
         $result->message = 'Successfully analysed';
         $result->file = $file;
         return $result;

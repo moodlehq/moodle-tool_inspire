@@ -35,20 +35,19 @@ defined('MOODLE_INTERNAL') || die();
  */
 class model {
 
-    const ANALYSE_OK = 0;
-    const ANALYSE_GENERAL_ERROR = 1;
+    const OK = 0;
+    const GENERAL_ERROR = 1;
+    const NO_DATASET = 1;
+
+    const EVALUATE_LOW_SCORE = 3;
+    const EVALUATE_NOT_ENOUGH_DATA = 4;
+    const EVALUATE_LOW_SCORE_AND_NOT_ENOUGH_DATA = 5;
+
     const ANALYSE_INPROGRESS = 2;
     const ANALYSE_REJECTED_RANGE_PROCESSOR = 3;
     const ANALYSABLE_STATUS_INVALID_FOR_RANGEPROCESSORS = 4;
     const ANALYSABLE_STATUS_INVALID_FOR_TARGET = 5;
 
-    const EVALUATE_OK = 0;
-    const EVALUATE_NO_DATASET = 1;
-
-    const TRAIN_OK = 0;
-    const TRAIN_NO_DATASET = 1;
-
-    const PREDICT_OK = 0;
 
     protected $model = null;
 
@@ -172,10 +171,10 @@ class model {
 
             if (!$dataset) {
 
-                $result->status = self::EVALUATE_NO_DATASET;
+                $result->status = self::NO_DATASET;
                 $result->score = 0;
                 $result->dataset = null;
-                $result->errors = array('No dataset found');
+                $result->errors = array('Was not possible to create a dataset for this range processor');
 
                 $results[$rangeprocessor->get_codename()] = $result;
                 continue;
@@ -195,7 +194,7 @@ class model {
             // Evaluate the dataset.
             $predictorresult = $predictor->evaluate($this->model->id, $filepath, $outputdir);
 
-            $result->status = self::EVALUATE_OK;
+            $result->status = $predictorresult->status;
             $result->score = $predictorresult->score;
             $result->errors = $predictorresult->errors;
 
@@ -219,7 +218,7 @@ class model {
         // No training if no files have been provided.
         if (empty($analysed['files'])) {
             $result = new \stdClass();
-            $result->status = self::TRAIN_NO_DATASET;
+            $result->status = self::NO_DATASET;
             $result->errors = array('No files suitable for training') + $analysed['messages'];
 
             // Copy the result to all range processors.
@@ -244,7 +243,7 @@ class model {
             // Train using the dataset.
             $predictorresult = $predictor->train($this->get_unique_id(), $filepath, $outputdir);
 
-            $result->status = self::TRAIN_OK;
+            $result->status = $predictorresult->status;
             $result->errors = $predictorresult->errors;
 
             $results[$rangeprocessorcodename] = $result;
@@ -281,7 +280,7 @@ class model {
             $predictorresult = $predictor->predict($this->get_unique_id(), $filepath, $outputdir);
 
             $result = new \stdClass();
-            $result->status = self::PREDICT_OK;
+            $result->status = $predictorresult->status;
             $result->errors = $predictorresult->errors;
             $result->predictions = $predictorresult->predictions;
 
