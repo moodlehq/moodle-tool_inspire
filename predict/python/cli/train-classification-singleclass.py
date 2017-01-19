@@ -20,7 +20,7 @@ from BinaryClassifierDNN import BinaryClassifierDNN
 if len(sys.argv) < 4:
     result = dict()
     result['runid'] = int(binary_classifier.get_runid())
-    result['status'] = 1
+    result['status'] = Classifier.GENERAL_ERROR
     result['errors'] = ['Missing arguments, you should set:\
 - The model unique identifier\
 - The directory to store all generated outputs\

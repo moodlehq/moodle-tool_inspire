@@ -1,4 +1,5 @@
 import os
+import logging
 import time
 import math
 
@@ -10,20 +11,34 @@ class Classifier(object):
 
     PERSIST_FILENAME = 'classifier.pkl'
 
-    log_into_file = True
+    OK = 0
+    GENERAL_ERROR = 1
+    NO_DATASET = 2
+    EVALUATE_LOW_SCORE = 3
+    EVALUATE_NOT_ENOUGH_DATA = 4
+    EVALUATE_LOW_SCORE_AND_NOT_ENOUGH_DATA = 5
 
-    def __init__(self, modelid, directory):
+    def __init__(self, modelid, directory, log_into_file=False):
 
         self.classes = None
 
         self.modelid = modelid
-        self.directory = directory
 
         self.runid = str(int(time.time()))
 
         # We define dirname even though we may not use it.
-        self.dirname = os.path.join(os.path.expanduser('~'), self.__class__.__name__)
-        if self.log_into_file != False:
+        self.dirname = os.path.join(directory, self.get_runid())
+        if os.path.isdir(self.dirname):
+            raise OSError('Directory ' + self.dirname + ' already exists.')
+        if os.mkdir(self.dirname) == False:
+            raise OSError('Directory ' + self.dirname + ' can not be created.')
+
+        # Logging.
+        self.log_into_file = True
+        logfile = self.get_log_filename()
+        logging.basicConfig(filename=logfile,level=logging.DEBUG)
+
+        if self.log_into_file == True:
             if not os.path.exists(self.dirname):
                 os.makedirs(self.dirname)
 
@@ -32,17 +47,30 @@ class Classifier(object):
 
         self.reset_rates()
 
+        # Logging.
+        logfile = self.get_log_filename()
+        logging.basicConfig(filename=logfile,level=logging.DEBUG)
+
         np.set_printoptions(suppress=True)
         np.set_printoptions(precision=5)
         np.set_printoptions(threshold=np.inf)
         np.seterr(all='raise')
 
+
     def get_runid(self):
         return self.runid
 
+
+    def get_log_filename(self):
+        if self.log_into_file == False:
+            return False
+        return os.path.join(self.dirname, 'info.log')
+
+
     def get_labelled_samples(self, filepath):
 
-        samples = np.loadtxt(filepath, delimiter=',', dtype='float', skiprows=4)
+        # We skip 3 rows of metadata.
+        samples = np.loadtxt(filepath, delimiter=',', dtype='float', skiprows=3)
         samples = shuffle(samples)
 
         # All columns but the last one.
@@ -53,9 +81,11 @@ class Classifier(object):
 
         return [X, y]
 
+
     def get_unlabelled_samples(self, filepath):
 
-        samples = np.loadtxt(filepath, delimiter=',', dtype='float', skiprows=4)
+        # We skip 3 rows of metadata.
+        samples = np.loadtxt(filepath, delimiter=',', dtype='float', skiprows=3)
 
         # Only the first column and as an integer
         sampleids = np.array(samples[:,0:1]).astype(int)
@@ -82,6 +112,7 @@ class Classifier(object):
             return value
 
     def scale_x(self):
+	"""Deprecated, input data should already come scaled."""
 
         # Limit values to 2 standard deviations from the mean in order
         # to avoid extreme values.

@@ -17,22 +17,12 @@ from LearningCurve import LearningCurve
 
 class BinaryClassifier(Classifier):
 
-    def __init__(self, modelid, directory):
+    def __init__(self, modelid, directory, log_into_file=False):
 
-        super(BinaryClassifier, self).__init__(modelid, directory)
+        super(BinaryClassifier, self).__init__(modelid, directory, log_into_file)
 
         self.aucs = []
         self.classes = [1, 0]
-
-        # Logging.
-        logfile = self.get_log_filename()
-        logging.basicConfig(filename=logfile,level=logging.DEBUG)
-
-
-    def get_log_filename(self):
-        if self.log_into_file == False:
-            return False
-        return os.path.join(self.dirname, self.get_runid() + '.log')
 
 
     def train(self, X_train, y_train, classifier=False):
@@ -65,7 +55,7 @@ class BinaryClassifier(Classifier):
         joblib.dump(trained_classifier, classifier_filepath)
 
         result = dict()
-        result['status'] = 0
+        result['status'] = Classifier.OK
         result['errors'] = []
         return result
 
@@ -78,7 +68,7 @@ class BinaryClassifier(Classifier):
         classifier_filepath = os.path.join(self.directory, Classifier.PERSIST_FILENAME)
         if os.path.isfile(classifier_filepath) == False:
             result = dict()
-            result['status'] = 1
+            result['status'] = Classifier.NO_DATASET
             result['errors'] = ['Provided model have not been trained yet']
             return result
 
@@ -91,7 +81,7 @@ class BinaryClassifier(Classifier):
         probabilities = y_proba[range(len(y_proba)), y_pred]
 
         result = dict()
-        result['status'] = 0
+        result['status'] = Classifier.OK
         result['errors'] = []
         # First column sampleids, second the prediction and third how reliable is the prediction (from 0 to 1).
         result['predictions'] = np.vstack((sampleids[:,0], y_pred, probabilities)).T.tolist()
@@ -103,7 +93,6 @@ class BinaryClassifier(Classifier):
         # TODO Move this to Classifier and make it multiple classes compatible.
 
         [self.X, self.y] = self.get_labelled_samples(filepath)
-        self.scale_x()
 
         # Classes balance check.
         counts = []
@@ -119,8 +108,15 @@ class BinaryClassifier(Classifier):
         self.roc_curve_plot = RocCurve(self.dirname, 2)
 
         # Learning curve.
-        if self.log_into_file != False:
-            self.store_learning_curve()
+        if self.log_into_file == True:
+            try:
+                self.store_learning_curve()
+            except ValueError:
+                # The learning curve cross-validation process may trigger a
+                # ValueError if all examples in a data chunk belong to the same
+                # class, which is likely to happen when the number of samples
+                # is small.
+                logging.info('Learning curve generation skipped, not enough samples')
 
         for i in range(0, n_test_runs):
 
@@ -132,8 +128,8 @@ class BinaryClassifier(Classifier):
             self.rate_prediction(classifier, X_test, y_test)
 
         # Store the roc curve.
-        if self.log_into_file:
-            fig_filepath = self.roc_curve_plot.store(self.get_runid())
+        if self.log_into_file == True:
+            fig_filepath = self.roc_curve_plot.store()
             logging.info("Figure stored in " + fig_filepath)
 
         # Return results.
@@ -241,7 +237,7 @@ class BinaryClassifier(Classifier):
         result['accepted_phi'] = accepted_phi
         result['accepted_deviation'] = accepted_deviation
 
-        result['status'] = 0
+        result['status'] = Classifier.OK
         result['errors'] = []
 
         # If deviation is too high we may need more records to report if
@@ -252,23 +248,25 @@ class BinaryClassifier(Classifier):
                 + ' we need more samples to check if this model is valid.'
                 + ' Model deviation = %f, accepted deviation = %f' \
                 % (auc_deviation, accepted_deviation))
-            result['status'] = 1
+            result['status'] = Classifier.EVALUATE_NOT_ENOUGH_DATA
 
         if avg_phi < accepted_phi:
             result['errors'].append('The model is not good enough. Model phi ='
                 + ' %f, accepted phi = %f' \
                 % (avg_phi, accepted_phi))
-            result['status'] = 1
+            result['status'] = Classifier.EVALUATE_LOW_SCORE
+
+        if auc_deviation > accepted_deviation and avg_phi < accepted_phi:
+            result['status'] = Classifier.EVALUATE_LOW_SCORE_AND_NOT_ENOUGH_DATA
 
         return result
 
 
     def store_learning_curve(self):
-        lc = LearningCurve(self.get_runid())
+        lc = LearningCurve(self.dirname)
         lc.set_classifier(self.get_classifier(self.X, self.y))
-        lc_filepath = lc.save(self.X, self.y, self.dirname)
-        if lc_filepath != False:
-            logging.info("Figure stored in " + lc_filepath)
+        lc_filepath = lc.save(self.X, self.y)
+        logging.info("Figure stored in " + lc_filepath)
 
 
     def get_classifier(self, X, y):

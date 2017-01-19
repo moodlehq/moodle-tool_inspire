@@ -19,7 +19,7 @@ from BinaryClassifierDNN import BinaryClassifierDNN
 # Missing arguments.
 if len(sys.argv) < 7:
     result = dict()
-    result['status'] = 1
+    result['status'] = Classifier.GENERAL_ERROR
     result['errors'] = ['Missing arguments, you should set:\
 - The model unique identifier\
 - The directory to store all generated outputs\

@@ -13,7 +13,7 @@ class RocCurve(object):
     def add(self, fpr, tpr, label):
         plt.plot(fpr, tpr, label=label)
 
-    def store(self, runid):
+    def store(self):
         plt.plot([0, 1], [0, 1], 'k--')
         plt.xlim([0.0, 1.0])
         plt.ylim([0.0, 1.05])
@@ -22,7 +22,7 @@ class RocCurve(object):
         plt.title('Provided data ROC curve/s')
         plt.legend(loc="lower right")
 
-        filepath = os.path.join(self.dirname, runid + '.roc.png')
+        filepath = os.path.join(self.dirname, 'roc-curve.png')
         plt.savefig(filepath, format='png')
 
         return filepath

@@ -7,16 +7,16 @@ from sklearn.learning_curve import learning_curve
 
 class LearningCurve(object):
 
-    def __init__(self, runid):
-        self.runid = runid
+    def __init__(self, dirname):
+        self.dirname = dirname
 
     def set_classifier(self, classifier):
         self.classifier = classifier
 
-    def save(self, X, y, dirname, figure_id=1):
+    def save(self, X, y, figure_id=1):
 
         plt.figure(figure_id)
-        plt.xlabel("Training examples")
+        plt.xlabel("Training samples")
         plt.ylabel("Error")
 
         train_sizes, train_scores, test_scores = learning_curve(self.classifier, X, y[:,0])
@@ -38,7 +38,7 @@ class LearningCurve(object):
                  label="Cross-validation error")
         plt.legend(loc="best")
 
-        filepath = os.path.join(dirname, self.runid + '.learning-curve.png')
+        filepath = os.path.join(self.dirname, 'learning-curve.png')
         plt.savefig(filepath, format='png')
 
         if not os.path.isfile(filepath):
