@@ -1,5 +1,6 @@
 import os
 import logging
+import warnings
 import time
 import math
 
@@ -14,11 +15,10 @@ class Classifier(object):
     OK = 0
     GENERAL_ERROR = 1
     NO_DATASET = 2
-    EVALUATE_LOW_SCORE = 3
-    EVALUATE_NOT_ENOUGH_DATA = 4
-    EVALUATE_LOW_SCORE_AND_NOT_ENOUGH_DATA = 5
+    EVALUATE_LOW_SCORE = 4
+    EVALUATE_NOT_ENOUGH_DATA = 8
 
-    def __init__(self, modelid, directory, log_into_file=False):
+    def __init__(self, modelid, directory, log_into_file=True):
 
         self.classes = None
 
@@ -34,28 +34,29 @@ class Classifier(object):
             raise OSError('Directory ' + self.dirname + ' can not be created.')
 
         # Logging.
-        self.log_into_file = True
+        self.log_into_file = log_into_file
         logfile = self.get_log_filename()
         logging.basicConfig(filename=logfile,level=logging.DEBUG)
+        warnings.showwarning = Classifier.warnings_to_log
 
         if self.log_into_file == True:
             if not os.path.exists(self.dirname):
                 os.makedirs(self.dirname)
+
 
         self.X = None
         self.y = None
 
         self.reset_rates()
 
-        # Logging.
-        logfile = self.get_log_filename()
-        logging.basicConfig(filename=logfile,level=logging.DEBUG)
-
         np.set_printoptions(suppress=True)
         np.set_printoptions(precision=5)
         np.set_printoptions(threshold=np.inf)
         np.seterr(all='raise')
 
+    @staticmethod
+    def warnings_to_log(message, category, filename, lineno, file=None):
+       logging.warning('%s:%s: %s:%s' % (filename, lineno, category.__name__, message))
 
     def get_runid(self):
         return self.runid

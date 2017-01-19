@@ -1,6 +1,6 @@
-import logging
 import os
 import math
+import logging
 import resource
 
 import numpy as np
@@ -17,7 +17,7 @@ from LearningCurve import LearningCurve
 
 class BinaryClassifier(Classifier):
 
-    def __init__(self, modelid, directory, log_into_file=False):
+    def __init__(self, modelid, directory, log_into_file=True):
 
         super(BinaryClassifier, self).__init__(modelid, directory, log_into_file)
 
@@ -156,15 +156,24 @@ class BinaryClassifier(Classifier):
         # Transform it to an array.
         y_test = y_test.T[0]
 
-        fpr, tpr, _ = roc_curve(y_test, y_score)
-        self.aucs.append(auc(fpr, tpr))
-
         # Calculate accuracy, sensitivity and specificity.
         [acc, prec, rec, ph] = self.calculate_metrics(y_test == 1, y_pred == 1)
         self.accuracies.append(acc)
         self.precisions.append(prec)
         self.recalls.append(rec)
         self.phis.append(ph)
+
+        # ROC curve calculations.
+        fpr, tpr, _ = roc_curve(y_test, y_score)
+
+        # When the amount of samples is small we can randomly end up having just
+        # one class instead of examples of each, which triggers a "UndefinedMetricWarning:
+        # No negative samples in y_true, false positive value should be meaningless"
+        # and returning NaN.
+        if math.isnan(fpr[0]) or math.isnan(tpr[0]):
+            return
+
+        self.aucs.append(auc(fpr, tpr))
 
         # Draw it.
         self.roc_curve_plot.add(fpr, tpr, 'Positives')
@@ -257,7 +266,7 @@ class BinaryClassifier(Classifier):
             result['status'] = Classifier.EVALUATE_LOW_SCORE
 
         if auc_deviation > accepted_deviation and avg_phi < accepted_phi:
-            result['status'] = Classifier.EVALUATE_LOW_SCORE_AND_NOT_ENOUGH_DATA
+            result['status'] = Classifier.EVALUATE_LOW_SCORE + Classifier.EVALUATE_NOT_ENOUGH_DATA
 
         return result
 

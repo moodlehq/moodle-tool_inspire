@@ -7,9 +7,21 @@ class BinaryClassifierNN(BinaryClassifier):
     def get_classifier(self, X, y):
 
         epsilon = None
-        nn_iterations=1000
+        nn_iterations=50
         reg_lambda = 0.0005
-        # Number of elements per hidden layer.
+
+        # Number of elements per hidden layer dependant on the number of features.
+        n_samples, n_features = X.shape
+        if n_features == 1:
+            nn_hidden = []
+        elif n_features == 2:
+            nn_hidden = []
+        elif n_features > 5:
+            nn_hidden = [3]
+        elif n_features > 10:
+            nn_hidden = [6, 3]
+        elif n_features > 50:
+            nn_hidden = [20, 5]
         nn_hidden = [5, 3]
 
         # Find out the best epsilon value.

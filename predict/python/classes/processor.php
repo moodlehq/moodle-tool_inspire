@@ -108,8 +108,7 @@ class processor implements \tool_inspire\predictor {
     public function evaluate($uniqueid, $datasetpath, $outputdir) {
 
         $absolutescriptpath = escapeshellarg(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'cli' . DIRECTORY_SEPARATOR .
-            'check-classification-singleclass.py');
-
+            'evaluate-classification-singleclass.py');
         $cmd = 'python ' . $absolutescriptpath . ' ' .
             escapeshellarg($uniqueid) . ' ' .
             escapeshellarg($outputdir) . ' ' .

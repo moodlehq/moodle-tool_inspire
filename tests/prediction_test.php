@@ -41,6 +41,8 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
 
     public function test_training_and_prediction() {
         $this->resetAfterTest(true);
+
+
     }
 
     /**
@@ -103,10 +105,9 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
 
         return array(
             'bad-and-no-enough-data' => array(
-                'random',
-                10,
-                // Expected results.
-                array(
+                'modelquality' => 'random',
+                'ncourses' => 10,
+                'expectedresults' => array(
                     // The course duration is too much to be processed by in weekly basis.
                     'weekly' => \tool_inspire\model::NO_DATASET,
                     'weekly_accum' => \tool_inspire\model::NO_DATASET,
@@ -118,10 +119,9 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
                 )
             ),
             'bad' => array(
-                'random',
-                50,
-                // Expected results.
-                array(
+                'modelquality' => 'random',
+                'ncourses' => 50,
+                'expectedresults' => array(
                     // The course duration is too much to be processed by in weekly basis.
                     'weekly' => \tool_inspire\model::NO_DATASET,
                     'weekly_accum' => \tool_inspire\model::NO_DATASET,
@@ -133,10 +133,9 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
             ),
 
             'no-enough-data' => array(
-                'perfect',
-                10,
-                // Expected results.
-                array(
+                'modelquality' => 'perfect',
+                'ncourses' => 10,
+                'expectedresults' => array(
                     // The course duration is too much to be processed by in weekly basis.
                     'weekly' => \tool_inspire\model::NO_DATASET,
                     'weekly_accum' => \tool_inspire\model::NO_DATASET,
@@ -148,10 +147,9 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
                 )
             ),
             'good' => array(
-                'perfect',
-                50,
-                // Expected results.
-                array(
+                'modelquality' => 'perfect',
+                'ncourses' => 50,
+                'expectedresults' => array(
                     // The course duration is too much to be processed by in weekly basis.
                     'weekly' => \tool_inspire\model::NO_DATASET,
                     'weekly_accum' => \tool_inspire\model::NO_DATASET,

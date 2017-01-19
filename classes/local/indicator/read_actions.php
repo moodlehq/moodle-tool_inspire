@@ -58,6 +58,7 @@ class read_actions extends base {
         // We need to adapt the limits to the time range duration.
         $nweeks = $this->get_time_range_weeks_number($starttime, $endtime);
 
+        // Careful with this, depends on the course.
         $limit = $nweeks * 3 * 10;
         $ranges = array(
             array('eq', 0),

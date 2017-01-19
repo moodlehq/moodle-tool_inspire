@@ -33,21 +33,19 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class model {
+final class model {
 
     const OK = 0;
     const GENERAL_ERROR = 1;
-    const NO_DATASET = 1;
+    const NO_DATASET = 2;
 
-    const EVALUATE_LOW_SCORE = 3;
-    const EVALUATE_NOT_ENOUGH_DATA = 4;
-    const EVALUATE_LOW_SCORE_AND_NOT_ENOUGH_DATA = 5;
+    const EVALUATE_LOW_SCORE = 4;
+    const EVALUATE_NOT_ENOUGH_DATA = 8;
 
     const ANALYSE_INPROGRESS = 2;
-    const ANALYSE_REJECTED_RANGE_PROCESSOR = 3;
-    const ANALYSABLE_STATUS_INVALID_FOR_RANGEPROCESSORS = 4;
-    const ANALYSABLE_STATUS_INVALID_FOR_TARGET = 5;
-
+    const ANALYSE_REJECTED_RANGE_PROCESSOR = 4;
+    const ANALYSABLE_STATUS_INVALID_FOR_RANGEPROCESSORS = 8;
+    const ANALYSABLE_STATUS_INVALID_FOR_TARGET = 16;
 
     protected $model = null;
 
