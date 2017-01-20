@@ -33,7 +33,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class model {
+class model {
 
     const OK = 0;
     const GENERAL_ERROR = 1;
@@ -100,19 +100,19 @@ final class model {
         $indicators = $this->get_indicators();
 
         if (!empty($options['evaluation'])) {
-            // We try all available range processors.
-            $rangeprocessors = \tool_inspire\manager::get_all_range_processors();
+            // We try all available time splitting methods.
+            $timesplittings = \tool_inspire\manager::get_all_time_splittings();
         } else {
 
-            if (empty($this->model->rangeprocessor)) {
-                throw new \moodle_exception('invalidrangeprocessor', 'tool_inspire', '', $this->model->codename);
+            if (empty($this->model->timesplitting)) {
+                throw new \moodle_exception('invalidtimesplitting', 'tool_inspire', '', $this->model->codename);
             }
 
-            // TODO This may get range processors from different moodle components.
-            $fullclassname = '\\tool_inspire\\local\\range_processor\\' . $this->model->rangeprocessor;
+            // TODO This may get time splitting methods from different moodle components.
+            $fullclassname = '\\tool_inspire\\local\\time_splitting\\' . $this->model->timesplitting;
 
-            // Returned as an array in case we decide to allow multiple range processors enabled for a single model.
-            $rangeprocessors = array(\tool_inspire\manager::get_range_processor($fullclassname));
+            // Returned as an array in case we decide to allow multiple time splitting methods enabled for a single model.
+            $timesplittings = array(\tool_inspire\manager::get_time_splitting($fullclassname));
         }
 
         if (empty($target)) {
@@ -123,8 +123,8 @@ final class model {
             throw new \moodle_exception('errornoindicators', 'tool_inspire');
         }
 
-        if (empty($rangeprocessors)) {
-            throw new \moodle_exception('errornorangeprocessors', 'tool_inspire');
+        if (empty($timesplittings)) {
+            throw new \moodle_exception('errornotimesplittings', 'tool_inspire');
         }
 
         $classname = $target->get_analyser_class();
@@ -133,7 +133,7 @@ final class model {
         }
 
         // Returns a \tool_inspire\local\analyser\base class.
-        return new $classname($this->model->id, $target, $indicators, $rangeprocessors, $options);
+        return new $classname($this->model->id, $target, $indicators, $timesplittings, $options);
     }
 
     /**
@@ -161,20 +161,20 @@ final class model {
 
         $results = array();
 
-        foreach (\tool_inspire\manager::get_all_range_processors() as $rangeprocessor) {
+        foreach (\tool_inspire\manager::get_all_time_splittings() as $timesplitting) {
 
             $result = new \stdClass();
 
-            $dataset = \tool_inspire\dataset_manager::get_evaluation_range_file($this->model->id, $rangeprocessor->get_codename());
+            $dataset = \tool_inspire\dataset_manager::get_evaluation_file($this->model->id, $timesplitting->get_codename());
 
             if (!$dataset) {
 
                 $result->status = self::NO_DATASET;
                 $result->score = 0;
                 $result->dataset = null;
-                $result->errors = array('Was not possible to create a dataset for this range processor');
+                $result->errors = array('Was not possible to create a dataset for this time splitting method');
 
-                $results[$rangeprocessor->get_codename()] = $result;
+                $results[$timesplitting->get_codename()] = $result;
                 continue;
             }
 
@@ -186,7 +186,7 @@ final class model {
             // Copy the evaluated dataset filepath to the result object.
             $result->dataset = $filepath;
 
-            $outputdir = $this->get_output_dir($rangeprocessor->get_codename());
+            $outputdir = $this->get_output_dir($timesplitting->get_codename());
             $predictor = \tool_inspire\manager::get_predictions_processor();
 
             // Evaluate the dataset.
@@ -196,7 +196,7 @@ final class model {
             $result->score = $predictorresult->score;
             $result->errors = $predictorresult->errors;
 
-            $results[$rangeprocessor->get_codename()] = $result;
+            $results[$timesplitting->get_codename()] = $result;
         }
 
         return $results;
@@ -205,8 +205,8 @@ final class model {
     public function train() {
         global $DB;
 
-        if ($this->model->enabled == false || empty($this->model->rangeprocessor)) {
-            throw new \moodle_exception('invalidrangeprocessor', 'tool_inspire', '', $this->model->codename);
+        if ($this->model->enabled == false || empty($this->model->timesplitting)) {
+            throw new \moodle_exception('invalidtimesplitting', 'tool_inspire', '', $this->model->codename);
         }
 
         $results = array();
@@ -219,14 +219,14 @@ final class model {
             $result->status = self::NO_DATASET;
             $result->errors = array('No files suitable for training') + $analysed['messages'];
 
-            // Copy the result to all range processors.
-            foreach ($analysed as $rangeprocessorcodename => $unused) {
-                $results[$rangeprocessorcodename] = $result;
+            // Copy the result to all time splitting methods.
+            foreach ($analysed as $timesplittingcodename => $unused) {
+                $results[$timesplittingcodename] = $result;
             }
             return $results;
         }
 
-        foreach ($analysed['files'] as $rangeprocessorcodename => $dataset) {
+        foreach ($analysed['files'] as $timesplittingcodename => $dataset) {
 
             $result = new \stdClass();
 
@@ -235,7 +235,7 @@ final class model {
             $dir = make_request_directory();
             $filepath = $dataset->copy_content_to_temp($dir);
 
-            $outputdir = $this->get_output_dir($rangeprocessorcodename);
+            $outputdir = $this->get_output_dir($timesplittingcodename);
             $predictor = \tool_inspire\manager::get_predictions_processor();
 
             // Train using the dataset.
@@ -244,7 +244,7 @@ final class model {
             $result->status = $predictorresult->status;
             $result->errors = $predictorresult->errors;
 
-            $results[$rangeprocessorcodename] = $result;
+            $results[$timesplittingcodename] = $result;
 
             $this->flag_file_as_used($dataset, 'trained');
         }
@@ -259,20 +259,20 @@ final class model {
 
     public function predict() {
 
-        if ($this->model->enabled == false || empty($this->model->rangeprocessor)) {
-            throw new \moodle_exception('invalidrangeprocessor', 'tool_inspire', '', $this->model->codename);
+        if ($this->model->enabled == false || empty($this->model->timesplitting)) {
+            throw new \moodle_exception('invalidtimesplitting', 'tool_inspire', '', $this->model->codename);
         }
 
         $samplesdata = $this->get_analyser()->get_unlabelled_data();
 
-        foreach ($samplesdata['files'] as $rangeprocessorcodename => $samplesfile) {
+        foreach ($samplesdata['files'] as $timesplittingcodename => $samplesfile) {
 
             // From moodle filesystem to the file system.
             // TODO This is not ideal, but it seems that there is no read access to moodle filesystem files.
             $dir = make_request_directory();
             $filepath = $samplesfile->copy_content_to_temp($dir);
 
-            $outputdir = $this->get_output_dir($rangeprocessorcodename);
+            $outputdir = $this->get_output_dir($timesplittingcodename);
 
             $predictor = \tool_inspire\manager::get_predictions_processor();
             $predictorresult = $predictor->predict($this->get_unique_id(), $filepath, $outputdir);
@@ -318,16 +318,16 @@ final class model {
         }
     }
 
-    public function enable($rangeprocessorcodename = false) {
+    public function enable($timesplittingcodename = false) {
         global $DB;
 
-        if ($rangeprocessorcodename) {
-            $this->model->rangeprocessor = $rangeprocessorcodename;
+        if ($timesplittingcodename) {
+            $this->model->timesplitting = $timesplittingcodename;
             $this->model->timemodified = time();
         }
         $this->model->enabled = 1;
 
-        // We don't always update timemodified intentionally as we reserve it for target, indicators or rangeprocessor updates.
+        // We don't always update timemodified intentionally as we reserve it for target, indicators or timesplitting updates.
         $DB->update_record('tool_inspire_models', $this->model);
     }
 
@@ -367,7 +367,7 @@ final class model {
             return $this->uniqueid;
         }
 
-        // Generate a unique id for this site, this model and this range processor, considering the last time
+        // Generate a unique id for this site, this model and this time splitting method, considering the last time
         // that the model target and indicators were updated.
         $ids = array($CFG->wwwroot, $CFG->dirroot, $CFG->prefix, $this->model->id, $this->model->timemodified);
         $this->uniqueid = sha1(implode('$$', $ids));

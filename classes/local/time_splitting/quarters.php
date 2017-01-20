@@ -15,19 +15,19 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * 4 quarters range processor.
+ * 4 quarters time splitting method.
  *
  * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_inspire\local\range_processor;
+namespace tool_inspire\local\time_splitting;
 
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * 4 quarters range processor.
+ * 4 quarters time splitting method.
  *
  * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}

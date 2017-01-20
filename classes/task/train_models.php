@@ -40,7 +40,7 @@ class train_models extends \core\task\scheduled_task {
     public function execute() {
         global $DB;
 
-        $models = $DB->get_records_select('tool_inspire_models', 'enabled = 1 AND rangeprocessor IS NOT NULL');
+        $models = $DB->get_records_select('tool_inspire_models', 'enabled = 1 AND timesplitting IS NOT NULL');
         if (!$models) {
             mtrace(get_string('errornoenabledmodels', 'tool_inspire'));
             return;
@@ -49,8 +49,8 @@ class train_models extends \core\task\scheduled_task {
             $model = new \tool_inspire\model($modelobj);
             $results = $model->train();
 
-            foreach ($results as $rangeprocessorcodename => $result) {
-                mtrace($rangeprocessorcodename . ' results:');
+            foreach ($results as $timesplittingcodename => $result) {
+                mtrace($timesplittingcodename . ' results:');
                 mtrace(' - Status code: ' . $result->status);
                 if (!empty($result->errors)) {
                     foreach ($result->errors as $error) {

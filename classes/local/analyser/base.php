@@ -37,15 +37,15 @@ abstract class base {
 
     protected $target;
     protected $indicators;
-    protected $rangeprocessors;
+    protected $timesplittings;
 
     protected $options;
 
-    public function __construct($modelid, \tool_inspire\local\target\base $target, $indicators, $rangeprocessors, $options) {
+    public function __construct($modelid, \tool_inspire\local\target\base $target, $indicators, $timesplittings, $options) {
         $this->modelid = $modelid;
         $this->target = $target;
         $this->indicators = $indicators;
-        $this->rangeprocessors = $rangeprocessors;
+        $this->timesplittings = $timesplittings;
 
         if (empty($options['evaluation'])) {
             $options['evaluation'] = false;
@@ -79,7 +79,7 @@ abstract class base {
      * In most of the cases you should have enough extending from one of these classes so you don't need
      * to reimplement this method.
      *
-     * @return array Array containing a status codes for each analysable and a list of files, one for each range processor
+     * @return array Array containing a status codes for each analysable and a list of files, one for each time splitting method
      */
     abstract public function get_analysable_data($includetarget);
 
@@ -114,12 +114,12 @@ abstract class base {
     /**
      * Processes an analysable
      *
-     * This method returns the general analysable status, an array of files by range processor and
+     * This method returns the general analysable status, an array of files by time splitting method and
      * an error message if there is any problem.
      *
      * @param \tool_inspire\analysable $analysable
      * @param bool $includetarget
-     * @return array Analysable general status code AND (files by range processor OR error code)
+     * @return array Analysable general status code AND (files by time splitting method OR error code)
      */
     public function process_analysable($analysable, $includetarget) {
 
@@ -138,12 +138,12 @@ abstract class base {
             ];
         }
 
-        // Process all provided range processors.
+        // Process all provided time splitting methods.
         $results = array();
-        foreach ($this->rangeprocessors as $rangeprocessor) {
-            $result = $this->process_range($rangeprocessor, $analysable, $includetarget);
+        foreach ($this->timesplittings as $timesplitting) {
+            $result = $this->process_range($timesplitting, $analysable, $includetarget);
             if (!empty($result->file)) {
-                $files[$rangeprocessor->get_codename()] = $result->file;
+                $files[$timesplitting->get_codename()] = $result->file;
             }
             $results[] = $result;
         }
@@ -152,13 +152,13 @@ abstract class base {
         if (!empty($files)) {
             $status = \tool_inspire\model::OK;
         } else {
-            if (count($this->rangeprocessors) === 1) {
+            if (count($this->timesplittings) === 1) {
                 // We can be more specific.
                 $status = $results[0]->status;
                 $message = $results[0]->message;
             } else {
                 $status = \tool_inspire\model::ANALYSABLE_STATUS_INVALID_FOR_RANGEPROCESSORS;
-                $message = 'Analysable not valid for any of the range processors';
+                $message = 'Analysable not valid for any of the time splitting methods';
             }
         }
 
@@ -169,16 +169,16 @@ abstract class base {
         ];
     }
 
-    protected function process_range($rangeprocessor, $analysable, $includetarget) {
+    protected function process_range($timesplitting, $analysable, $includetarget) {
 
         $result = new \stdClass();
 
-        if (!$rangeprocessor->is_valid_analysable($analysable)) {
+        if (!$timesplitting->is_valid_analysable($analysable)) {
             $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;
             $result->message = 'Invalid analysable for this processor';
             return $result;
         }
-        $rangeprocessor->set_analysable($analysable);
+        $timesplitting->set_analysable($analysable);
 
         // What is a sample is defined by the analyser, it can be an enrolment, a course, a user, a question
         // attempt... it is on what we will base indicators calculations.
@@ -192,10 +192,10 @@ abstract class base {
 
         if ($includetarget) {
             // All ranges are used when we are calculating data for training.
-            $ranges = $rangeprocessor->get_all_ranges();
+            $ranges = $timesplitting->get_all_ranges();
         } else {
             // Only some ranges can be used for prediction (it depends on the time range where we are right now).
-            $ranges = $this->get_prediction_ranges($rangeprocessor);
+            $ranges = $this->get_prediction_ranges($timesplitting);
         }
 
         // There is no need to keep track of the evaluated samples and ranges as we always evaluate the whole dataset.
@@ -208,7 +208,7 @@ abstract class base {
             }
 
             // We skip all samples that are already part of a training dataset, even if they have noe been used for training yet.
-            $samples = $this->filter_out_train_samples($samples, $analysable, $rangeprocessor);
+            $samples = $this->filter_out_train_samples($samples, $analysable, $timesplitting);
 
             if (count($samples) === 0) {
                 $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;
@@ -219,7 +219,7 @@ abstract class base {
             // Only when processing data for predictions.
             if ($includetarget === false) {
                 // We also filter out ranges that have already been used for predictions.
-                $ranges = $this->filter_out_prediction_ranges($ranges, $analysable, $rangeprocessor);
+                $ranges = $this->filter_out_prediction_ranges($ranges, $analysable, $timesplitting);
             }
 
             if (count($ranges) === 0) {
@@ -229,20 +229,20 @@ abstract class base {
             }
         }
 
-        $rangeprocessor->set_samples($samples);
+        $timesplitting->set_samples($samples);
 
-        $dataset = new \tool_inspire\dataset_manager($this->modelid, $analysable->get_id(), $rangeprocessor->get_codename(),
+        $dataset = new \tool_inspire\dataset_manager($this->modelid, $analysable->get_id(), $timesplitting->get_codename(),
             $this->options['evaluation'], $includetarget);
 
-        // Flag the model + analysable + rangeprocessor as being analysed (prevent concurrent executions).
+        // Flag the model + analysable + timesplitting as being analysed (prevent concurrent executions).
         $dataset->init_process();
 
         // Here we start the memory intensive process that will last until $data var is
         // unset (until the method is finished basically).
         if ($includetarget) {
-            $data = $rangeprocessor->calculate($this->indicators, $ranges, $this->target);
+            $data = $timesplitting->calculate($this->indicators, $ranges, $this->target);
         } else {
-            $data = $rangeprocessor->calculate($this->indicators, $ranges);
+            $data = $timesplitting->calculate($this->indicators, $ranges);
         }
 
         if (!$data) {
@@ -254,7 +254,7 @@ abstract class base {
         // Write all calculated data to a file.
         $file = $dataset->store($data);
 
-        // Flag the model + analysable + rangeprocessor as analysed.
+        // Flag the model + analysable + timesplitting as analysed.
         $dataset->close_process();
 
         // No need to keep track of analysed stuff when evaluating.
@@ -262,9 +262,9 @@ abstract class base {
             // Save the samples that have been already analysed so they are not analysed again in future.
 
             if ($includetarget) {
-                $this->save_train_samples($samples, $analysable, $rangeprocessor, $file);
+                $this->save_train_samples($samples, $analysable, $timesplitting, $file);
             } else {
-                $this->save_prediction_ranges($ranges, $analysable, $rangeprocessor);
+                $this->save_prediction_ranges($ranges, $analysable, $timesplitting);
             }
         }
 
@@ -274,14 +274,14 @@ abstract class base {
         return $result;
     }
 
-    protected function get_prediction_ranges($rangeprocessor) {
+    protected function get_prediction_ranges($timesplitting) {
 
         $now = time();
 
-        // We already provided the analysable to the range processor, there is no need to feed it back.
+        // We already provided the analysable to the time splitting method, there is no need to feed it back.
         $predictionranges = array();
-        foreach ($rangeprocessor->get_all_ranges() as $rangeindex => $range) {
-            if ($rangeprocessor->ready_to_predict($range)) {
+        foreach ($timesplitting->get_all_ranges() as $rangeindex => $range) {
+            if ($timesplitting->ready_to_predict($range)) {
                 // We need to maintain the same indexes.
                 $predictionranges[$rangeindex] = $range;
             }
@@ -290,11 +290,11 @@ abstract class base {
         return $predictionranges;
     }
 
-    protected function filter_out_train_samples($samples, $analysable, $rangeprocessor) {
+    protected function filter_out_train_samples($samples, $analysable, $timesplitting) {
         global $DB;
 
         $params = array('modelid' => $this->modelid, 'analysableid' => $analysable->get_id(),
-            'rangeprocessor' => $rangeprocessor->get_codename());
+            'timesplitting' => $timesplitting->get_codename());
 
         $trainingsamples = $DB->get_records('tool_inspire_train_samples', $params);
 
@@ -312,11 +312,11 @@ abstract class base {
         return $samples;
     }
 
-    protected function filter_out_prediction_ranges($ranges, $analysable, $rangeprocessor) {
+    protected function filter_out_prediction_ranges($ranges, $analysable, $timesplitting) {
         global $DB;
 
         $params = array('modelid' => $this->modelid, 'analysableid' => $analysable->get_id(),
-            'rangeprocessor' => $rangeprocessor->get_codename());
+            'timesplitting' => $timesplitting->get_codename());
 
         $predictedranges = $DB->get_records('tool_inspire_predict_ranges', $params);
         foreach ($predictedranges as $predictedrange) {
@@ -329,13 +329,13 @@ abstract class base {
 
     }
 
-    protected function save_train_samples($samples, $analysable, $rangeprocessor, $file) {
+    protected function save_train_samples($samples, $analysable, $timesplitting, $file) {
         global $DB;
 
         $trainingsamples = new \stdClass();
         $trainingsamples->modelid = $this->modelid;
         $trainingsamples->analysableid = $analysable->get_id();
-        $trainingsamples->rangeprocessor = $rangeprocessor->get_codename();
+        $trainingsamples->timesplitting = $timesplitting->get_codename();
         $trainingsamples->fileid = $file->get_id();
 
         // TODO We just need the keys, we can save some space by removing the values.
@@ -345,13 +345,13 @@ abstract class base {
         return $DB->insert_record('tool_inspire_train_samples', $trainingsamples);
     }
 
-    protected function save_prediction_ranges($ranges, $analysable, $rangeprocessor) {
+    protected function save_prediction_ranges($ranges, $analysable, $timesplitting) {
         global $DB;
 
         $predictionrange = new \stdClass();
         $predictionrange->modelid = $this->modelid;
         $predictionrange->analysableid = $analysable->get_id();
-        $predictionrange->rangeprocessor = $rangeprocessor->get_codename();
+        $predictionrange->timesplitting = $timesplitting->get_codename();
         $predictionrange->timecreated = time();
 
         foreach ($ranges as $rangeindex => $unused) {

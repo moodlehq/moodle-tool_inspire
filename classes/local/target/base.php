@@ -103,7 +103,7 @@ abstract class base extends \tool_inspire\calculable {
      *
      * Returns an array of values which size matches $samples size.
      *
-     * Rows with null values will be skipped as invalid by range processors.
+     * Rows with null values will be skipped as invalid by time splitting methods.
      *
      * @param array $samples
      * @param \tool_inspire\analysable $analysable

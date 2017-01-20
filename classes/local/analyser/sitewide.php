@@ -55,17 +55,17 @@ abstract class sitewide extends base {
 
         // Copy to range files as there is just one analysable.
         // TODO Not abstracted as we should ideally directly store it as range-scope file.
-        foreach ($files as $rangeprocessorcodename => $file) {
+        foreach ($files as $timesplittingcodename => $file) {
 
             if ($this->options['evaluation'] === true) {
                 // Delete the previous copy. Only when evaluating.
-                \tool_inspire\dataset_manager::delete_evaluation_range_file($this->modelid, $rangeprocessorcodename);
+                \tool_inspire\dataset_manager::delete_evaluation_file($this->modelid, $timesplittingcodename);
             }
 
             // We use merge but it is just a copy
             // TODO use copy or move if there are performance issues.
-            $files[$rangeprocessorcodename] = \tool_inspire\dataset_manager::merge_datasets(array($file), $this->modelid,
-                $rangeprocessorcodename, $this->options['evaluation'], $includetarget);
+            $files[$timesplittingcodename] = \tool_inspire\dataset_manager::merge_datasets(array($file), $this->modelid,
+                $timesplittingcodename, $this->options['evaluation'], $includetarget);
         }
 
         if ($status === \tool_inspire\model::OK) {

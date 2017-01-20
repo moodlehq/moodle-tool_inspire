@@ -49,7 +49,7 @@ class dataset_manager {
      *
      * @var string
      */
-    protected $rangeprocessor;
+    protected $timesplitting;
 
     /**
      * @var int
@@ -75,10 +75,10 @@ class dataset_manager {
      *
      * @return void
      */
-    public function __construct($modelid, $analysableid, $rangeprocessorcodename, $evaluation = false, $includetarget = false) {
+    public function __construct($modelid, $analysableid, $timesplittingcodename, $evaluation = false, $includetarget = false) {
         $this->modelid = $modelid;
         $this->analysableid = $analysableid;
-        $this->rangeprocessor = $rangeprocessorcodename;
+        $this->timesplitting = $timesplittingcodename;
         $this->evaluation = $evaluation;
         $this->includetarget = $includetarget;
     }
@@ -90,7 +90,7 @@ class dataset_manager {
      */
     public function init_process() {
         $lockkey = 'modelid:' . $this->modelid . '-analysableid:' . $this->analysableid .
-            '-rangeprocessor:' . $this->rangeprocessor . '-includetarget:' . (int)$this->includetarget;
+            '-timesplitting:' . $this->timesplitting . '-includetarget:' . (int)$this->includetarget;
 
         // Large timeout as processes may be quite long.
         $lockfactory = \core\lock\lock_config::get_lock_factory('tool_inspire');
@@ -115,7 +115,7 @@ class dataset_manager {
             'filearea' => self::get_filearea($this->includetarget),
             'itemid' => $this->analysableid,
             'contextid' => \context_system::instance()->id,
-            'filepath' => '/' . $this->modelid . '/analysable/' . $this->rangeprocessor . '/',
+            'filepath' => '/' . $this->modelid . '/analysable/' . $this->timesplitting . '/',
             'filename' => self::get_filename($this->evaluation)
         ];
 
@@ -147,16 +147,16 @@ class dataset_manager {
         $lock->release();
     }
 
-    public static function get_evaluation_range_file($modelid, $rangeprocessorcodename) {
+    public static function get_evaluation_file($modelid, $timesplittingcodename) {
         $fs = get_file_storage();
         // Evaluation data is always labelled.
         return $fs->get_file(\context_system::instance()->id, 'tool_inspire', self::LABELLED_FILEAREA,
-            self::convert_to_int($rangeprocessorcodename), '/' . $modelid . '/range/' . $rangeprocessorcodename . '/', self::EVALUATION_FILENAME);
+            self::convert_to_int($timesplittingcodename), '/' . $modelid . '/timesplitting/' . $timesplittingcodename . '/', self::EVALUATION_FILENAME);
     }
 
-    public static function delete_evaluation_range_file($modelid, $rangeprocessorcodename) {
+    public static function delete_evaluation_file($modelid, $timesplittingcodename) {
         $fs = get_file_storage();
-        if ($file = self::get_evaluation_range_file($modelid, $rangeprocessorcodename)) {
+        if ($file = self::get_evaluation_file($modelid, $timesplittingcodename)) {
             $file->delete();
             return true;
         }
@@ -172,12 +172,12 @@ class dataset_manager {
      * @param array  $files
      * @param string $filename
      * @param int    $modelid
-     * @param string $rangeproceesorcodename
+     * @param string $timesplittingcodename
      * @param bool   $evaluation
      * @param bool   $includetarget
      * @return \stored_file
      */
-    public static function merge_datasets(array $files, $modelid, $rangeprocessorcodename, $evaluation, $includetarget) {
+    public static function merge_datasets(array $files, $modelid, $timesplittingcodename, $evaluation, $includetarget) {
 
         $tmpfilepath = make_request_directory() . DIRECTORY_SEPARATOR . 'tmpfile.csv';
 
@@ -237,9 +237,9 @@ class dataset_manager {
         $filerecord = [
             'component' => 'tool_inspire',
             'filearea' => self::get_filearea($includetarget),
-            'itemid' => self::convert_to_int($rangeprocessorcodename),
+            'itemid' => self::convert_to_int($timesplittingcodename),
             'contextid' => \context_system::instance()->id,
-            'filepath' => '/' . $modelid . '/range/' . $rangeprocessorcodename . '/',
+            'filepath' => '/' . $modelid . '/timesplitting/' . $timesplittingcodename . '/',
             'filename' => self::get_filename($evaluation)
         ];
 

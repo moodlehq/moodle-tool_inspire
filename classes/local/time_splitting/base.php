@@ -15,14 +15,14 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Base range processor.
+ * Base time splitting method.
  *
  * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_inspire\local\range_processor;
+namespace tool_inspire\local\time_splitting;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -67,7 +67,7 @@ abstract class base {
     abstract protected function define_ranges();
 
     /**
-     * Returns the range processor codename.
+     * Returns the time splitting method codename.
      *
      * @return string
      */
@@ -89,7 +89,7 @@ abstract class base {
     }
 
     /**
-     * Returns whether the course can be processed by this range processor or not.
+     * Returns whether the course can be processed by this time splitting method or not.
      *
      * @return bool
      */
@@ -223,11 +223,11 @@ abstract class base {
             if ($nranges > 1) {
 
                 // 1 column for each range.
-                $rangeindicators = array_fill(0, $nranges, 0);
+                $timeindicators = array_fill(0, $nranges, 0);
 
-                $rangeindicators[$rangeindex] = 1;
+                $timeindicators[$rangeindex] = 1;
 
-                $dataset[$uniquesampleid] = array_merge($rangeindicators, $dataset[$uniquesampleid]);
+                $dataset[$uniquesampleid] = array_merge($timeindicators, $dataset[$uniquesampleid]);
             }
         }
     }
@@ -252,7 +252,7 @@ abstract class base {
 
         // Metadata is mainly provided by the analysable.
         $metadata = array(
-            'rangeprocessor' => $this->get_codename(),
+            'timesplitting' => $this->get_codename(),
             'nfeatures' => count(current($dataset)) - 1, // We skip the target column.
             'targetclasses' => json_encode($target->get_classes()),
             'targettype' => ($target->is_linear()) ? 'linear' : 'discrete'
@@ -274,7 +274,7 @@ abstract class base {
     }
 
     /**
-     * Returns the ranges used by this range processor.
+     * Returns the ranges used by this time splitting method.
      *
      * @return array
      */
@@ -367,7 +367,7 @@ abstract class base {
     }
 
     /**
-     * Validates the range processor ranges.
+     * Validates the time splitting method ranges.
      *
      * @throw \coding_exception
      * @return void
@@ -375,7 +375,7 @@ abstract class base {
     protected function validate_ranges() {
         foreach ($this->ranges as $key => $range) {
             if (!isset($this->ranges[$key]['start']) || !isset($this->ranges[$key]['end'])) {
-                throw new \coding_exception($this->get_codename() . ' range processor "' . $key .
+                throw new \coding_exception($this->get_codename() . ' time splitting method "' . $key .
                     '" range is not fully defined. We need a start timestamp and an end timestamp.');
             }
         }

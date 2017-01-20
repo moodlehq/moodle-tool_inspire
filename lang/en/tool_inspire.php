@@ -23,21 +23,21 @@
  */
 
 $string['errordisabledmodel'] = '{$a} model is disabled and can not be used to predict';
-$string['errorinvalidrangeprocessor'] = '{$a} range processor is not valid';
+$string['errorinvalidtimesplitting'] = '{$a} time splitting method is not valid';
 $string['errornoenabledmodels'] = 'There are not enabled models to train';
 $string['errornoenabledandtrainedmodels'] = 'There are not enabled and trained models to predict';
 $string['errornoindicators'] = 'This model does not have any indicator';
 $string['errornopredictresults'] = 'No results returned from the predictions processor, check the output directory contents for more info';
 $string['errornorunrecord'] = 'Couldn\'t locate the current run record in the database';
-$string['errornorangeprocessors'] = 'This model does not have any range processor';
+$string['errornotimesplittings'] = 'This model does not have any time splitting method';
 $string['errornoroles'] = 'Student or teacher roles have not been defined. Define them in inspire plugin settings page.';
 $string['errornotarget'] = 'This model does not have any target';
 $string['errornottrainedmodel'] = '{$a} model has not been trained yet';
 $string['errorpredictionsprocessor'] = 'Predictions processor error: {$a}';
 $string['errorpredictwrongformat'] = 'The predictions processor return can not be decoded: "{$a}"';
-$string['errorunexistingrangeprocessor'] = 'The selected range processor is not available';
+$string['errorunexistingtimesplitting'] = 'The selected time splitting method is not available';
 $string['evaluatingsitedata'] = 'Evaluating site data';
-$string['invalidrangeprocessor'] = 'Model {$a} needs a range processor before it can be used to train';
+$string['invalidtimesplitting'] = 'Model {$a} needs a time splitting method before it can be used to train';
 $string['modeloutputdir'] = 'Models output directory';
 $string['nocourses'] = 'No courses to analyse';
 $string['predictmodels'] = 'Predict models';

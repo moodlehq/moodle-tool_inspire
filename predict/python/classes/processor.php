@@ -133,7 +133,7 @@ class processor implements \tool_inspire\predictor {
             throw new \moodle_exception('errorpredictwrongformat', 'tool_inspire', '', json_last_error_msg());
         }
 
-        // Phi goes from 0 to 1 so its value is the model score for this range processor.
+        // Phi goes from 0 to 1 so its value is the model score for this time splitting method.
         $resultobj->score = $resultobj->phi;
 
         return $resultobj;

@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * No range processor.
+ * No time splitting method.
  *
  * Used when time is not a factor to consider into the equation.
  *
@@ -24,11 +24,11 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_inspire\local\range_processor;
+namespace tool_inspire\local\time_splitting;
 
 defined('MOODLE_INTERNAL') || die();
 
-class no_range extends base {
+class no_splitting extends base {
 
     public function ready_to_predict($range) {
         return true;

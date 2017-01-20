@@ -63,7 +63,7 @@ class tool_inspire_model_testcase extends advanced_testcase {
         $this->assertInstanceOf('\tool_inspire\local\target\discrete', $this->model->get_target());
         $this->assertInstanceOf('\tool_inspire\local\analyser\base', $this->model->get_analyser(array('evaluation' => true)));
 
-        $this->model->enable('fakerangeprocessor');
+        $this->model->enable('faketimesplitting');
         $this->assertInstanceOf('\tool_inspire\local\analyser\courses', $this->model->get_analyser(array('evaluation' => false)));
     }
 

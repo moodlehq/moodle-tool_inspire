@@ -46,9 +46,9 @@ class manager {
     protected static $allindicators = null;
 
     /**
-     * @var \tool_inspire\local\range_processor\base[]
+     * @var \tool_inspire\local\time_splitting\base[]
      */
-    protected static $allrangeprocessors = null;
+    protected static $alltimesplittings = null;
 
     /**
      * Returns the site selected predictions processor.
@@ -99,37 +99,37 @@ class manager {
     }
 
     /**
-     * Get all available range processors.
+     * Get all available time splitting methods.
      *
-     * @return \tool_inspire\range_processor\base[]
+     * @return \tool_inspire\time_splitting\base[]
      */
-    public static function get_all_range_processors() {
-        if (self::$allrangeprocessors !== null) {
-            return self::$allrangeprocessors;
+    public static function get_all_time_splittings() {
+        if (self::$alltimesplittings !== null) {
+            return self::$alltimesplittings;
         }
 
-        // TODO: It should be able to search range processors in other plugins.
-        $classes = \core_component::get_component_classes_in_namespace('tool_inspire', 'local\\range_processor');
+        // TODO: It should be able to search time splitting methods in other plugins.
+        $classes = \core_component::get_component_classes_in_namespace('tool_inspire', 'local\\time_splitting');
 
-        self::$allrangeprocessors = [];
+        self::$alltimesplittings = [];
         foreach ($classes as $fullclassname => $classpath) {
-            $instance = self::get_range_processor($fullclassname);
+            $instance = self::get_time_splitting($fullclassname);
             if ($instance) {
-                self::$allrangeprocessors[$instance->get_codename()] = $instance;
+                self::$alltimesplittings[$instance->get_codename()] = $instance;
             }
         }
 
-        return self::$allrangeprocessors;
+        return self::$alltimesplittings;
     }
 
     /**
-     * Returns a range processor by its classname.
+     * Returns a time splitting method by its classname.
      *
      * @param string $fullclassname
-     * @return \tool_inspire\local\range_processor\base|false False if it is not valid.
+     * @return \tool_inspire\local\time_splitting\base|false False if it is not valid.
      */
-    public static function get_range_processor($fullclassname) {
-        if (!self::is_valid($fullclassname, '\tool_inspire\local\range_processor\base')) {
+    public static function get_time_splitting($fullclassname) {
+        if (!self::is_valid($fullclassname, '\tool_inspire\local\time_splitting\base')) {
             return false;
         }
         return new $fullclassname();
@@ -172,7 +172,7 @@ class manager {
     }
 
     /**
-     * Returns whether a range processor is valid or not.
+     * Returns whether a time splitting method is valid or not.
      *
      * @param string $fullclassname
      * @return bool

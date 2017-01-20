@@ -82,8 +82,8 @@ $analyseroptions = array(
 // Evaluate its suitability to predict accurately.
 $results = $model->evaluate($analyseroptions);
 
-foreach ($results as $rangeprocessorcodename => $result) {
-    mtrace($rangeprocessorcodename . ' results');
+foreach ($results as $timesplittingcodename => $result) {
+    mtrace($timesplittingcodename . ' results');
     mtrace(' - status code: ' . $result->status);
     mtrace(' - score: ' . $result->score);
     if (!empty($result->errors)) {
@@ -96,19 +96,19 @@ foreach ($results as $rangeprocessorcodename => $result) {
 
 // Select a dataset, train and enable the model.
 $input = cli_input(get_string('trainandenablemodel', 'tool_inspire'));
-$rangeprocessorcodename = clean_param($input, PARAM_ALPHANUMEXT);
-while (empty($results[$rangeprocessorcodename])) {
-    mtrace(get_string('errorunexistingrangeprocessor', 'tool_inspire'));
+$timesplittingcodename = clean_param($input, PARAM_ALPHANUMEXT);
+while (empty($results[$timesplittingcodename])) {
+    mtrace(get_string('errorunexistingtimesplitting', 'tool_inspire'));
     $input = cli_input(get_string('trainandenablemodel', 'tool_inspire'));
-    $rangeprocessorcodename = clean_param($input, PARAM_ALPHANUMEXT);
+    $timesplittingcodename = clean_param($input, PARAM_ALPHANUMEXT);
 }
 
-// Set the range processor file and enable it.
-$model->enable($rangeprocessorcodename);
+// Set the time splitting method file and enable it.
+$model->enable($timesplittingcodename);
 
-mtrace(get_string('trainingmodel', 'tool_inspire', $rangeprocessorcodename));
+mtrace(get_string('trainingmodel', 'tool_inspire', $timesplittingcodename));
 
-// Train the model with the selected range processor.
+// Train the model with the selected time splitting method.
 $model->train();
 
 cli_heading(get_string('success'));

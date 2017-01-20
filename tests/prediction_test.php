@@ -92,10 +92,10 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
             $results = $this->model->evaluate();
 
             // We check that the returned status includes at least $expectedcode code.
-            foreach ($results as $rangeprocessor => $result) {
-                $message = 'The returned status code should include ' . $expected[$rangeprocessor] . ', ' .
+            foreach ($results as $timesplitting => $result) {
+                $message = 'The returned status code should include ' . $expected[$timesplitting] . ', ' .
                     $result->status . ' returned';
-                $this->assertEquals($expected[$rangeprocessor], $result->status & $expected[$rangeprocessor], $message);
+                $this->assertEquals($expected[$timesplitting], $result->status & $expected[$timesplitting], $message);
             }
         }
 
@@ -112,7 +112,7 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
                     'weekly' => \tool_inspire\model::NO_DATASET,
                     'weekly_accum' => \tool_inspire\model::NO_DATASET,
                     // 10 samples is not enough to process anything.
-                    'no_range' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA & \tool_inspire\model::EVALUATE_LOW_SCORE,
+                    'no_splitting' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA & \tool_inspire\model::EVALUATE_LOW_SCORE,
                     'single_range' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA & \tool_inspire\model::EVALUATE_LOW_SCORE,
                     'quarters' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA & \tool_inspire\model::EVALUATE_LOW_SCORE,
                     'quarters_accum' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA & \tool_inspire\model::EVALUATE_LOW_SCORE,
@@ -125,7 +125,7 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
                     // The course duration is too much to be processed by in weekly basis.
                     'weekly' => \tool_inspire\model::NO_DATASET,
                     'weekly_accum' => \tool_inspire\model::NO_DATASET,
-                    'no_range' => \tool_inspire\model::EVALUATE_LOW_SCORE,
+                    'no_splitting' => \tool_inspire\model::EVALUATE_LOW_SCORE,
                     'single_range' => \tool_inspire\model::EVALUATE_LOW_SCORE,
                     'quarters' => \tool_inspire\model::EVALUATE_LOW_SCORE,
                     'quarters_accum' => \tool_inspire\model::EVALUATE_LOW_SCORE,
@@ -140,7 +140,7 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
                     'weekly' => \tool_inspire\model::NO_DATASET,
                     'weekly_accum' => \tool_inspire\model::NO_DATASET,
                     // 10 samples is not enough to process anything.
-                    'no_range' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA,
+                    'no_splitting' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA,
                     'single_range' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA,
                     'quarters' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA,
                     'quarters_accum' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA,
@@ -153,7 +153,7 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
                     // The course duration is too much to be processed by in weekly basis.
                     'weekly' => \tool_inspire\model::NO_DATASET,
                     'weekly_accum' => \tool_inspire\model::NO_DATASET,
-                    'no_range' => \tool_inspire\model::OK,
+                    'no_splitting' => \tool_inspire\model::OK,
                     'single_range' => \tool_inspire\model::OK,
                     'quarters' => \tool_inspire\model::OK,
                     'quarters_accum' => \tool_inspire\model::OK,

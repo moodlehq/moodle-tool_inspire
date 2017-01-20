@@ -61,7 +61,7 @@ abstract class by_course extends base {
 
         $status = array();
         $messages = array();
-        $filesbyrangeprocessor = array();
+        $filesbytimesplitting = array();
 
         // This class and all children will iterate through a list of courses (\tool_inspire\course).
         $analysables = $this->get_courses();
@@ -70,38 +70,38 @@ abstract class by_course extends base {
             list($status[$analysableid], $files, $messages[$analysableid]) = $this->process_analysable($analysable, $includetarget);
 
             if ($status[$analysableid] === \tool_inspire\model::OK) {
-                // Later we will need to aggregate data by range processor.
-                foreach ($files as $rangeprocessorcodename => $file) {
-                    $filesbyrangeprocessor[$rangeprocessorcodename][$analysableid] = $file;
+                // Later we will need to aggregate data by time splitting method.
+                foreach ($files as $timesplittingcodename => $file) {
+                    $filesbytimesplitting[$timesplittingcodename][$analysableid] = $file;
                 }
             }
         }
 
-        // We join the datasets by range processor.
-        $rangeprocessorfiles = $this->merge_analysable_files($filesbyrangeprocessor, $includetarget);
+        // We join the datasets by time splitting method.
+        $timesplittingfiles = $this->merge_analysable_files($filesbytimesplitting, $includetarget);
 
         return array(
             'status' => $status,
-            'files' => $rangeprocessorfiles,
+            'files' => $timesplittingfiles,
             'messages' => $messages
         );
     }
 
-    protected function merge_analysable_files($filesbyrangeprocessor, $includetarget) {
+    protected function merge_analysable_files($filesbytimesplitting, $includetarget) {
 
-        $rangeprocessorfiles = array();
-        foreach ($filesbyrangeprocessor as $rangeprocessorcodename => $files) {
+        $timesplittingfiles = array();
+        foreach ($filesbytimesplitting as $timesplittingcodename => $files) {
 
             if ($this->options['evaluation'] === true) {
                 // Delete the previous copy. Only when evaluating.
-                \tool_inspire\dataset_manager::delete_evaluation_range_file($this->modelid, $rangeprocessorcodename);
+                \tool_inspire\dataset_manager::delete_evaluation_file($this->modelid, $timesplittingcodename);
             }
 
             // Merge all course files into one.
-            $rangeprocessorfiles[$rangeprocessorcodename] = \tool_inspire\dataset_manager::merge_datasets($files,
-                $this->modelid, $rangeprocessorcodename, $this->options['evaluation'], $includetarget);
+            $timesplittingfiles[$timesplittingcodename] = \tool_inspire\dataset_manager::merge_datasets($files,
+                $this->modelid, $timesplittingcodename, $this->options['evaluation'], $includetarget);
         }
 
-        return $rangeprocessorfiles;
+        return $timesplittingfiles;
     }
 }
