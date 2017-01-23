@@ -47,6 +47,7 @@ class tool_inspire_model_testcase extends advanced_testcase {
         $this->modelobj->codename = 'testmodel';
         $this->modelobj->target = 'test_target_shortname';
         $this->modelobj->indicators = json_encode($indicators);
+        $this->modelobj->evaluationminscore = 0.7;
         $this->modelobj->predictionminscore = 0.8;
         $this->modelobj->timecreated = time();
         $this->modelobj->timemodified = time();

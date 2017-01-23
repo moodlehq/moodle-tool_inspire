@@ -39,7 +39,12 @@ function xmldb_tool_inspire_install() {
     $model->codename = 'dropout';
     $model->target = '\tool_inspire\local\target\grade_pass';
     $model->indicators = json_encode(array_keys($indicators));
-    $model->predictionminscore = 0.7;
+
+    // Standard 0.7 score to validate the model.
+    $model->evaluationminscore = 0.7;
+
+    // We don't require high prediction scores, if there is a risk we consider it valid enough to perform further action.
+    $model->predictionminscore = 0.6;
     $model->timecreated = time();
     $model->timemodified = time();
     $model->usermodified = $USER->id;

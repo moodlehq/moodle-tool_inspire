@@ -24,9 +24,9 @@ if len(sys.argv) < 7:
 - The model unique identifier\
 - The directory to store all generated outputs\
 - The training file\
-- The minimum phi value to consider the model as valid\
-- The minimum deviation to accept the model as valid\
-- The number of times the evaluation will run\
+- The minimum score (from 0 to 1) to consider the model as valid (defaults to 0.7)\
+- The minimum deviation to accept the model as valid (defaults to 0.02)\
+- The number of times the evaluation will run (defaults to 100)\
 Received: ' + ' '.join(sys.argv)]
 
     # Add the provided unique id.

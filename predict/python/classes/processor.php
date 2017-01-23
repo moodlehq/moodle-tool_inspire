@@ -35,10 +35,6 @@ defined('MOODLE_INTERNAL') || die();
  */
 class processor implements \tool_inspire\predictor {
 
-    const VALIDATION = 0.7;
-    const DEVIATION = 0.02;
-    const ITERATIONS = 30;
-
     public function train($uniqueid, \stored_file $dataset, $outputdir) {
 
         $datasetpath = $this->get_file_path($dataset);
@@ -109,19 +105,19 @@ class processor implements \tool_inspire\predictor {
         return $resultobj;
     }
 
-    public function evaluate($uniqueid, \stored_file $dataset, $outputdir) {
+    public function evaluate($uniqueid, $minscore, $resultsdeviation, $niterations, \stored_file $dataset, $outputdir) {
 
         $datasetpath = $this->get_file_path($dataset);
 
-        $absolutescriptpath = escapeshellarg(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'cli' . DIRECTORY_SEPARATOR .
-            'evaluate-classification-singleclass.py');
+        $absolutescriptpath = escapeshellarg(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR .
+            'cli' . DIRECTORY_SEPARATOR . 'evaluate-classification-singleclass.py');
         $cmd = 'python ' . $absolutescriptpath . ' ' .
             escapeshellarg($uniqueid) . ' ' .
             escapeshellarg($outputdir) . ' ' .
             escapeshellarg($datasetpath) . ' ' .
-            escapeshellarg(self::VALIDATION) . ' ' .
-            escapeshellarg(self::DEVIATION) . ' ' .
-            escapeshellarg(self::ITERATIONS);
+            escapeshellarg($minscore) . ' ' .
+            escapeshellarg($resultsdeviation) . ' ' .
+            escapeshellarg($niterations);
 
         if (debugging() && !PHPUNIT_TEST) {
             mtrace($cmd);
@@ -138,9 +134,6 @@ class processor implements \tool_inspire\predictor {
         if (!$resultobj = json_decode($result)) {
             throw new \moodle_exception('errorpredictwrongformat', 'tool_inspire', '', json_last_error_msg());
         }
-
-        // Phi goes from -1 to 1 we need to transform it to a value between 0 and 1.
-        $resultobj->score = ($resultobj->phi + 1) / 2;
 
         return $resultobj;
     }

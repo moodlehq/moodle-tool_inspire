@@ -180,8 +180,11 @@ class model {
             $outputdir = $this->get_output_dir($timesplitting->get_codename());
             $predictor = \tool_inspire\manager::get_predictions_processor();
 
-            // Evaluate the dataset.
-            $predictorresult = $predictor->evaluate($this->model->id, $dataset, $outputdir);
+            // Evaluate the dataset, the deviation we accept in the results depends on the amount of iterations.
+            $resultsdeviation = 0.02;
+            $niterations = 100;
+            $predictorresult = $predictor->evaluate($this->model->id, $this->model->evaluationminscore,
+                $resultsdeviation, $niterations, $dataset, $outputdir);
 
             $result->status = $predictorresult->status;
             $result->score = $predictorresult->score;
@@ -252,6 +255,12 @@ class model {
         $samplesdata = $this->get_analyser()->get_unlabelled_data();
 
         foreach ($samplesdata['files'] as $timesplittingcodename => $samplesfile) {
+
+            // We need to throw an exception if we are trying to predict stuff that was already predicted.
+            $params = array('fileid' => $samplesfile->get_id(), 'action' => 'predicted', 'modelid' => $this->model->id);
+            if ($predicted = $DB->get_record('tool_inspire_used_files', $params)) {
+                throw new \moodle_exception('erroralreadypredict', 'tool_inspire', '', $samplesfile->get_id());
+            }
 
             $outputdir = $this->get_output_dir($timesplittingcodename);
 

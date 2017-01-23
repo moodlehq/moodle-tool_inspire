@@ -89,7 +89,7 @@ class BinaryClassifier(Classifier):
         return result
 
 
-    def evaluate_dataset(self, filepath, accepted_phi=0.7, accepted_deviation=0.02, n_test_runs=1):
+    def evaluate_dataset(self, filepath, min_score=0.7, accepted_deviation=0.02, n_test_runs=100):
         # TODO Move this to Classifier and make it multiple classes compatible.
 
         [self.X, self.y] = self.get_labelled_samples(filepath)
@@ -133,7 +133,7 @@ class BinaryClassifier(Classifier):
             logging.info("Figure stored in " + fig_filepath)
 
         # Return results.
-        result = self.get_evaluation_results(accepted_phi, accepted_deviation)
+        result = self.get_evaluation_results(min_score, accepted_deviation)
 
         # Add the run id to identify it in the caller.
         result['runid'] = int(self.get_runid())
@@ -141,7 +141,7 @@ class BinaryClassifier(Classifier):
         logging.info("Accuracy: %.2f%%" % (result['accuracy'] * 100))
         logging.info("Precision (predicted elements that are real): %.2f%%" % (result['precision'] * 100))
         logging.info("Recall (real elements that are predicted): %.2f%%" % (result['recall'] * 100))
-        logging.info("Phi coefficient: %.2f%%" % (result['phi'] * 100))
+        logging.info("Score: %.2f%%" % (result['score'] * 100))
         logging.info("AUC standard desviation: %.4f" % (result['auc_deviation']))
 
         return result
@@ -228,22 +228,26 @@ class BinaryClassifier(Classifier):
         return [accuracy, precision, recall, phi]
 
 
-    def get_evaluation_results(self, accepted_phi, accepted_deviation):
+    def get_evaluation_results(self, min_score, accepted_deviation):
 
         avg_accuracy = np.mean(self.accuracies)
         avg_precision = np.mean(self.precisions)
         avg_recall = np.mean(self.recalls)
-        avg_phi = np.mean(self.phis)
         avg_aucs = np.mean(self.aucs)
+        avg_phi = np.mean(self.phis)
+
+        # Phi goes from -1 to 1 we need to transform it to a value between
+        # 0 and 1 to compare it with the minimum score provided.
+        score = (avg_phi + 1) / 2
 
         result = dict()
         result['auc'] = avg_aucs
         result['accuracy'] = avg_accuracy
         result['precision'] = avg_precision
         result['recall'] = avg_recall
-        result['phi'] = avg_phi
         result['auc_deviation'] = np.std(self.aucs)
-        result['accepted_phi'] = accepted_phi
+        result['score'] = score
+        result['min_score'] = min_score
         result['accepted_deviation'] = accepted_deviation
 
         result['status'] = Classifier.OK
@@ -259,13 +263,13 @@ class BinaryClassifier(Classifier):
                 % (auc_deviation, accepted_deviation))
             result['status'] = Classifier.EVALUATE_NOT_ENOUGH_DATA
 
-        if avg_phi < accepted_phi:
-            result['errors'].append('The model is not good enough. Model phi ='
-                + ' %f, accepted phi = %f' \
-                % (avg_phi, accepted_phi))
+        if score < min_score:
+            result['errors'].append('The model is not good enough. Model score ='
+                + ' %f, minimum score = %f' \
+                % (score, min_score))
             result['status'] = Classifier.EVALUATE_LOW_SCORE
 
-        if auc_deviation > accepted_deviation and avg_phi < accepted_phi:
+        if auc_deviation > accepted_deviation and score < min_score:
             result['status'] = Classifier.EVALUATE_LOW_SCORE + Classifier.EVALUATE_NOT_ENOUGH_DATA
 
         return result

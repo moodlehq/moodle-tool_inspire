@@ -53,10 +53,6 @@ defined('MOODLE_INTERNAL') || die();
  */
 class processor implements \tool_inspire\predictor {
 
-    const VALIDATION = 0.7;
-    const DEVIATION = 0.02;
-    const ITERATIONS = 30;
-
     public function train($uniqueid, \stored_file $dataset, $outputdir) {
         throw new \Exception('Not implemented');
     }
@@ -65,7 +61,7 @@ class processor implements \tool_inspire\predictor {
         throw new \Exception('Not implemented');
     }
 
-    public function evaluate($uniqueid, \stored_file $dataset, $outputdir) {
+    public function evaluate($uniqueid, $minscore, $resultsdeviation, $niterations, \stored_file $dataset, $outputdir) {
 
         $fh = $dataset->get_content_file_handle();
 
@@ -89,7 +85,7 @@ class processor implements \tool_inspire\predictor {
         $phis = array();
 
         // Evaluate the model multiple times to confirm the results are not significantly random due to a short amount of data.
-        for ($i = 0; $i < self::ITERATIONS; $i++) {
+        for ($i = 0; $i < $niterations; $i++) {
 
             // Binary classification.
             $network = new MultilayerPerceptron([intval($metadata['nfeatures']), 2, 1]);
@@ -121,10 +117,10 @@ class processor implements \tool_inspire\predictor {
         }
 
         // Let's fill the results changing the returned status code depending on the phi-related calculated metrics.
-        return $this->get_result_object($phis);
+        return $this->get_result_object($phis, $resultsdeviation, $minscore);
     }
 
-    protected function get_result_object($phis) {
+    protected function get_result_object($phis, $resultsdeviation, $minscore) {
 
         // We convert phi (from -1 to 1) to a value between 0 and 1.
         $avgphi = Mean::arithmetic($phis);
@@ -140,21 +136,22 @@ class processor implements \tool_inspire\predictor {
         $resultobj->status = \tool_inspire\model::OK;
         $resultobj->errors = array();
 
+        // Convert phi (from -1 to 1 to a value between 0 and 1) to a standard score.
+        $resultobj->score = ($avgphi + 1) / 2;
+
         // If each iteration results varied too much we need more data to confirm that this is a valid model.
-        if ($stddev > self::DEVIATION) {
+        if ($stddev > $resultsdeviation) {
             $resultobj->status = $resultobj->status + \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA;
             $resultobj->errors[] = 'The results obtained varied too much, we need more samples to check ' .
-                'if this model is valid. Model deviation = ' . $stddev . ', accepted deviation = ' . self::DEVIATION;
+                'if this model is valid. Model deviation = ' . $stddev . ', accepted deviation = ' . $resultsdeviation;
         }
 
-        if ($avgphi < self::VALIDATION) {
+        if ($resultobj->score < $minscore) {
             $resultobj->status = $resultobj->status + \tool_inspire\model::EVALUATE_LOW_SCORE;
-            $resultobj->errors[] = 'The model is not good enough. Model phi = ' . $avgphi .
-                ', accepted phi = ' . self::VALIDATION;
+            $resultobj->errors[] = 'The model is not good enough. Model score = ' . $resultobj->score .
+                ', minimum score = ' . $minscore;
         }
 
-        // Convert phi (from -1 to 1 to a value between 0 and 1).
-        $resultobj->score = ($avgphi + 1) / 2;
 
         return $resultobj;
     }

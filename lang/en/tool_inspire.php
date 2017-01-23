@@ -22,6 +22,7 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+$string['erroralreadypredict'] = '{$a} file has already been used to predict';
 $string['errordisabledmodel'] = '{$a} model is disabled and can not be used to predict';
 $string['errorinvalidtimesplitting'] = '{$a} time splitting method is not valid';
 $string['errornoenabledmodels'] = 'There are not enabled models to train';
