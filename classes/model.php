@@ -171,26 +171,17 @@ class model {
 
                 $result->status = self::NO_DATASET;
                 $result->score = 0;
-                $result->dataset = null;
                 $result->errors = array('Was not possible to create a dataset for this time splitting method');
 
                 $results[$timesplitting->get_codename()] = $result;
                 continue;
             }
 
-            // From moodle filesystem to the file system.
-            // TODO This is not ideal, but it seems that there is no read access to moodle filesystem files.
-            $dir = make_request_directory();
-            $filepath = $dataset->copy_content_to_temp($dir);
-
-            // Copy the evaluated dataset filepath to the result object.
-            $result->dataset = $filepath;
-
             $outputdir = $this->get_output_dir($timesplitting->get_codename());
             $predictor = \tool_inspire\manager::get_predictions_processor();
 
             // Evaluate the dataset.
-            $predictorresult = $predictor->evaluate($this->model->id, $filepath, $outputdir);
+            $predictorresult = $predictor->evaluate($this->model->id, $dataset, $outputdir);
 
             $result->status = $predictorresult->status;
             $result->score = $predictorresult->score;
@@ -230,16 +221,11 @@ class model {
 
             $result = new \stdClass();
 
-            // From moodle filesystem to the file system.
-            // TODO This is not ideal, but it seems that there is no read access to moodle filesystem files.
-            $dir = make_request_directory();
-            $filepath = $dataset->copy_content_to_temp($dir);
-
             $outputdir = $this->get_output_dir($timesplittingcodename);
             $predictor = \tool_inspire\manager::get_predictions_processor();
 
             // Train using the dataset.
-            $predictorresult = $predictor->train($this->get_unique_id(), $filepath, $outputdir);
+            $predictorresult = $predictor->train($this->get_unique_id(), $dataset, $outputdir);
 
             $result->status = $predictorresult->status;
             $result->errors = $predictorresult->errors;
@@ -267,15 +253,10 @@ class model {
 
         foreach ($samplesdata['files'] as $timesplittingcodename => $samplesfile) {
 
-            // From moodle filesystem to the file system.
-            // TODO This is not ideal, but it seems that there is no read access to moodle filesystem files.
-            $dir = make_request_directory();
-            $filepath = $samplesfile->copy_content_to_temp($dir);
-
             $outputdir = $this->get_output_dir($timesplittingcodename);
 
             $predictor = \tool_inspire\manager::get_predictions_processor();
-            $predictorresult = $predictor->predict($this->get_unique_id(), $filepath, $outputdir);
+            $predictorresult = $predictor->predict($this->get_unique_id(), $samplesfile, $outputdir);
 
             $result = new \stdClass();
             $result->status = $predictorresult->status;

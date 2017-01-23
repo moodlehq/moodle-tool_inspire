@@ -78,11 +78,8 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
             $this->getDataGenerator()->create_course($params);
         }
 
-        // We repeat the test for all enabled prediction processors.
-        // TODO The "enabled" part is not implemented"
+        // We repeat the test for all prediction processors.
         $predictionprocessors = \tool_inspire\manager::get_all_prediction_processors();
-        // TODO Uncomment.
-        unset($predictionprocessors['\\predict_php\\processor']);
 
         foreach ($predictionprocessors as $classfullname => $predictionsprocessor) {
 
@@ -129,21 +126,6 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
                     'single_range' => \tool_inspire\model::EVALUATE_LOW_SCORE,
                     'quarters' => \tool_inspire\model::EVALUATE_LOW_SCORE,
                     'quarters_accum' => \tool_inspire\model::EVALUATE_LOW_SCORE,
-                )
-            ),
-
-            'no-enough-data' => array(
-                'modelquality' => 'perfect',
-                'ncourses' => 10,
-                'expectedresults' => array(
-                    // The course duration is too much to be processed by in weekly basis.
-                    'weekly' => \tool_inspire\model::NO_DATASET,
-                    'weekly_accum' => \tool_inspire\model::NO_DATASET,
-                    // 10 samples is not enough to process anything.
-                    'no_splitting' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA,
-                    'single_range' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA,
-                    'quarters' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA,
-                    'quarters_accum' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA,
                 )
             ),
             'good' => array(

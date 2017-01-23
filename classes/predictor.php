@@ -35,9 +35,9 @@ defined('MOODLE_INTERNAL') || die();
  */
 interface predictor {
 
-    public function train($modelid, $datasetpath, $outputdir);
+    public function train($modelid, \stored_file $dataset, $outputdir);
 
-    public function predict($modelid, $datasetpath, $outputdir);
+    public function predict($modelid, \stored_file $dataset, $outputdir);
 
-    public function evaluate($modelid, $datasetpath, $outputdir);
+    public function evaluate($modelid, \stored_file $dataset, $outputdir);
 }

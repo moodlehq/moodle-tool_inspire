@@ -39,7 +39,9 @@ class processor implements \tool_inspire\predictor {
     const DEVIATION = 0.02;
     const ITERATIONS = 30;
 
-    public function train($uniqueid, $datasetpath, $outputdir) {
+    public function train($uniqueid, \stored_file $dataset, $outputdir) {
+
+        $datasetpath = $this->get_file_path($dataset);
 
         $absolutescriptpath = escapeshellarg(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'cli' . DIRECTORY_SEPARATOR .
             'train-classification-singleclass.py');
@@ -72,7 +74,9 @@ class processor implements \tool_inspire\predictor {
         return $resultobj;
     }
 
-    public function predict($uniqueid, $datasetpath, $outputdir) {
+    public function predict($uniqueid, \stored_file $dataset, $outputdir) {
+
+        $datasetpath = $this->get_file_path($dataset);
 
         $absolutescriptpath = escapeshellarg(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'cli' . DIRECTORY_SEPARATOR .
             'predict-classification-singleclass.py');
@@ -105,7 +109,9 @@ class processor implements \tool_inspire\predictor {
         return $resultobj;
     }
 
-    public function evaluate($uniqueid, $datasetpath, $outputdir) {
+    public function evaluate($uniqueid, \stored_file $dataset, $outputdir) {
+
+        $datasetpath = $this->get_file_path($dataset);
 
         $absolutescriptpath = escapeshellarg(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'cli' . DIRECTORY_SEPARATOR .
             'evaluate-classification-singleclass.py');
@@ -133,9 +139,20 @@ class processor implements \tool_inspire\predictor {
             throw new \moodle_exception('errorpredictwrongformat', 'tool_inspire', '', json_last_error_msg());
         }
 
-        // Phi goes from 0 to 1 so its value is the model score for this time splitting method.
-        $resultobj->score = $resultobj->phi;
+        // Phi goes from -1 to 1 we need to transform it to a value between 0 and 1.
+        $resultobj->score = ($resultobj->phi + 1) / 2;
 
         return $resultobj;
+    }
+
+    protected function get_file_path(\stored_file $file) {
+
+        // From moodle filesystem to the local file system.
+        // This is not ideal, but there is no read access to moodle filesystem files.
+        $dir = make_request_directory();
+        $filepath = $file->copy_content_to_temp($dir);
+
+        // Copy the evaluated dataset filepath to the result object.
+        return $filepath;
     }
 }

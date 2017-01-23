@@ -37,7 +37,10 @@ use Phpml\NeuralNetwork\Network\MultilayerPerceptron;
 use Phpml\NeuralNetwork\Training\Backpropagation;
 use Phpml\CrossValidation\RandomSplit;
 use Phpml\Dataset\ArrayDataset;
-use Phpml\Metric\Accuracy;
+use Phpml\Metric\ConfusionMatrix;
+
+use Phpml\Math\Statistic\Mean;
+use Phpml\Math\Statistic\StandardDeviation;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -50,17 +53,21 @@ defined('MOODLE_INTERNAL') || die();
  */
 class processor implements \tool_inspire\predictor {
 
-    public function train($uniqueid, $datasetpath, $outputdir) {
+    const VALIDATION = 0.7;
+    const DEVIATION = 0.02;
+    const ITERATIONS = 30;
+
+    public function train($uniqueid, \stored_file $dataset, $outputdir) {
         throw new \Exception('Not implemented');
     }
 
-    public function predict($uniqueid, $datasetpath, $outputdir) {
+    public function predict($uniqueid, \stored_file $dataset, $outputdir) {
         throw new \Exception('Not implemented');
     }
 
-    public function evaluate($uniqueid, $datasetpath, $outputdir) {
+    public function evaluate($uniqueid, \stored_file $dataset, $outputdir) {
 
-        $fh = fopen($datasetpath, 'r');
+        $fh = $dataset->get_content_file_handle();
 
         // The first lines are var names and the second one values.
         $metadata = fgetcsv($fh);
@@ -69,9 +76,7 @@ class processor implements \tool_inspire\predictor {
         // Skip headers.
         fgets($fh);
 
-        $network = new MultilayerPerceptron([intval($metadata['nfeatures']), 2, 1]);
-        $training = new Backpropagation($network);
-
+        // TODO This should be processed in chunks if we expect it to scale.
         $samples = array();
         $targets = array();
         while (($data = fgetcsv($fh)) !== false) {
@@ -81,30 +86,95 @@ class processor implements \tool_inspire\predictor {
         }
         fclose($fh);
 
-        $dataset = new RandomSplit(new ArrayDataset($samples, $targets), 0.1);
+        $phis = array();
 
-        $training->train($dataset->getTrainSamples(), $dataset->getTrainLabels(), 0.3, 300);
+        // Evaluate the model multiple times to confirm the results are not significantly random due to a short amount of data.
+        for ($i = 0; $i < self::ITERATIONS; $i++) {
 
-        $predictedvalues = array();
-        foreach ($dataset->getTestSamples() as $input) {
-            $predictedvalues[] = $network->setInput($input)->getOutput();
+            // Binary classification.
+            $network = new MultilayerPerceptron([intval($metadata['nfeatures']), 2, 1]);
+            $training = new Backpropagation($network);
+
+            // Split up the dataset in training and testing.
+            $data = new RandomSplit(new ArrayDataset($samples, $targets), 0.2);
+
+            // For evaluation 0.1 error and 100 should be enough.
+            $training->train($data->getTrainSamples(), $data->getTrainLabels(), 0.1, 100);
+
+            $predictedlabels = array();
+            $scores = array();
+            foreach ($data->getTestSamples() as $input) {
+
+                // This [0] must change if the output have more than 1 neuron.
+                $probs = $network->setInput($input)->getOutput()[0];
+                if ($probs >= 0.5) {
+                    $predictedlabels[] = 1;
+                    $scores[] = $probs;
+                } else {
+                    $predictedlabels[] = 0;
+                    $scores[] = 1 - $probs;
+                }
+            }
+            $testlabels = array_reduce($data->getTestLabels(), 'array_merge', array());
+
+            $phis[] = $this->get_phi($testlabels, $predictedlabels);
         }
-        var_dump(array_slice($dataset->getTestLabels(), 0, 20));
-        var_dump(array_slice($predictedvalues, 0, 20));
-die();
-        $testlabels = array_reduce($dataset->getTestLabels(), 'array_merge', array());
-        $predicted = array_reduce($predictedvalues, 'array_merge', array());
-        return false;
-        //die();
-        if (!$result) {
-            throw new \moodle_exception('errornopredictresults', 'tool_inspire');
+
+        // Let's fill the results changing the returned status code depending on the phi-related calculated metrics.
+        return $this->get_result_object($phis);
+    }
+
+    protected function get_result_object($phis) {
+
+        // We convert phi (from -1 to 1) to a value between 0 and 1.
+        $avgphi = Mean::arithmetic($phis);
+
+        // Standard deviation should ideally be calculated against the area under the curve.
+        $stddev = StandardDeviation::population($phis);
+        \tool_inspire\model::OK;
+
+        // Let's fill the results object.
+        $resultobj = new \stdClass();
+
+        // Zero is ok, now we add other bits if something is not right.
+        $resultobj->status = \tool_inspire\model::OK;
+        $resultobj->errors = array();
+
+        // If each iteration results varied too much we need more data to confirm that this is a valid model.
+        if ($stddev > self::DEVIATION) {
+            $resultobj->status = $resultobj->status + \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA;
+            $resultobj->errors[] = 'The results obtained varied too much, we need more samples to check ' .
+                'if this model is valid. Model deviation = ' . $stddev . ', accepted deviation = ' . self::DEVIATION;
         }
 
-
-        if (!$resultobj = json_decode($result)) {
-            throw new \moodle_exception('errorpredictwrongformat', 'tool_inspire', '', json_last_error_msg());
+        if ($avgphi < self::VALIDATION) {
+            $resultobj->status = $resultobj->status + \tool_inspire\model::EVALUATE_LOW_SCORE;
+            $resultobj->errors[] = 'The model is not good enough. Model phi = ' . $avgphi .
+                ', accepted phi = ' . self::VALIDATION;
         }
+
+        // Convert phi (from -1 to 1 to a value between 0 and 1).
+        $resultobj->score = ($avgphi + 1) / 2;
 
         return $resultobj;
+    }
+
+    protected function get_phi($testlabels, $predictedlabels) {
+        // Binary here only as well.
+        $matrix = ConfusionMatrix::compute($testlabels, $predictedlabels, array(0, 1));
+
+        $tptn = $matrix[0][0] * $matrix[1][1];
+        $fpfn = $matrix[1][0] * $matrix[0][1];
+        $tpfp = $matrix[0][0] + $matrix[1][0];
+        $tpfn = $matrix[0][0] + $matrix[0][1];
+        $tnfp = $matrix[1][1] + $matrix[1][0];
+        $tnfn = $matrix[1][1] + $matrix[0][1];
+        if ($tpfp === 0 || $tpfn === 0 || $tnfp === 0 || $tnfn === 0) {
+            $phi = 0;
+        } else {
+            $phi = ( $tptn - $fpfn ) / sqrt( $tpfp * $tpfn * $tnfp * $tnfn);
+        }
+
+        return $phi;
     }
 }
