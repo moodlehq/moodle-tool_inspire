@@ -95,7 +95,7 @@ class grade_pass extends discrete {
         return true;
     }
 
-    public function calculate_sample($sampleid, \tool_inspire\analysable $analysable, $data) {
+    public function calculate_sample($sampleid, $tablename, \tool_inspire\analysable $analysable, $data) {
 
         $params = array('userid' => $sampleid, 'itemid' => self::$coursegradeitems[$data['course']->id]->id);
         $grade = \grade_grade::fetch($params);

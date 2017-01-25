@@ -35,11 +35,11 @@ defined('MOODLE_INTERNAL') || die();
  */
 class user_track_forums extends base {
 
-    public static function get_requirements() {
-        return ['user'];
+    public static function required_sample() {
+        return 'user';
     }
 
-    public function calculate_sample($sampleid, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
+    public function calculate_sample($sampleid, $tablename, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
         return ($data['user'][$sampleid]->trackforums) ? self::get_max_value() : self::get_min_value();
     }
 }

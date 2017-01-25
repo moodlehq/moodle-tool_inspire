@@ -33,10 +33,8 @@ defined('MOODLE_INTERNAL') || die();
  */
 class courses extends sitewide {
 
-    protected function samples_info() {
-        return array(
-            'course' => 'courseid'
-        );
+    public function get_samples_tablename() {
+        return 'course';
     }
 
     public function get_all_samples(\tool_inspire\analysable $site) {

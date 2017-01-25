@@ -66,11 +66,12 @@ abstract class base extends \tool_inspire\calculable {
      * In case there are no values to return or the provided sample is not applicable just return null.
      *
      * @param int $sample
+     * @param string $tablename
      * @param \tool_inspire\analysable $analysable
      * @param array $data
      * @return float|null
      */
-    abstract protected function calculate_sample($sampleid, \tool_inspire\analysable $analysable, $data);
+    abstract protected function calculate_sample($sampleid, $tablename, \tool_inspire\analysable $analysable, $data);
 
     /**
      * Callback to execute once a prediction has been returned from the predictions processor.
@@ -106,17 +107,18 @@ abstract class base extends \tool_inspire\calculable {
      * Rows with null values will be skipped as invalid by time splitting methods.
      *
      * @param array $samples
+     * @param string $tablename
      * @param \tool_inspire\analysable $analysable
      * @param array $data All required data.
-     * @param integer $notused1 startime is not necessary when calculating targets
-     * @param integer $notused2 endtime is not necessary when calculating targets
+     * @param integer $starttime startime is not necessary when calculating targets
+     * @param integer $endtime endtime is not necessary when calculating targets
      * @return array The format to follow is [userid] = scalar|null
      */
-    public function calculate($samples, \tool_inspire\analysable $analysable, $data, $notused1 = false, $notused2 = false) {
+    public function calculate($samples, $tablename, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
 
         $calculations = [];
         foreach ($samples as $sampleid => $sample) {
-            $calculatedvalue = $this->calculate_sample($sampleid, $analysable, $data);
+            $calculatedvalue = $this->calculate_sample($sampleid, $tablename, $analysable, $data);
 
             if (!is_null($calculatedvalue)) {
                 if ($this->is_linear() && ($calculatedvalue > self::get_max_value() || $calculatedvalue < self::get_min_value())) {

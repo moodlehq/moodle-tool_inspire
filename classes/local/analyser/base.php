@@ -56,12 +56,7 @@ abstract class base {
         $this->check_indicators_requirements();
     }
 
-    /**
-     * This function is used to check calculables needs against the info provided in the analyser samples.
-     *
-     * @return string[]
-     */
-    abstract protected function samples_info();
+    abstract protected function get_samples_tablename();
 
     /**
      * This function returns the list of samples that can be calculated.
@@ -99,14 +94,13 @@ abstract class base {
      */
     protected function check_indicators_requirements() {
 
-        $samplesinfo = $this->samples_info();
+        $sampletablename = $this->get_samples_tablename();
 
         foreach ($this->indicators as $indicator) {
-            foreach ($indicator::get_requirements() as $requirement) {
-                if (empty($samplesinfo[$requirement])) {
-                    throw new \tool_inspire\requirements_exception($indicator->get_codename() . ' indicator requires ' .
-                        $requirement . ' which is not provided by ' . get_class($this));
-                }
+            $tablename = $indicator::required_sample();
+            if ($tablename && $tablename !== $sampletablename) {
+                throw new \tool_inspire\requirements_exception($indicator->get_codename() . ' indicator requires ' .
+                    $tablename . ' samples which are not provided by ' . get_class($this));
             }
         }
     }
@@ -229,7 +223,7 @@ abstract class base {
             }
         }
 
-        $timesplitting->set_samples($samples);
+        $timesplitting->set_samples($samples, $this->get_samples_tablename());
 
         $dataset = new \tool_inspire\dataset_manager($this->modelid, $analysable->get_id(), $timesplitting->get_codename(),
             $this->options['evaluation'], $includetarget);

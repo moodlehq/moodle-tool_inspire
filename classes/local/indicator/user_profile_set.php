@@ -35,11 +35,11 @@ defined('MOODLE_INTERNAL') || die();
  */
 class user_profile_set extends base {
 
-    public static function get_requirements() {
-        return ['user'];
+    public static function required_sample() {
+        return 'user';
     }
 
-    public function calculate_sample($sampleid, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
+    public function calculate_sample($sampleid, $tablename, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
         $user = $data['user'][$sampleid];
 
         // Nothing set results in -1.

@@ -38,28 +38,29 @@ abstract class calculable {
     /**
      * Calculation for all provided samples.
      *
-     * @param int $sample
+     * @param int[] $samples
+     * @param string $tablename
      * @param \tool_inspire\analysable $analysable
      * @param array $data
      * @param int $starttime
      * @param int $endtime
      * @return int[]|float[]
      */
-    abstract public function calculate($samples, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false);
+    abstract public function calculate($samples, $tablename, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false);
 
     /**
-     * Return database records required to perform a calculation, for all course students.
+     * Specify db records to store in-memory during the whole analysis.
      *
-     * Course data and course users data is available in $this->course, $this->studentids and
-     * $this->teachers. In self::calculate you can also access $data['course'] and
-     * $data['user'], this last one including only students and teachers by default.
+     * This function is useful to fill a pool of data that will be available across indicators,
+     * saving db queries.
      *
      * Please, only load whatever info you really need as all this data will be stored in
      * memory so only include boolean and integer fields, you can also include string fields if you know
-     * that they will not contain big chunks of text.
+     * that they will not contain big chunks of text or the amount of records that is available is not
+     * massive.
      *
      * You can just return null if:
-     * - You need hardly reusable records
+     * - The records you need to calculate the indicator are hardly reusable
      * - You can sort the calculation out easily using a single query fetching data from multiple db tables
      * - You need fields that can be potentially big (varchars and texts)
      *
@@ -68,7 +69,7 @@ abstract class calculable {
      * @param \tool_inspire\local\analysable $analysable
      * @return null|array The format to follow is [tablename][id] = stdClass(dbrecord)
      */
-    public function get_required_records(\tool_inspire\analysable $analysable) {
+    public function fill_cache(\tool_inspire\analysable $analysable) {
         return null;
     }
 

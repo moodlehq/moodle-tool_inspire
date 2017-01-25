@@ -115,6 +115,10 @@ class manager {
         foreach ($classes as $fullclassname => $classpath) {
             $instance = self::get_time_splitting($fullclassname);
             if ($instance) {
+                if (!empty(self::$alltimesplittings[$instance->get_codename()])) {
+                    throw new \coding_exception('Time splitting methods codename should be unique, ' .
+                        $instance->get_codename() . ' is duplicated.');
+                }
                 self::$alltimesplittings[$instance->get_codename()] = $instance;
             }
         }

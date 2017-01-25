@@ -2,11 +2,11 @@
 
 class test_indicator_fullname extends \tool_inspire\local\indicator\base {
 
-    public static function get_requirements() {
-        return ['course'];
+    public static function required_sample() {
+        return 'course';
     }
 
-    protected function calculate_sample($sampleid, \tool_inspire\analysable $analysable, $data, $starttime, $endtime) {
+    protected function calculate_sample($sampleid, $tablename, \tool_inspire\analysable $analysable, $data, $starttime, $endtime) {
         global $DB;
 
         $sample = $DB->get_record('course', array('id' => $sampleid));

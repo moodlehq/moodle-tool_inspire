@@ -40,9 +40,14 @@ abstract class base {
 
 
     /**
-     * @var array
+     * @var int[]
      */
     protected $samples;
+
+    /**
+     * @var string
+     */
+    protected $samplestablename;
 
     /**
      * @var array
@@ -84,8 +89,9 @@ abstract class base {
         $this->analysable = $analysable;
     }
 
-    public function set_samples($samples) {
+    public function set_samples($samples, $tablename) {
         $this->samples = $samples;
+        $this->samplestablename = $tablename;
     }
 
     /**
@@ -122,22 +128,22 @@ abstract class base {
 
         // Fetch all database items required records.
         foreach ($indicators as $indicator) {
-            if ($requiredrecords = $indicator->get_required_records($this->analysable)) {
-                $this->merge_into_storage($requiredrecords);
+            if ($records = $indicator->fill_cache($this->analysable)) {
+                $this->merge_into_cache($records);
             }
         }
 
         // We only add target required records if we calculate the target.
         if ($target) {
-            if ($requiredrecords = $target->get_required_records($this->analysable)) {
-                $this->merge_into_storage($requiredrecords);
+            if ($records = $target->fill_cache($this->analysable)) {
+                $this->merge_into_cache($records);
             }
         }
 
         $calculatedtarget = false;
         if ($target) {
             // We first calculate the target because analysable data may still be invalid, we need to stop if it is not.
-            $calculatedtarget = $target->calculate($this->samples, $this->analysable, $this->storage);
+            $calculatedtarget = $target->calculate($this->samples, $this->samplestablename, $this->analysable, $this->storage);
 
             // We remove samples we can not calculate their target.
             $this->samples = array_filter($this->samples, function($sample) use ($calculatedtarget) {
@@ -180,7 +186,7 @@ abstract class base {
             foreach ($ranges as $rangeindex => $range) {
 
                 // Calculate the indicator for each sample in this time range.
-                $calculated = $indicator->calculate($this->samples, $this->analysable, $this->storage, $range['start'], $range['end']);
+                $calculated = $indicator->calculate($this->samples, $this->samplestablename, $this->analysable, $this->storage, $range['start'], $range['end']);
 
                 // Copy the calculated data to the dataset.
                 foreach ($calculated as $analysersampleid => $calculatedvalue) {
@@ -326,7 +332,7 @@ abstract class base {
      * @param array $info
      * @return void
      */
-    protected function merge_into_storage($info) {
+    protected function merge_into_cache($info) {
 
         foreach ($info as $tablename => $records) {
 
@@ -351,7 +357,7 @@ abstract class base {
                         }
 
                         // This should be safe as indicators are not allowed to modify the database contents in
-                        // get_required_records and we call all get_required_records methods sequentially.
+                        // \tool_inspire\local\base::fill_cache and all fill_cache calls are sequential.
                         //
                         // In case any indicator has the great idea of modifying the database and returning a modified record
                         // we give preference to the value that was already set so the issue should be detected by the indicator

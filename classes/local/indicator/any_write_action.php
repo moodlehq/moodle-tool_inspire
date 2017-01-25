@@ -35,17 +35,22 @@ defined('MOODLE_INTERNAL') || die();
  */
 class any_write_action extends base {
 
-    public static function get_requirements() {
-        return ['course', 'user'];
-    }
-
-    public function calculate_sample($sampleid, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
+    public function calculate_sample($sampleid, $tablename, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
         global $DB;
+
+        $select = '';
+        $params = array();
+
+        if ($tablename === 'user') {
+            $select = "userid = :userid AND ";
+            $params = array('userid' => $sampleid);
+        }
+
         // Filter by context to use the db table index.
         $context = $analysable->get_context();
-        $select = "userid = :userid AND contextlevel = :contextlevel AND contextinstanceid = :contextinstanceid AND " .
+        $select = "contextlevel = :contextlevel AND contextinstanceid = :contextinstanceid AND " .
             "(crud = 'c' OR crud = 'u') AND timecreated > :starttime AND timecreated <= :endtime";
-        $params = array('userid' => $sampleid, 'contextlevel' => $context->contextlevel,
+        $params = $params + array('contextlevel' => $context->contextlevel,
             'contextinstanceid' => $context->instanceid, 'starttime' => $starttime, 'endtime' => $endtime);
         return $DB->record_exists_select('logstore_standard_log', $select, $params) ? self::get_max_value() : self::get_min_value();
     }

@@ -40,7 +40,7 @@ class any_access_after_end extends base {
         return CONTEXT_SYSTEM;
     }
 
-    public function calculate_sample($sampleid, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
+    public function calculate_sample($sampleid, $tablename, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
         global $DB;
         // Filter by context to use the db table index.
         $context = $analysable->get_context();
