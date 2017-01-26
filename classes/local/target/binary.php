@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Discrete values target.
+ * Binary classifier target.
  *
  * @package   tool_inspire
  * @copyright 2017 David Monllao {@link http://www.davidmonllao.com}
@@ -27,17 +27,13 @@ namespace tool_inspire\local\target;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Discrete values target.
+ * Binary classifier target.
  *
  * @package   tool_inspire
  * @copyright 2017 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-abstract class discrete extends base {
-
-    public function is_linear() {
-        return false;
-    }
+abstract class binary extends discrete {
 
     /**
      * Returns the target discrete values.
@@ -46,23 +42,17 @@ abstract class discrete extends base {
      *
      * @return array
      */
-    public function get_classes() {
-        // Coding exception as this will only be called if this target have non-linear values.
-        throw new \coding_exception('Overwrite get_classes() and return an array with the different target classes');
+    public final function get_classes() {
+        return array(0, 1);
     }
 
     /**
      * Returns the predicted classes that will be ignored.
      *
-     * Better be keen to add more than less classes here, the callback is always able to discard some classes. As an example
-     * a target with classes 'grade 0-3', 'grade 3-6', 'grade 6-8' and 'grade 8-10' is interested in flagging both 'grade 0-3'
-     * and 'grade 3-6'. On the other hand, a target like dropout risk with classes 'yes', 'no' may just be interested in 'yes'.
-     *
      * @return array
      */
     protected function ignored_predicted_classes() {
-        // Coding exception as this will only be called if this target have non-linear values.
-        throw new \coding_exception('Overwrite ignored_predicted_classes() and return an array with the classes that triggers ' .
-            'the callback');
+        // Zero-value class is usually ignored in binary classifiers.
+        return array(0);
     }
 }

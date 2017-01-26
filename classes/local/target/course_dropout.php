@@ -37,7 +37,7 @@ require_once($CFG->dirroot . '/lib/grade/constants.php');
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class course_dropout extends discrete {
+class course_dropout extends binary {
 
     protected static $coursegradeitems = array();
 
@@ -49,12 +49,15 @@ class course_dropout extends discrete {
         return false;
     }
 
-    public function get_classes() {
-        return array(0, 1);
-    }
-
-    protected function get_callback_classes() {
-        return array(0);
+    /**
+     * Returns the predicted classes that will be ignored.
+     *
+     * Overwriten because we are also interested in knowing when the student is far from the risk of dropping out.
+     *
+     * @return array
+     */
+    protected function ignored_predicted_classes() {
+        return array();
     }
 
     public function get_analyser_class() {
@@ -135,7 +138,7 @@ class course_dropout extends discrete {
         return $class;
     }
 
-    public function callback($sampleid, $prediction) {
-        var_dump('AAAAAAAAAAAAAAA: ' . $sampleid . '-' . $prediction);
+    public function callback($sampleid, $prediction, $predictionscore) {
+        var_dump('AAAAAAAAAAAAAAA: ' . $sampleid . '-' . $prediction . '-' . $predictionscore);
     }
 }

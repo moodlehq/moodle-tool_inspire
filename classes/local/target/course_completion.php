@@ -36,7 +36,7 @@ require_once($CFG->dirroot . '/completion/completion_completion.php');
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class course_completion extends discrete {
+class course_completion extends binary {
 
     public static function get_name() {
         return get_string('target:coursecompleted', 'tool_inspire');
@@ -44,14 +44,6 @@ class course_completion extends discrete {
 
     public function is_linear() {
         return false;
-    }
-
-    public function get_classes() {
-        return array(0, 1);
-    }
-
-    protected function get_callback_classes() {
-        return array(0);
     }
 
     public function get_analyser_class() {

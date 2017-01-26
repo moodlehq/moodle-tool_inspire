@@ -38,13 +38,11 @@
     <caption>{{#str}}modelslist, tool_inspire{{/str}}</caption>
     <thead>
         <tr>
-            <th scope="col">{{#str}}modelname, tool_inspire{{/str}}</th>
+            <th scope="col">{{#str}}target, tool_inspire{{/str}}</th>
             <th scope="col">{{#str}}enabled, tool_inspire{{/str}}</th>
             <th scope="col">{{#str}}trained, tool_inspire{{/str}}</th>
-            <th scope="col">{{#str}}target, tool_inspire{{/str}}</th>
             <th scope="col">{{#str}}indicators, tool_inspire{{/str}}</th>
             <th scope="col">{{#str}}modeltimesplitting, tool_inspire{{/str}}</th>
-            <th scope="col">{{#str}}predictionminscore, tool_inspire{{/str}}</th>
             <th scope="col">{{#str}}evaluationminscore, tool_inspire{{/str}}</th>
             <th scope="col">{{#str}}timemodified, tool_inspire{{/str}}</th>
         </tr>
@@ -52,14 +50,13 @@
     <tbody>
     {{#models}}
         <tr>
-            <td>{{name}}</td>
+            <td>{{target}}</td>
             <td>
                 {{#enabled}}{{#str}}yes{{/str}}{{/enabled}}{{^enabled}}{{#str}}no{{/str}}{{/enabled}}
             </td>
             <td>
                 {{#trained}}{{#str}}yes{{/str}}{{/trained}}{{^trained}}{{#str}}no{{/str}}{{/trained}}
             </td>
-            <td>{{target}}</td>
             <td>
                 <ul>
                 {{#indicators}}
@@ -69,9 +66,6 @@
             </td>
             <td>
                 {{#timesplitting}}{{timesplitting}}{{/timesplitting}}{{^timesplitting}}{{#str}}notdefined, tool_inspire{{/str}}{{/timesplitting}}
-            </td>
-            <td>
-                {{#predictionminscore}} {{predictionminscore}} {{/predictionminscore}}
             </td>
             <td>
                 {{#evaluationminscore}} {{evaluationminscore}} {{/evaluationminscore}}

@@ -64,7 +64,7 @@ class manager {
 
         $models = $DB->get_records('tool_inspire_models');
         foreach ($models as $model) {
-            self::$models[$model->codename] = new \tool_inspire\model($model);
+            self::$models[$model->id] = new \tool_inspire\model($model);
         }
         return self::$models;
     }

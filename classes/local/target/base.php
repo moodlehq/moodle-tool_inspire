@@ -77,10 +77,23 @@ abstract class base extends \tool_inspire\calculable {
      * Callback to execute once a prediction has been returned from the predictions processor.
      *
      * @param int $sampleid
-     * @param float $prediction
+     * @param float|int $prediction
+     * @param float $predictionscore
      * @return void
      */
-    abstract public function callback($sampleid, $prediction);
+    abstract public function callback($sampleid, $prediction, $predictionscore);
+
+    /**
+     * Defines a boundary to ignore predictions below the specified prediction score.
+     *
+     * Value should go from 0 to 1.
+     *
+     * @return float
+     */
+    protected function min_prediction_score() {
+        // The default minimum discards predictions with a low score.
+        return 0.6;
+    }
 
     protected function is_a_class($class) {
         return (in_array($class, $this->get_classes()));
@@ -92,11 +105,24 @@ abstract class base extends \tool_inspire\calculable {
      * @param mixed $class
      * @return bool
      */
-    public function triggers_callback($class) {
-        if (in_array($class, $this->get_callback_classes())) {
-            return true;
+    public function triggers_callback($predictedclass, $predictionscore) {
+
+        $minscore = floatval($this->min_prediction_score());
+        if ($minscore < 0) {
+            debugging(get_class($this) . ' minimum prediction score is below 0, please update it to a value between 0 and 1.');
+        } else if ($minscore > 1) {
+            debugging(get_class($this) . ' minimum prediction score is above 1, please update it to a value between 0 and 1.');
         }
-        return false;
+
+        // Targets may be interested in not having a min score.
+        if (!empty($minscore) && floatval($predictionscore)) {
+            return false;
+        }
+
+        if (in_array($predictedclass, $this->ignored_predicted_classes())) {
+            return false;
+        }
+        return true;
     }
 
     /**

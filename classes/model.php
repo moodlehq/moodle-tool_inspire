@@ -77,14 +77,6 @@ class model {
         return $this->model->id;
     }
 
-    public function get_name() {
-        if (!empty($this->model->name)) {
-            return $this->model->name;
-        }
-        // For built-in models fallback to the lang string.
-        return get_string('model:' . $this->model->codename, 'tool_inspire');
-    }
-
     public function get_target() {
         if ($this->target !== null) {
             return $this->target;
@@ -103,7 +95,7 @@ class model {
         $fullclassnames = json_decode($this->model->indicators);
 
         if (!$fullclassnames || !is_array($fullclassnames)) {
-            throw new \coding_exception('Model ' . $this->model->codename . ' indicators can not be read');
+            throw new \coding_exception('Model ' . $this->model->id . ' indicators can not be read');
         }
 
         $this->indicators = array();
@@ -128,7 +120,7 @@ class model {
         } else {
 
             if (empty($this->model->timesplitting)) {
-                throw new \moodle_exception('invalidtimesplitting', 'tool_inspire', '', $this->model->codename);
+                throw new \moodle_exception('invalidtimesplitting', 'tool_inspire', '', $this->model->id);
             }
 
             // TODO This may get time splitting methods from different moodle components.
@@ -223,7 +215,7 @@ class model {
         global $DB;
 
         if ($this->model->enabled == false || empty($this->model->timesplitting)) {
-            throw new \moodle_exception('invalidtimesplitting', 'tool_inspire', '', $this->model->codename);
+            throw new \moodle_exception('invalidtimesplitting', 'tool_inspire', '', $this->model->id);
         }
 
         $results = array();
@@ -272,7 +264,7 @@ class model {
     public function predict() {
 
         if ($this->model->enabled == false || empty($this->model->timesplitting)) {
-            throw new \moodle_exception('invalidtimesplitting', 'tool_inspire', '', $this->model->codename);
+            throw new \moodle_exception('invalidtimesplitting', 'tool_inspire', '', $this->model->id);
         }
 
         $samplesdata = $this->get_analyser()->get_unlabelled_data();
@@ -317,13 +309,8 @@ class model {
                         break;
                 }
 
-                // The prediction should be reliable enough according to how the model was designed.
-                if (floatval($predictionscore) < floatval($this->model->predictionminscore)) {
-                    continue;
-                }
-
-                if ($this->get_target()->triggers_callback($prediction)) {
-                    $this->get_target()->callback($sampleid, $prediction);
+                if ($this->get_target()->triggers_callback($prediction, $predictionscore)) {
+                    $this->get_target()->callback($sampleid, $prediction, $predictionscore);
                 }
             }
 
@@ -390,7 +377,6 @@ class model {
 
     public function export() {
         $data = clone $this->model;
-        $data->name = $this->get_name();
         $data->target = $this->get_target()->get_name();
         $data->indicators = array();
         foreach ($this->get_indicators() as $indicator) {

@@ -30,20 +30,20 @@ require_once($CFG->libdir.'/clilib.php');
 $help = "Evaluates the provided model.
 
 Options:
---model      Model code name
+--modelid      Model id
 --analyseall Analyse all site or only non rencently analysed analysables (Optional)
 --filter     Analyser dependant (Optional)
 -h, --help   Print out this help
 
 Example:
-\$ php admin/tool/inspire/cli/evaluate_model.php --model=dropoutrisk --filter=123,321
+\$ php admin/tool/inspire/cli/evaluate_model.php --modelid=1 --filter=123,321
 ";
 
 // Now get cli options.
 list($options, $unrecognized) = cli_get_params(
     array(
         'help'          => false,
-        'model'         => false,
+        'modelid'         => false,
         'analyseall'    => false,
         'filter'        => false
     ),
@@ -57,7 +57,7 @@ if ($options['help']) {
     exit(0);
 }
 
-if ($options['model'] === false) {
+if ($options['modelid'] === false) {
     echo $help;
     exit(0);
 }
@@ -69,11 +69,10 @@ if ($options['filter'] !== false) {
 
 echo "\n".get_string('processingcourses', 'tool_inspire')."\n\n";
 
-$modelobj = $DB->get_record('tool_inspire_models', array('codename' => $options['model']), '*', MUST_EXIST);
-
+$modelobj = $DB->get_record('tool_inspire_models', array('id' => $options['modelid']), '*', MUST_EXIST);
 $model = new \tool_inspire\model($modelobj);
 
-mtrace(get_string('evaluatingsitedata', 'tool_inspire'));
+mtrace(get_string('analysingsitedata', 'tool_inspire'));
 
 $analyseroptions = array(
     'filter' => $options['filter'],

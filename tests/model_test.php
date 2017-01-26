@@ -44,11 +44,9 @@ class tool_inspire_model_testcase extends advanced_testcase {
         $indicators = array('test_indicator_max', 'test_indicator_min', 'test_indicator_fullname');
 
         $this->modelobj = new stdClass();
-        $this->modelobj->codename = 'testmodel';
         $this->modelobj->target = 'test_target_shortname';
         $this->modelobj->indicators = json_encode($indicators);
         $this->modelobj->evaluationminscore = 0.7;
-        $this->modelobj->predictionminscore = 0.8;
         $this->modelobj->timecreated = time();
         $this->modelobj->timemodified = time();
         $this->modelobj->usermodified = $USER->id;
@@ -61,7 +59,7 @@ class tool_inspire_model_testcase extends advanced_testcase {
         $this->resetAfterTest(true);
 
         $this->assertCount(3, $this->model->get_indicators());
-        $this->assertInstanceOf('\tool_inspire\local\target\discrete', $this->model->get_target());
+        $this->assertInstanceOf('\tool_inspire\local\target\binary', $this->model->get_target());
         $this->assertInstanceOf('\tool_inspire\local\analyser\base', $this->model->get_analyser(array('evaluation' => true)));
 
         $this->model->enable('faketimesplitting');

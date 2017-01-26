@@ -1,17 +1,17 @@
 <?php
 
-class test_target_shortname extends \tool_inspire\local\target\discrete {
-
-    public function get_classes() {
-        return array(0, 1);
-    }
-
-    protected function get_callback_classes() {
-        return array(1);
-    }
+class test_target_shortname extends \tool_inspire\local\target\binary {
 
     public function get_analyser_class() {
         return '\tool_inspire\local\analyser\courses';
+    }
+
+    /**
+     * High value as we want to discard random stuff and we don't want any false positives.
+     * @return float
+     */
+    protected function min_prediction_score() {
+        return 0.8;
     }
 
     public function is_valid_analysable(\tool_inspire\analysable $analysable) {
@@ -32,7 +32,7 @@ class test_target_shortname extends \tool_inspire\local\target\discrete {
         }
     }
 
-    public function callback($sampleid, $prediction) {
-        return 'yeah-' . $sampleid . '-' . $prediction;
+    public function callback($sampleid, $prediction, $predictionscore) {
+        return 'yeah-' . $sampleid . '-' . $prediction . '-' . $predictionscore;
     }
 }
