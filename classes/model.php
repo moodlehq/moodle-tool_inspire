@@ -55,6 +55,11 @@ class model {
     protected $target = null;
 
     /**
+     * @var \tool_inspire\local\indicator\base[]
+     */
+    protected $indicators = null;
+
+    /**
      * Unique Model id created from site info and last model modification time.
      *
      * It is the id that is passed to prediction processors so the same prediction
@@ -68,30 +73,48 @@ class model {
         $this->model = $model;
     }
 
-    public function get_target() {
-        if ($this->target === null) {
-            $classname = $this->model->target;
-            $this->target = new $classname();
+    public function get_id() {
+        return $this->model->id;
+    }
+
+    public function get_name() {
+        if (!empty($this->model->name)) {
+            return $this->model->name;
         }
+        // For built-in models fallback to the lang string.
+        return get_string('model:' . $this->model->codename, 'tool_inspire');
+    }
+
+    public function get_target() {
+        if ($this->target !== null) {
+            return $this->target;
+        }
+        $classname = $this->model->target;
+        $this->target = new $classname();
+
         return $this->target;
     }
 
     public function get_indicators() {
+        if ($this->indicators !== null) {
+            return $this->indicators;
+        }
+
         $fullclassnames = json_decode($this->model->indicators);
 
         if (!$fullclassnames || !is_array($fullclassnames)) {
             throw new \coding_exception('Model ' . $this->model->codename . ' indicators can not be read');
         }
 
-        $indicators = array();
+        $this->indicators = array();
         foreach ($fullclassnames as $fullclassname) {
             $instance = \tool_inspire\manager::get_indicator($fullclassname);
             if ($instance) {
-                $indicators[$fullclassname] = $instance;
+                $this->indicators[$fullclassname] = $instance;
             }
         }
 
-        return $indicators;
+        return $this->indicators;
     }
 
     public function get_analyser($options = array()) {
@@ -363,6 +386,17 @@ class model {
         $this->uniqueid = sha1(implode('$$', $ids));
 
         return $this->uniqueid;
+    }
+
+    public function export() {
+        $data = clone $this->model;
+        $data->name = $this->get_name();
+        $data->target = $this->get_target()->get_name();
+        $data->indicators = array();
+        foreach ($this->get_indicators() as $indicator) {
+            $data->indicators[] = $indicator->get_name();
+        }
+        return $data;
     }
 
     protected function flag_file_as_used(\stored_file $file, $action) {

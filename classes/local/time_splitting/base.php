@@ -315,12 +315,12 @@ abstract class base {
 
         // Model indicators.
         foreach ($indicators as $indicator) {
-            $headers[] = clean_param($indicator::get_name(), PARAM_ALPHANUMEXT);
+            $headers[] = clean_param($indicator::get_codename(), PARAM_ALPHANUMEXT);
         }
 
         // The target as well.
         if ($target) {
-            $headers[] = clean_param($target::get_name(), PARAM_ALPHANUMEXT);
+            $headers[] = clean_param($target::get_codename(), PARAM_ALPHANUMEXT);
         }
 
         return $headers;

@@ -44,8 +44,8 @@ class renderer extends plugin_renderer_base {
      * @param templatable $renderable
      * @return string HTML
      */
-    public function render_info(templatable $renderable) {
+    public function render_models_list(templatable $renderable) {
         $data = $renderable->export_for_template($this);
-        return parent::render_from_template('tool_inspire/info', $data);
+        return parent::render_from_template('tool_inspire/models_list', $data);
     }
 }

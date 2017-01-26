@@ -36,8 +36,8 @@ function xmldb_tool_inspire_install() {
     $indicators = \tool_inspire\manager::get_all_indicators();
 
     $model = new stdClass();
-    $model->codename = 'dropout';
-    $model->target = '\tool_inspire\local\target\grade_pass';
+    $model->codename = 'dropoutrisk';
+    $model->target = '\tool_inspire\local\target\course_passed';
     $model->indicators = json_encode(array_keys($indicators));
 
     // Standard 0.7 score to validate the model.

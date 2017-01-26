@@ -22,6 +22,7 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+$string['enabled'] = 'Enabled';
 $string['erroralreadypredict'] = '{$a} file has already been used to predict';
 $string['errordisabledmodel'] = '{$a} model is disabled and can not be used to predict';
 $string['errorinvalidtimesplitting'] = '{$a} time splitting method is not valid';
@@ -38,9 +39,24 @@ $string['errorpredictionsprocessor'] = 'Predictions processor error: {$a}';
 $string['errorpredictwrongformat'] = 'The predictions processor return can not be decoded: "{$a}"';
 $string['errorunexistingtimesplitting'] = 'The selected time splitting method is not available';
 $string['evaluatingsitedata'] = 'Evaluating site data';
+$string['evaluationminscore'] = 'Evaluation minimum score';
+$string['indicator:accessesafterend'] = 'Accesses after the end date';
+$string['indicator:accessesbeforestart'] = 'Accesses before the start date';
+$string['indicator:anywrite'] = 'Any write action';
+$string['indicator:readactions'] = 'Read actions amount';
+$string['indicator:completeduserprofile'] = 'User profile is completed';
+$string['indicator:userforumstracking'] = 'User is tracking forums';
+$string['indicators'] = 'Indicators';
+$string['inspiremodels'] = 'Inspire models';
 $string['invalidtimesplitting'] = 'Model {$a} needs a time splitting method before it can be used to train';
+$string['model:dropoutrisk'] = 'Students at risk of dropping out';
+$string['modelname'] = 'Name';
 $string['modeloutputdir'] = 'Models output directory';
+$string['modelslist'] = 'Models list';
+$string['modeltimesplitting'] = 'Time splitting';
 $string['nocourses'] = 'No courses to analyse';
+$string['notdefined'] = 'Not yet defined';
+$string['predictionminscore'] = 'Prediction minimum score';
 $string['predictmodels'] = 'Predict models';
 $string['processingcourse'] = 'Processing course {$a}';
 $string['processingcourses'] = 'Processing courses...';
@@ -49,7 +65,12 @@ $string['skippingcourse'] = 'Skipping course {$a}';
 $string['studentroles'] = 'Student roles';
 $string['subplugintype_predict'] = 'Predictions processor';
 $string['subplugintype_predict_plural'] = 'Predictions processors';
+$string['target'] = 'Target';
+$string['target:coursedropout'] = 'Dropping out of a course';
+$string['target:coursecompleted'] = 'Course completed';
 $string['teacherroles'] = 'Teacher roles';
+$string['timemodified'] = 'Last modification';
 $string['trainandenablemodel'] = 'Select which model you want to enable';
+$string['trained'] = 'Trained';
 $string['trainingmodel'] = 'Training {$a} model';
 $string['trainmodels'] = 'Train models';

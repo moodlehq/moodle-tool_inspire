@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Grade pass target.
+ * Drop out course target.
  *
  * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
@@ -31,15 +31,19 @@ require_once($CFG->dirroot . '/lib/grade/grade_grade.php');
 require_once($CFG->dirroot . '/lib/grade/constants.php');
 
 /**
- * Grade pass target.
+ * Drop out course target.
  *
  * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class grade_pass extends discrete {
+class course_dropout extends discrete {
 
     protected static $coursegradeitems = array();
+
+    public static function get_name() {
+        return get_string('target:coursedropout', 'tool_inspire');
+    }
 
     public function is_linear() {
         return false;

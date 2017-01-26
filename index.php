@@ -25,12 +25,14 @@
 require_once(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 
-admin_externalpage_setup('inspiremanagement');
+admin_externalpage_setup('inspiremodels', '', null, '', array('pagelayout'=>'report'));
+
+$models = \tool_inspire\manager::get_all_models();
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('pluginname', 'tool_inspire'));
 
-$renderable = new \tool_inspire\output\info();
+$renderable = new \tool_inspire\output\models_list($models);
 echo $PAGE->get_renderer('tool_inspire')->render($renderable);
 
 echo $OUTPUT->footer();

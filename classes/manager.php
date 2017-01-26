@@ -36,6 +36,11 @@ defined('MOODLE_INTERNAL') || die();
 class manager {
 
     /**
+     * @var \tool_inspire\model[]
+     */
+    protected static $models = null;
+
+    /**
      * @var \tool_inspire\predictor[]
      */
     protected static $predictionprocessors = null;
@@ -49,6 +54,20 @@ class manager {
      * @var \tool_inspire\local\time_splitting\base[]
      */
     protected static $alltimesplittings = null;
+
+    public static function get_all_models() {
+        global $DB;
+
+        if (self::$models !== null) {
+            return self::$models;
+        }
+
+        $models = $DB->get_records('tool_inspire_models');
+        foreach ($models as $model) {
+            self::$models[$model->codename] = new \tool_inspire\model($model);
+        }
+        return self::$models;
+    }
 
     /**
      * Returns the site selected predictions processor.

@@ -35,6 +35,10 @@ defined('MOODLE_INTERNAL') || die();
  */
 class any_write_action extends base {
 
+    public static function get_name() {
+        return get_string('indicator:anywrite', 'tool_inspire');
+    }
+
     public function calculate_sample($sampleid, $tablename, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
         global $DB;
 

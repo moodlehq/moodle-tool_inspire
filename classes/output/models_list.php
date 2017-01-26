@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Inspire info page.
+ * Inspire models list page.
  *
  * @package    tool_inspire
  * @copyright  2016 David Monllao {@link http://www.davidmonllao.com}
@@ -27,23 +27,36 @@ namespace tool_inspire\output;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Shows tool_inspire info.
+ * Shows tool_inspire models list.
  *
  * @package    tool_inspire
  * @copyright  2016 David Monllao {@link http://www.davidmonllao.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class info implements \renderable, \templatable {
+class models_list implements \renderable, \templatable {
+
+    protected $models = array();
+
+    public function __construct($models) {
+        $this->models = $models;
+    }
 
     /**
-     * Exports the info data.
+     * Exports the data.
      *
      * @param \renderer_base $output
      * @return \stdClass
      */
     public function export_for_template(\renderer_base $output) {
+
         $data = new \stdClass();
 
+        $data->models = array();
+        foreach ($this->models as $model) {
+            $model = $model->export();
+            $model->timemodified = userdate($model->timemodified);
+            $data->models[] = $model;
+        }
 
         return $data;
     }

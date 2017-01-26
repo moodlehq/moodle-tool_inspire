@@ -74,7 +74,20 @@ abstract class calculable {
     }
 
     /**
-     * Returns a name for the indicator.
+     * Returns codename for the indicator.
+     *
+     * Used as column identificator.
+     *
+     * Defaults to the indicator class name.
+     *
+     * @return string
+     */
+    public static function get_codename() {
+        return get_called_class();
+    }
+
+    /**
+     * Returns a visible name for the indicator.
      *
      * Used as column identificator.
      *

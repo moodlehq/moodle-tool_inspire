@@ -35,11 +35,17 @@ defined('MOODLE_INTERNAL') || die();
  */
 class user_track_forums extends base {
 
+    public static function get_name() {
+        return get_string('indicator:userforumstracking', 'tool_inspire');
+    }
+
     public static function required_sample() {
         return 'user';
     }
 
     public function calculate_sample($sampleid, $tablename, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
+
+        // TODO Return null if forums tracking is the default.
         return ($data['user'][$sampleid]->trackforums) ? self::get_max_value() : self::get_min_value();
     }
 }

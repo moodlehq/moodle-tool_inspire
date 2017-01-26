@@ -36,7 +36,7 @@ Options:
 -h, --help   Print out this help
 
 Example:
-\$ php admin/tool/inspire/cli/evaluate_model.php --model=dropout --filter=123,321
+\$ php admin/tool/inspire/cli/evaluate_model.php --model=dropoutrisk --filter=123,321
 ";
 
 // Now get cli options.

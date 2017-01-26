@@ -35,9 +35,8 @@ defined('MOODLE_INTERNAL') || die();
  */
 class any_access_after_end extends base {
 
-    public static function min_contextlevel_depth() {
-        // Does not make much sense at context system, but it is calculable.
-        return CONTEXT_SYSTEM;
+    public static function get_name() {
+        return get_string('target:accessesafterend', 'tool_inspire');
     }
 
     public function calculate_sample($sampleid, $tablename, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {

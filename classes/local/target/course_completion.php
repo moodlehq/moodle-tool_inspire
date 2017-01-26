@@ -38,6 +38,10 @@ require_once($CFG->dirroot . '/completion/completion_completion.php');
  */
 class course_completion extends discrete {
 
+    public static function get_name() {
+        return get_string('target:coursecompleted', 'tool_inspire');
+    }
+
     public function is_linear() {
         return false;
     }

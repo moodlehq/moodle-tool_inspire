@@ -35,6 +35,11 @@ defined('MOODLE_INTERNAL') || die();
  */
 class user_profile_set extends base {
 
+
+    public static function get_name() {
+        return get_string('indicator:completeduserprofile', 'tool_inspire');
+    }
+
     public static function required_sample() {
         return 'user';
     }

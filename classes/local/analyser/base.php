@@ -56,8 +56,6 @@ abstract class base {
         $this->check_indicators_requirements();
     }
 
-    abstract protected function get_samples_tablename();
-
     /**
      * This function returns the list of samples that can be calculated.
      *
@@ -65,6 +63,8 @@ abstract class base {
      * @return array
      */
     abstract public function get_all_samples(\tool_inspire\analysable $analysable);
+
+    abstract protected function get_samples_tablename();
 
     /**
      * Main analyser method which processes the site analysables.
