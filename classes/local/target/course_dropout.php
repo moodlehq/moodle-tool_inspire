@@ -29,6 +29,8 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/lib/grade/grade_item.php');
 require_once($CFG->dirroot . '/lib/grade/grade_grade.php');
 require_once($CFG->dirroot . '/lib/grade/constants.php');
+require_once($CFG->dirroot . '/lib/completionlib.php');
+require_once($CFG->dirroot . '/completion/completion_completion.php');
 
 /**
  * Drop out course target.
@@ -67,12 +69,6 @@ class course_dropout extends binary {
     public function is_valid_analysable(\tool_inspire\analysable $analysable) {
         global $DB;
 
-        // Not a valid target if there is no course grade item.
-        self::$coursegradeitems[$analysable->get_id()] = \grade_item::fetch(array('itemtype' => 'course', 'courseid' => $analysable->get_id()));
-        if (empty(self::$coursegradeitems[$analysable->get_id()])) {
-            return 'There is no course grade item';
-        }
-
         // Ongoing courses data can not be used to train.
         if ($analysable->get_end() > time()) {
             return 'Course is not yet finished';
@@ -99,43 +95,103 @@ class course_dropout extends binary {
             return 'Not enough logs';
         }
 
+        // Now we check that we can analyse the course through course completion, course competencies or grades.
+        $nogradeitem = false;
+        $nogradevalue = false;
+        $nocompletion = false;
+        $nocompetencies = false;
+
+        $completion = new \completion_info($analysable->get_id());
+        if (!$completion->is_enabled() && $completion->has_criteria()) {
+            $nocompletion = true;
+        }
+
+        if (\core_competency\api::count_competencies_in_course($analysable->get_id()) === 0) {
+            $nocompetencies = true;
+        }
+
+        // Not a valid target if there is no course grade item.
+        self::$coursegradeitems[$analysable->get_id()] = \grade_item::fetch(array('itemtype' => 'course', 'courseid' => $analysable->get_id()));
+        if (empty(self::$coursegradeitems[$analysable->get_id()])) {
+            $nogradeitem = true;
+        }
+
+        if (self::$coursegradeitems[$analysable->get_id()]->grade_type !== GRADE_TYPE_VALUE) {
+            $nogradevalue = true;
+        }
+
+        if ($nocompletion === true && $nocompetencies === true && ($nogradeitem || $nogradevalue)) {
+            return 'No course pass method available (no completion nor competencies or course grades';
+        }
+
         return true;
     }
 
+    /**
+     * calculate_sample
+     *
+     * The meaning of a drop out changes depending on the settings enabled in the course. Following these priorities order:
+     * 1.- Course completion
+     * 2.- All course competencies completion
+     * 3.- Course final grade over grade pass
+     * 4.- Course final grade below 50% of the course maximum grade
+     *
+     * @param int $sampleid
+     * @param string $tablename
+     * @param \tool_inspire\analysable $analysable
+     * @param array $data
+     * @return void
+     */
     public function calculate_sample($sampleid, $tablename, \tool_inspire\analysable $analysable, $data) {
 
-        $params = array('userid' => $sampleid, 'itemid' => self::$coursegradeitems[$data['course']->id]->id);
-        $grade = \grade_grade::fetch($params);
-        if (!$grade || !$grade->finalgrade) {
-            // Not valid.
-            return 0;
-        }
-
-        // TODO This should look at the course minmaxgrade setting, using the grade_grades one here.
-        if ($grade->rawgrademax - $grade->rawgrademin == 0) {
-            // Return the lowest one.
-            return 0;
-        }
-        $weightedgrade = ($grade->finalgrade - $grade->rawgrademin) / ($grade->rawgrademax - $grade->rawgrademin);
-
-        // $boundaries should contain the same number of items than self::get_classes().
-        $boundaries = array(0.5, 1);
-        foreach ($boundaries as $key => $classboundary) {
-            if ($weightedgrade <= $classboundary) {
-                $class = $key;
-                break;
+        // We use completion as a success metric only when it is enabled.
+        $completion = new \completion_info($analysable->get_id());
+        if ($completion->is_enabled() && $completion->has_criteria()) {
+            $ccompletion = new \completion_completion(array('userid' => $sampleid, 'course' => $analysable->get_id()));
+            if ($ccompletion->is_complete()) {
+                return 0;
+            } else {
+                return 1;
             }
         }
 
-        if (!isset($class)) {
-            throw new \coding_exception('Something wrong with ' . $weightedgrade . ' grade, should be between 0 and 1');
+        // Same with competencies.
+        $ncoursecompetencies = \core_competency\api::count_competencies_in_course($analysable->get_id());
+        if ($ncoursecompetencies > 0) {
+            $nusercompetencies = \core_competency\api::count_proficient_competencies_in_course_for_user(
+                $analysable->get_id(), $sampleid);
+            if ($ncoursecompetencies > $nusercompetencies) {
+                return 1;
+            } else {
+                return 0;
+            }
         }
 
-        if (!in_array($class, $this->get_classes())) {
-            throw new \coding_exception($class . ' class is not part of ' . json_encode($this->get_classes()));
+        // Falling back to the course grades.
+        $params = array('userid' => $sampleid, 'itemid' => self::$coursegradeitems[$data['course']->id]->id);
+        $grade = \grade_grade::fetch($params);
+        if (!$grade || !$grade->finalgrade) {
+            // We checked that the course is suitable for being analysed in is_valid_analysable so if the
+            // student do not have a final grade it is because there are no grades for that student, which is bad.
+            return 1;
         }
 
-        return $class;
+        $passed = $grade->is_passed();
+        // is_passed returns null if there is no pass grade or can't be calculated.
+        if ($passed !== null) {
+            // Returning the opposite as 1 means dropout user.
+            return !$passed;
+        }
+
+        // Pass if gets more than 50% of the course grade.
+        list($mingrade, $maxgrade) = $grade->get_grade_min_and_max();
+        $weightedgrade = ($grade->finalgrade - $mingrade) / ($maxgrade - $mingrade);
+
+        if ($weightedgrade >= 0.5) {
+            return 0;
+        }
+
+        return 1;
     }
 
     public function callback($sampleid, $prediction, $predictionscore) {
