@@ -77,7 +77,7 @@ class manager {
     public static function get_predictions_processor($predictionclass = false) {
 
         if ($predictionclass === false) {
-            $predictionclass = get_config('tool_inspire', 'predictionprocessor');
+            $predictionclass = get_config('tool_inspire', 'predictionsprocessor');
         }
 
         if (empty($predictionclass)) {

@@ -54,6 +54,7 @@ $string['modeltimesplitting'] = 'Time splitting';
 $string['nocourses'] = 'No courses to analyse';
 $string['notdefined'] = 'Not yet defined';
 $string['predictmodels'] = 'Predict models';
+$string['predictionsprocessor'] = 'Predictions processor';
 $string['processingcourse'] = 'Processing course {$a}';
 $string['processingcourses'] = 'Processing courses...';
 $string['pluginname'] = 'Inspire';

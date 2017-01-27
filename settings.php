@@ -30,8 +30,18 @@ if ($hassiteconfig) {
     $settings = new admin_settingpage('inspiremanagement', new lang_string('pluginname', 'tool_inspire'));
     $ADMIN->add('tools', $settings);
 
+    $predictionprocessors = \tool_inspire\manager::get_all_prediction_processors();
+    $predictors = array();
+    foreach ($predictionprocessors as $fullclassname => $predictor) {
+        $pluginname = substr($fullclassname, 1, strpos($fullclassname, '\\', 1) - 1);
+        $predictors[$fullclassname] = new lang_string('pluginname', $pluginname);
+    }
+    $settings->add(new admin_setting_configselect('tool_inspire/predictionsprocessor',
+        new lang_string('predictionsprocessor', 'tool_inspire'), '', '\predict_php\processor', $predictors));
+
     $defaultmodeloutputdir = rtrim($CFG->dataroot, '/') . DIRECTORY_SEPARATOR . 'models';
-    $settings->add(new admin_setting_configtext('tool_inspire/modeloutputdir', new lang_string('modeloutputdir', 'tool_inspire'), '', $defaultmodeloutputdir, PARAM_PATH));
+    $settings->add(new admin_setting_configtext('tool_inspire/modeloutputdir', new lang_string('modeloutputdir', 'tool_inspire'),
+        '', $defaultmodeloutputdir, PARAM_PATH));
     $studentdefaultroles = [];
     $teacherdefaultroles = [];
 

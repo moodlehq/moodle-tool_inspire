@@ -83,7 +83,7 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
 
         foreach ($predictionprocessors as $classfullname => $predictionsprocessor) {
 
-            set_config('predictionprocessor', $classfullname, 'tool_inspire');
+            set_config('predictionsprocessor', $classfullname, 'tool_inspire');
 
             $this->model = new \tool_inspire\model($modelobj);
             $results = $this->model->evaluate();
