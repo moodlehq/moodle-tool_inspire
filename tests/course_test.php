@@ -89,7 +89,6 @@ class tool_inspire_course_testcase extends advanced_testcase {
         $this->resetAfterTest(true);
 
         $courseman = new \tool_inspire\course($this->course->id);
-        $this->assertFalse($courseman->has_enough_students());
         $this->assertFalse($courseman->was_started());
         $this->assertFalse($courseman->is_finished());
         $this->assertFalse($courseman->is_valid());
@@ -100,7 +99,6 @@ class tool_inspire_course_testcase extends advanced_testcase {
             $this->getDataGenerator()->enrol_user($user->id, $this->course->id, $this->teacherroleid);
         }
         $courseman = new \tool_inspire\course($this->course->id);
-        $this->assertFalse($courseman->has_enough_students());
         $this->assertFalse($courseman->is_valid());
 
         // More students now.
@@ -109,7 +107,6 @@ class tool_inspire_course_testcase extends advanced_testcase {
             $this->getDataGenerator()->enrol_user($user->id, $this->course->id, $this->studentroleid);
         }
         $courseman = new \tool_inspire\course($this->course->id);
-        $this->assertTrue($courseman->has_enough_students());
         $this->assertFalse($courseman->is_valid());
 
         // Valid start date unknown end date.

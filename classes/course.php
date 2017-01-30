@@ -33,8 +33,6 @@ defined('MOODLE_INTERNAL') || die();
  */
 class course implements \tool_inspire\analysable {
 
-    const MIN_NUMBER_STUDENTS = 10;
-    const MIN_NUMBER_LOGS = 100;
     const MIN_STUDENT_LOGS_PERCENT = 90;
 
     protected static $instance = null;
@@ -262,6 +260,10 @@ class course implements \tool_inspire\analysable {
         return $this->endtime;
     }
 
+    public function get_course_data() {
+        return $this->course;
+    }
+
     /**
      * Is the course valid to extract indicators from it?
      *
@@ -269,17 +271,8 @@ class course implements \tool_inspire\analysable {
      */
     public function is_valid() {
 
-        if (!$this->was_started() || !$this->is_finished() || !$this->has_enough_students()) {
+        if (!$this->was_started() || !$this->is_finished()) {
             return false;
-        }
-
-        // Ideally we would test this, but I don't want to generate self::MIN_NUMBER_LOGS for
-        // each tests and more importantly would make test_start_and_end_times really hard to
-        // test.
-        if (!PHPUNIT_TEST) {
-            if (!$this->has_enough_logs()) {
-                return false;
-            }
         }
 
         return true;
@@ -325,34 +318,6 @@ class course implements \tool_inspire\analysable {
     }
 
     /**
-     * Whether the course has enough students to analyse it or not.
-     *
-     * @return bool
-     */
-    public function has_enough_students() {
-        if (count($this->studentids) >= self::MIN_NUMBER_STUDENTS) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Whether the course has enough logs to be worth analysing it.
-     *
-     * @return bool
-     */
-    public function has_enough_logs() {
-        if ($this->get_total_logs() < self::MIN_NUMBER_LOGS) {
-            return false;
-        }
-        if ($this->get_total_logs() < count($this->studentids)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
      * Returns a list of user ids matching the specified roles in this course.
      *
      * @param array $roleids
@@ -392,10 +357,6 @@ class course implements \tool_inspire\analysable {
         }
 
         return $this->ntotallogs;
-    }
-
-    public function get_course_obj() {
-        return $this->course;
     }
 
     /**
