@@ -23,6 +23,7 @@
  */
 
 $string['enabled'] = 'Enabled';
+$string['enabledtimesplittings'] = 'Time splitting methods';
 $string['erroralreadypredict'] = '{$a} file has already been used to predict';
 $string['errordisabledmodel'] = '{$a} model is disabled and can not be used to predict';
 $string['errornoenabledmodels'] = 'There are not enabled models to train';
@@ -49,6 +50,7 @@ $string['indicators'] = 'Indicators';
 $string['inspiremodels'] = 'Inspire models';
 $string['invalidtimesplitting'] = 'Model with id {$a} needs a time splitting method before it can be used to train';
 $string['modeloutputdir'] = 'Models output directory';
+$string['modeloutputdirinfo'] = 'Directory where prediction processors store all evaluation info. Useful for debugging and research.';
 $string['modelslist'] = 'Models list';
 $string['modeltimesplitting'] = 'Time splitting';
 $string['nocourses'] = 'No courses to analyse';

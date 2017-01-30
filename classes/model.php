@@ -116,7 +116,7 @@ class model {
 
         if (!empty($options['evaluation'])) {
             // We try all available time splitting methods.
-            $timesplittings = \tool_inspire\manager::get_all_time_splittings();
+            $timesplittings = \tool_inspire\manager::get_enabled_time_splitting_methods();
         } else {
 
             if (empty($this->model->timesplitting)) {
@@ -176,7 +176,7 @@ class model {
 
         $results = array();
 
-        foreach (\tool_inspire\manager::get_all_time_splittings() as $timesplitting) {
+        foreach (\tool_inspire\manager::get_enabled_time_splitting_methods() as $timesplitting) {
 
             $result = new \stdClass();
 

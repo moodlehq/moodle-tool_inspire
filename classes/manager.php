@@ -146,6 +146,28 @@ class manager {
     }
 
     /**
+     * Returns the enabled time splitting methods.
+     *
+     * @return \tool_inspire\local\timesplitting\base[]
+     */
+    public static function get_enabled_time_splitting_methods() {
+
+        if ($enabledtimesplittings = get_config('tool_inspire', 'timesplittings')) {
+            $enabledtimesplittings = array_flip(explode(',', $enabledtimesplittings));
+        }
+
+        $timesplittings = self::get_all_time_splittings();
+        foreach ($timesplittings as $key => $timesplitting) {
+
+            // We remove the ones that are not enabled. This also respects the default value (all methods enabled).
+            if (!empty($enabledtimesplittings) && !isset($enabledtimesplittings[$key])) {
+                unset($timesplittings[$key]);
+            }
+        }
+        return $timesplittings;
+    }
+
+    /**
      * Returns a time splitting method by its classname.
      *
      * @param string $fullclassname

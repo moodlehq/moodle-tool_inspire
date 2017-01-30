@@ -30,6 +30,7 @@ if ($hassiteconfig) {
     $settings = new admin_settingpage('inspiremanagement', new lang_string('pluginname', 'tool_inspire'));
     $ADMIN->add('tools', $settings);
 
+    // Select the site prediction's processor.
     $predictionprocessors = \tool_inspire\manager::get_all_prediction_processors();
     $predictors = array();
     foreach ($predictionprocessors as $fullclassname => $predictor) {
@@ -39,12 +40,26 @@ if ($hassiteconfig) {
     $settings->add(new admin_setting_configselect('tool_inspire/predictionsprocessor',
         new lang_string('predictionsprocessor', 'tool_inspire'), '', '\predict_php\processor', $predictors));
 
+    // Enable/disable time splitting methods.
+    $alltimesplittings = \tool_inspire\manager::get_all_time_splittings();
+
+    $timesplittingoptions = array();
+    $timesplittingdefaults = array();
+    foreach ($alltimesplittings as $key => $timesplitting) {
+        $timesplittingoptions[$key] = $timesplitting->get_codename();
+        $timesplittingdefaults[] = $key;
+    }
+    $settings->add(new admin_setting_configmultiselect('tool_inspire/timesplittings',
+        new lang_string('enabledtimesplittings', 'tool_inspire'), '', $timesplittingdefaults, $timesplittingoptions));
+
+    // Predictions processor output dir.
     $defaultmodeloutputdir = rtrim($CFG->dataroot, '/') . DIRECTORY_SEPARATOR . 'models';
     $settings->add(new admin_setting_configtext('tool_inspire/modeloutputdir', new lang_string('modeloutputdir', 'tool_inspire'),
-        '', $defaultmodeloutputdir, PARAM_PATH));
+        new lang_string('modeloutputdirinfo', 'tool_inspire'), $defaultmodeloutputdir, PARAM_PATH));
     $studentdefaultroles = [];
     $teacherdefaultroles = [];
 
+    // Student and teacher roles.
     $allroles = role_fix_names(get_all_roles());
     $rolechoices = [];
     foreach ($allroles as $role) {
