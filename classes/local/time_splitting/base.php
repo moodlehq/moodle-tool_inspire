@@ -189,17 +189,17 @@ abstract class base {
                 $calculated = $indicator->calculate($this->samples, $this->samplestablename, $this->analysable, $this->storage, $range['start'], $range['end']);
 
                 // Copy the calculated data to the dataset.
-                foreach ($calculated as $analysersampleid => $calculatedvalue) {
+                foreach ($calculated as $analysersampleid => $calculatedvalues) {
 
                     $uniquesampleid = $this->append_rangeindex($analysersampleid, $rangeindex);
 
                     // Init the sample if it is still empty.
                     if (!isset($dataset[$uniquesampleid])) {
-                        $dataset[$uniquesampleid] = [];
+                        $dataset[$uniquesampleid] = array();
                     }
 
-                    // Append the indicator at the end of the sample.
-                    $dataset[$uniquesampleid][] = $calculatedvalue;
+                    // Append the calculated indicator features at the end of the sample.
+                    $dataset[$uniquesampleid] = array_merge($dataset[$uniquesampleid], $calculatedvalues);
                 }
             }
         }
@@ -260,7 +260,7 @@ abstract class base {
         $metadata = array(
             'timesplitting' => $this->get_codename(),
             'nfeatures' => count(current($dataset)) - 1, // We skip the target column.
-            'targetclasses' => json_encode($target->get_classes()),
+            'targetclasses' => json_encode($target::get_classes()),
             'targettype' => ($target->is_linear()) ? 'linear' : 'discrete'
         );
         $metadata = array_merge($metadata, $this->analysable->get_metadata());
@@ -273,7 +273,7 @@ abstract class base {
             $metadatavalues[] = $value;
         }
 
-        $headers = $this->get_columns_headers($indicators, $ranges, $target);
+        $headers = $this->get_headers($indicators, $ranges, $target);
 
         // This will also reset samples' dataset keys.
         array_unshift($dataset, $metadatacolumns, $metadatavalues, $headers);
@@ -300,10 +300,9 @@ abstract class base {
         return explode('-', $sampleid);
     }
 
-    protected function get_columns_headers($indicators, $ranges, $target = false) {
-        // 3rd column will be empty (dataset readability).
-        // 4th column will contain the indicators codenames.
-        $headers = [];
+    protected function get_headers($indicators, $ranges, $target = false) {
+        // 3th column will contain the indicators codenames.
+        $headers = array();
 
         // Range indicators.
         if (count($ranges) > 1) {
@@ -315,7 +314,7 @@ abstract class base {
 
         // Model indicators.
         foreach ($indicators as $indicator) {
-            $headers[] = clean_param($indicator::get_codename(), PARAM_ALPHANUMEXT);
+            $headers = array_merge($headers, $indicator::get_feature_headers());
         }
 
         // The target as well.

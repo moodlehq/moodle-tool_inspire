@@ -53,6 +53,8 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
     public function test_evaluation($modelquality, $ncourses, $expected) {
         $this->resetAfterTest(true);
 
+        set_config('timesplittings', 'weekly,single_range,quarters', 'tool_inspire');
+
         if ($modelquality === 'perfect') {
             $modelobj = $this->add_perfect_model();
         } else if ($modelquality === 'random') {
@@ -107,12 +109,9 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
                 'expectedresults' => array(
                     // The course duration is too much to be processed by in weekly basis.
                     'weekly' => \tool_inspire\model::NO_DATASET,
-                    'weekly_accum' => \tool_inspire\model::NO_DATASET,
                     // 10 samples is not enough to process anything.
-                    'no_splitting' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA & \tool_inspire\model::EVALUATE_LOW_SCORE,
                     'single_range' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA & \tool_inspire\model::EVALUATE_LOW_SCORE,
                     'quarters' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA & \tool_inspire\model::EVALUATE_LOW_SCORE,
-                    'quarters_accum' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA & \tool_inspire\model::EVALUATE_LOW_SCORE,
                 )
             ),
             'bad' => array(
@@ -121,11 +120,8 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
                 'expectedresults' => array(
                     // The course duration is too much to be processed by in weekly basis.
                     'weekly' => \tool_inspire\model::NO_DATASET,
-                    'weekly_accum' => \tool_inspire\model::NO_DATASET,
-                    'no_splitting' => \tool_inspire\model::EVALUATE_LOW_SCORE,
                     'single_range' => \tool_inspire\model::EVALUATE_LOW_SCORE,
                     'quarters' => \tool_inspire\model::EVALUATE_LOW_SCORE,
-                    'quarters_accum' => \tool_inspire\model::EVALUATE_LOW_SCORE,
                 )
             ),
             'good' => array(
@@ -134,11 +130,8 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
                 'expectedresults' => array(
                     // The course duration is too much to be processed by in weekly basis.
                     'weekly' => \tool_inspire\model::NO_DATASET,
-                    'weekly_accum' => \tool_inspire\model::NO_DATASET,
-                    'no_splitting' => \tool_inspire\model::OK,
                     'single_range' => \tool_inspire\model::OK,
                     'quarters' => \tool_inspire\model::OK,
-                    'quarters_accum' => \tool_inspire\model::OK,
                 )
             )
 

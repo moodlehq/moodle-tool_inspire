@@ -15,10 +15,10 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * User tracks forums indicator.
+ * Abstract binary indicator.
  *
  * @package   tool_inspire
- * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
+ * @copyright 2017 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -27,25 +27,33 @@ namespace tool_inspire\local\indicator;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * User tracks forums indicator.
+ * Abstract binary indicator.
  *
  * @package   tool_inspire
- * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
+ * @copyright 2017 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class user_track_forums extends binary {
+abstract class binary extends discrete {
 
-    public static function get_name() {
-        return get_string('indicator:userforumstracking', 'tool_inspire');
+    public static final function get_classes() {
+        return array(0, 1);
     }
 
-    public static function required_sample() {
-        return 'user';
+    public static function get_feature_headers() {
+        // Just 1 single feature obtained from the calculated value.
+        return array(
+            clean_param(static::get_codename(), PARAM_ALPHANUMEXT)
+        );
     }
 
-    public function calculate_sample($sampleid, $tablename, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
+    protected function to_features($calculatedvalues) {
+        // Indicators with binary values have only 1 feature for indicator, here we do nothing else
+        // than converting each sample scalar value to an array of scalars with 1 element.
+        array_walk($calculatedvalues, function(&$calculatedvalue) {
+            // Just return it as an array.
+            $calculatedvalue = array($calculatedvalue);
+        });
 
-        // TODO Return null if forums tracking is the default.
-        return ($data['user'][$sampleid]->trackforums) ? self::get_max_value() : self::get_min_value();
+        return $calculatedvalues;
     }
 }

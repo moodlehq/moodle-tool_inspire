@@ -33,7 +33,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class any_access_after_end extends base {
+class any_access_after_end extends binary {
 
     public static function get_name() {
         return get_string('target:accessesafterend', 'tool_inspire');

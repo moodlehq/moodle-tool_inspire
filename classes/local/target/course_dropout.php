@@ -26,9 +26,7 @@ namespace tool_inspire\local\target;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/lib/grade/grade_item.php');
-require_once($CFG->dirroot . '/lib/grade/grade_grade.php');
-require_once($CFG->dirroot . '/lib/grade/constants.php');
+require_once($CFG->dirroot . '/lib/gradelib.php');
 require_once($CFG->dirroot . '/lib/completionlib.php');
 require_once($CFG->dirroot . '/completion/completion_completion.php');
 
@@ -194,7 +192,8 @@ class course_dropout extends binary {
         }
 
         // Pass if gets more than 50% of the course grade.
-        list($mingrade, $maxgrade) = $grade->get_grade_min_and_max();
+        $mingrade = $grade->get_grade_min();
+        $maxgrade = $grade->get_grade_max();
         $weightedgrade = ($grade->finalgrade - $mingrade) / ($maxgrade - $mingrade);
 
         if ($weightedgrade >= 0.5) {

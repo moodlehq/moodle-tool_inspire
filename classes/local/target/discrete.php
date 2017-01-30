@@ -46,7 +46,7 @@ abstract class discrete extends base {
      *
      * @return array
      */
-    public function get_classes() {
+    public static function get_classes() {
         // Coding exception as this will only be called if this target have non-linear values.
         throw new \coding_exception('Overwrite get_classes() and return an array with the different target classes');
     }

@@ -95,8 +95,8 @@ abstract class base extends \tool_inspire\calculable {
         return 0.6;
     }
 
-    protected function is_a_class($class) {
-        return (in_array($class, $this->get_classes()));
+    protected static function is_a_class($class) {
+        return (in_array($class, static::get_classes()));
     }
 
     /**
@@ -119,9 +119,12 @@ abstract class base extends \tool_inspire\calculable {
             return false;
         }
 
-        if (in_array($predictedclass, $this->ignored_predicted_classes())) {
-            return false;
+        if (!$this->is_linear()) {
+            if (in_array($predictedclass, $this->ignored_predicted_classes())) {
+                return false;
+            }
         }
+
         return true;
     }
 
@@ -150,9 +153,9 @@ abstract class base extends \tool_inspire\calculable {
                 if ($this->is_linear() && ($calculatedvalue > self::get_max_value() || $calculatedvalue < self::get_min_value())) {
                     throw new \coding_exception('Calculated values should be higher than ' . self::get_min_value() .
                         ' and lower than ' . self::get_max_value() . '. ' . $calculatedvalue . ' received');
-                } else if (!$this->is_linear() && $this->is_a_class($calculatedvalue) === false) {
+                } else if (!$this->is_linear() && static::is_a_class($calculatedvalue) === false) {
                     throw new \coding_exception('Calculated values should be one of the target classes (' .
-                        json_encode($this->get_classes()) . '). ' . $calculatedvalue . ' received');
+                        json_encode(self::get_classes()) . '). ' . $calculatedvalue . ' received');
                 }
             }
             $calculations[$sampleid] = $calculatedvalue;

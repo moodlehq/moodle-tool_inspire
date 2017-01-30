@@ -33,7 +33,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class any_write_action extends base {
+class any_write_action extends binary {
 
     public static function get_name() {
         return get_string('indicator:anywrite', 'tool_inspire');
@@ -52,7 +52,7 @@ class any_write_action extends base {
 
         // Filter by context to use the db table index.
         $context = $analysable->get_context();
-        $select = "contextlevel = :contextlevel AND contextinstanceid = :contextinstanceid AND " .
+        $select .= "contextlevel = :contextlevel AND contextinstanceid = :contextinstanceid AND " .
             "(crud = 'c' OR crud = 'u') AND timecreated > :starttime AND timecreated <= :endtime";
         $params = $params + array('contextlevel' => $context->contextlevel,
             'contextinstanceid' => $context->instanceid, 'starttime' => $starttime, 'endtime' => $endtime);

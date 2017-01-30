@@ -1,9 +1,13 @@
 <?php
 
-class test_indicator_fullname extends \tool_inspire\local\indicator\base {
+class test_indicator_fullname extends \tool_inspire\local\indicator\linear {
 
     public static function required_sample() {
         return 'course';
+    }
+
+    protected static function include_averages() {
+        return false;
     }
 
     protected function calculate_sample($sampleid, $tablename, \tool_inspire\analysable $analysable, $data, $starttime, $endtime) {

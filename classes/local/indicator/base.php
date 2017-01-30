@@ -40,6 +40,14 @@ abstract class base extends \tool_inspire\calculable {
     const MAX_VALUE = 1;
 
     /**
+     * Converts the calculated indicators to feature/s.
+     *
+     * @param float|int[] $calculatedvalues
+     * @return array
+     */
+    abstract protected function to_features($calculatedvalues);
+
+    /**
      * @return null|string
      */
     public static function required_sample() {
@@ -80,10 +88,11 @@ abstract class base extends \tool_inspire\calculable {
      * @param array $data All required data.
      * @param integer $starttime Limit the calculation to this timestart
      * @param integer $endtime Limit the calculation to this timeend
-     * @return array The format to follow is [userid] = scalar
+     * @return array The format to follow is [userid] = int|float[]
      */
     public function calculate($samples, $tablename, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
-        $calculations = [];
+
+        $calculations = array();
         foreach ($samples as $sampleid => $unusedsampleid) {
 
             $calculatedvalue = $this->calculate_sample($sampleid, $tablename, $analysable, $data, $starttime, $endtime);
@@ -102,11 +111,26 @@ abstract class base extends \tool_inspire\calculable {
             $calculations[$sampleid] = $calculatedvalue;
         }
 
+        $calculations = $this->to_features($calculations);
+
         return $calculations;
     }
 
     protected function get_middle_value() {
         // In the middle of self::MIN_VALUE and self::MAX_VALUE but different than 0.
         return 0.01;
+    }
+
+    protected static function add_samples_averages() {
+        return false;
+    }
+
+    protected static function get_average_columns() {
+        return array('mean');
+    }
+
+    protected function calculate_averages($values) {
+        $mean = array_sum($values) / count($values);
+        return array($mean);
     }
 }

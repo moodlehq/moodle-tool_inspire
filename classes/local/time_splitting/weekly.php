@@ -53,7 +53,7 @@ class weekly extends base {
 
             $dt->modify('-1 weeks');
             $rangestart = $dt->getTimestamp();
-print_object(date('d-m-Y, H:i', $rangestart));
+
             $ranges[] = array(
                 'start' => $rangestart,
                 'end' => $rangeend

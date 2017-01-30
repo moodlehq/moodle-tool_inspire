@@ -33,7 +33,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class read_actions extends base {
+class read_actions extends linear {
 
     public static function get_name() {
         return get_string('indicator:readactions', 'tool_inspire');
@@ -52,9 +52,9 @@ class read_actions extends base {
 
         // Filter by context to use the db table index.
         $context = $analysable->get_context();
-        $select = "contextlevel = :contextlevel AND contextinstanceid = :contextinstanceid AND " .
+        $select .= "contextlevel = :contextlevel AND contextinstanceid = :contextinstanceid AND " .
             "crud = 'r' AND timecreated > :starttime AND timecreated <= :endtime";
-        $params = array('contextlevel' => $context->contextlevel,
+        $params = $params + array('contextlevel' => $context->contextlevel,
             'contextinstanceid' => $context->instanceid, 'starttime' => $starttime, 'endtime' => $endtime);
         $nrecords = $DB->count_records_select('logstore_standard_log', $select, $params);
 
