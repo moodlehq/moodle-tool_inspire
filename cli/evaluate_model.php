@@ -69,6 +69,9 @@ if ($options['filter'] !== false) {
 
 echo "\n".get_string('processingcourses', 'tool_inspire')."\n\n";
 
+// We need admin permissions.
+\core\session\manager::set_user(get_admin());
+
 $modelobj = $DB->get_record('tool_inspire_models', array('id' => $options['modelid']), '*', MUST_EXIST);
 $model = new \tool_inspire\model($modelobj);
 
