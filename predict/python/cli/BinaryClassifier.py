@@ -44,10 +44,11 @@ class BinaryClassifier(Classifier):
         [self.X, self.y] = self.get_labelled_samples(filepath)
 
         # Load the loaded model if it exists.
-        classifier_filepath = os.path.join(self.directory, Classifier.PERSIST_FILENAME)
+        classifier_filepath = os.path.join(self.persistencedir, Classifier.PERSIST_FILENAME)
         if os.path.isfile(classifier_filepath) == True:
             classifier = joblib.load(classifier_filepath)
         else:
+            # Not previously trained.
             classifier = False
 
         trained_classifier = self.train(self.X, self.y, classifier)
@@ -65,7 +66,7 @@ class BinaryClassifier(Classifier):
 
         [sampleids, x] = self.get_unlabelled_samples(filepath)
 
-        classifier_filepath = os.path.join(self.directory, Classifier.PERSIST_FILENAME)
+        classifier_filepath = os.path.join(self.persistencedir, Classifier.PERSIST_FILENAME)
         if os.path.isfile(classifier_filepath) == False:
             result = dict()
             result['status'] = Classifier.NO_DATASET
@@ -105,7 +106,7 @@ class BinaryClassifier(Classifier):
             logging.warning(balanced_classes)
 
         # ROC curve.
-        self.roc_curve_plot = RocCurve(self.dirname, 2)
+        self.roc_curve_plot = RocCurve(self.logsdir, 2)
 
         # Learning curve.
         if self.log_into_file == True:
@@ -276,7 +277,7 @@ class BinaryClassifier(Classifier):
 
 
     def store_learning_curve(self):
-        lc = LearningCurve(self.dirname)
+        lc = LearningCurve(self.logsdir)
         lc.set_classifier(self.get_classifier(self.X, self.y))
         lc_filepath = lc.save(self.X, self.y)
         logging.info("Figure stored in " + lc_filepath)
@@ -311,4 +312,4 @@ class BinaryClassifier(Classifier):
         self.aucs = []
 
         # ROC curve.
-        self.roc_curve_plot = RocCurve(self.dirname, 2)
+        self.roc_curve_plot = RocCurve(self.logsdir, 2)

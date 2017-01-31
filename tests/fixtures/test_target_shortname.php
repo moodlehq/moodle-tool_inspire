@@ -24,6 +24,13 @@ class test_target_shortname extends \tool_inspire\local\target\binary {
 
         $sample = $DB->get_record('course', array('id' => $sampleid));
 
+        if ($sample->visible == 0) {
+            // We skip not-visible courses as a way to emulate the training data / prediction data difference.
+            // In normal circumstances targets will return null when they receive a sample that can not be
+            // processed, that same sample may be used for prediction.
+            return null;
+        }
+
         $firstchar = substr($sample->shortname, 0, 1);
         if ($firstchar === 'a') {
             return 1;

@@ -26,23 +26,23 @@ class Classifier(object):
 
         self.runid = str(int(time.time()))
 
-        # We define dirname even though we may not use it.
-        self.dirname = os.path.join(directory, self.get_runid())
-        if os.path.isdir(self.dirname):
-            raise OSError('Directory ' + self.dirname + ' already exists.')
-        if os.mkdir(self.dirname) == False:
-            raise OSError('Directory ' + self.dirname + ' can not be created.')
+        self.persistencedir = os.path.join(directory, 'classifier')
+        if os.path.isdir(self.persistencedir) == False:
+            if os.makedirs(self.persistencedir) == False:
+                raise OSError('Directory ' + self.persistencedir + ' can not be created.')
+
+        # We define logsdir even though we may not use it.
+        self.logsdir = os.path.join(directory, 'logs', self.get_runid())
+        if os.path.isdir(self.logsdir):
+            raise OSError('Directory ' + self.logsdir + ' already exists.')
+        if os.makedirs(self.logsdir) == False:
+            raise OSError('Directory ' + self.logsdir + ' can not be created.')
 
         # Logging.
         self.log_into_file = log_into_file
         logfile = self.get_log_filename()
         logging.basicConfig(filename=logfile,level=logging.DEBUG)
         warnings.showwarning = Classifier.warnings_to_log
-
-        if self.log_into_file == True:
-            if not os.path.exists(self.dirname):
-                os.makedirs(self.dirname)
-
 
         self.X = None
         self.y = None
@@ -65,7 +65,7 @@ class Classifier(object):
     def get_log_filename(self):
         if self.log_into_file == False:
             return False
-        return os.path.join(self.dirname, 'info.log')
+        return os.path.join(self.logsdir, 'info.log')
 
 
     def get_labelled_samples(self, filepath):

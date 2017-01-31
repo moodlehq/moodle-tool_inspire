@@ -37,10 +37,6 @@ use Phpml\NeuralNetwork\Network\MultilayerPerceptron;
 use Phpml\NeuralNetwork\Training\Backpropagation;
 use Phpml\CrossValidation\RandomSplit;
 use Phpml\Dataset\ArrayDataset;
-use Phpml\Metric\ConfusionMatrix;
-
-use Phpml\Math\Statistic\Mean;
-use Phpml\Math\Statistic\StandardDeviation;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -123,11 +119,10 @@ class processor implements \tool_inspire\predictor {
     protected function get_result_object($phis, $resultsdeviation, $minscore) {
 
         // We convert phi (from -1 to 1) to a value between 0 and 1.
-        $avgphi = Mean::arithmetic($phis);
+        $avgphi = Phpml\Math\Statistic\Mean::arithmetic($phis);
 
         // Standard deviation should ideally be calculated against the area under the curve.
-        $stddev = StandardDeviation::population($phis);
-        \tool_inspire\model::OK;
+        $stddev = Phpml\Math\Statistic\StandardDeviation::population($phis);
 
         // Let's fill the results object.
         $resultobj = new \stdClass();
@@ -152,13 +147,12 @@ class processor implements \tool_inspire\predictor {
                 ', minimum score = ' . $minscore;
         }
 
-
         return $resultobj;
     }
 
     protected function get_phi($testlabels, $predictedlabels) {
         // Binary here only as well.
-        $matrix = ConfusionMatrix::compute($testlabels, $predictedlabels, array(0, 1));
+        $matrix = \Phpml\Metric\ConfusionMatrix::compute($testlabels, $predictedlabels, array(0, 1));
 
         $tptn = $matrix[0][0] * $matrix[1][1];
         $fpfn = $matrix[1][0] * $matrix[0][1];

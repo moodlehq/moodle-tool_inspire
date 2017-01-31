@@ -95,10 +95,6 @@ abstract class base extends \tool_inspire\calculable {
         return 0.6;
     }
 
-    protected static function is_a_class($class) {
-        return (in_array($class, static::get_classes()));
-    }
-
     /**
      * Should the model callback be triggered?
      *
@@ -150,12 +146,12 @@ abstract class base extends \tool_inspire\calculable {
             $calculatedvalue = $this->calculate_sample($sampleid, $tablename, $analysable, $data);
 
             if (!is_null($calculatedvalue)) {
-                if ($this->is_linear() && ($calculatedvalue > self::get_max_value() || $calculatedvalue < self::get_min_value())) {
-                    throw new \coding_exception('Calculated values should be higher than ' . self::get_min_value() .
-                        ' and lower than ' . self::get_max_value() . '. ' . $calculatedvalue . ' received');
+                if ($this->is_linear() && ($calculatedvalue > static::get_max_value() || $calculatedvalue < static::get_min_value())) {
+                    throw new \coding_exception('Calculated values should be higher than ' . static::get_min_value() .
+                        ' and lower than ' . static::get_max_value() . '. ' . $calculatedvalue . ' received');
                 } else if (!$this->is_linear() && static::is_a_class($calculatedvalue) === false) {
                     throw new \coding_exception('Calculated values should be one of the target classes (' .
-                        json_encode(self::get_classes()) . '). ' . $calculatedvalue . ' received');
+                        json_encode(static::get_classes()) . '). ' . $calculatedvalue . ' received');
                 }
             }
             $calculations[$sampleid] = $calculatedvalue;

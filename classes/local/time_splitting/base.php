@@ -104,7 +104,7 @@ abstract class base {
     }
 
     public function ready_to_predict($range) {
-        if ($range['end'] < time()) {
+        if ($range['end'] <= time()) {
             return true;
         }
         return false;
@@ -164,10 +164,10 @@ abstract class base {
 
         $this->calculate_indicators($dataset, $indicators, $ranges);
 
-        // Now that we have the indicators in place we can add the range indicators (and target if provided) to each of them.
-        $this->fill_dataset($dataset, $ranges, $calculatedtarget);
+        // Now that we have the indicators in place we can add the time range indicators (and target if provided) to each of them.
+        $this->fill_dataset($dataset, $calculatedtarget);
 
-        $this->add_metadata($dataset, $indicators, $ranges, $target);
+        $this->add_metadata($dataset, $indicators, $target);
 
         return $dataset;
     }
@@ -212,20 +212,15 @@ abstract class base {
      *
      * @return void
      */
-    protected function fill_dataset(&$dataset, $ranges, $calculatedtarget = false) {
+    protected function fill_dataset(&$dataset, $calculatedtarget = false) {
 
-        $nranges = count($ranges);
+        $nranges = count($this->get_all_ranges());
 
-        foreach ($dataset as $uniquesampleid => $sample) {
+        foreach ($dataset as $uniquesampleid => $unmodified) {
 
             list($analysersampleid, $rangeindex) = $this->infer_sample_info($uniquesampleid);
 
-            if ($calculatedtarget) {
-                // Add this sampleid's calculated target.
-                $dataset[$uniquesampleid][] = $calculatedtarget[$analysersampleid];
-            }
-
-            // No need to add range features if there is only 1 range.
+            // No need to add range features if this time splitting method only defines one time range.
             if ($nranges > 1) {
 
                 // 1 column for each range.
@@ -234,6 +229,16 @@ abstract class base {
                 $timeindicators[$rangeindex] = 1;
 
                 $dataset[$uniquesampleid] = array_merge($timeindicators, $dataset[$uniquesampleid]);
+            }
+
+            if ($calculatedtarget) {
+                // Add this sampleid's calculated target and the end.
+                $dataset[$uniquesampleid][] = $calculatedtarget[$analysersampleid];
+
+            } else {
+                // Add this sampleid, it will be used to identify the prediction that comes back from
+                // the predictions processor.
+                array_unshift($dataset[$uniquesampleid], $analysersampleid);
             }
         }
     }
@@ -254,15 +259,19 @@ abstract class base {
      *
      * @return void
      */
-    protected function add_metadata(&$dataset, $indicators, $ranges, $target = false) {
+    protected function add_metadata(&$dataset, $indicators, $target = false) {
 
         // Metadata is mainly provided by the analysable.
         $metadata = array(
             'timesplitting' => $this->get_codename(),
-            'nfeatures' => count(current($dataset)) - 1, // We skip the target column.
-            'targetclasses' => json_encode($target::get_classes()),
-            'targettype' => ($target->is_linear()) ? 'linear' : 'discrete'
+            // If no target the first column is the sampleid, if target the last column is the target.
+            'nfeatures' => count(current($dataset)) - 1
         );
+        if ($target) {
+            $metadata['targetclasses'] = json_encode($target::get_classes());
+            $metadata['targettype'] = ($target->is_linear()) ? 'linear' : 'discrete';
+        }
+
         $metadata = array_merge($metadata, $this->analysable->get_metadata());
 
         // The first 2 samples will be used to store metadata about the dataset.
@@ -273,7 +282,7 @@ abstract class base {
             $metadatavalues[] = $value;
         }
 
-        $headers = $this->get_headers($indicators, $ranges, $target);
+        $headers = $this->get_headers($indicators, $target);
 
         // This will also reset samples' dataset keys.
         array_unshift($dataset, $metadatacolumns, $metadatavalues, $headers);
@@ -300,11 +309,18 @@ abstract class base {
         return explode('-', $sampleid);
     }
 
-    protected function get_headers($indicators, $ranges, $target = false) {
+    protected function get_headers($indicators, $target = false) {
         // 3th column will contain the indicators codenames.
         $headers = array();
 
-        // Range indicators.
+        if (!$target) {
+            // The first column is the sampleid.
+            $headers[] = 'sampleid';
+        }
+
+        // We always have 1 column for each time splitting method range, it does not depend on how
+        // many ranges we calculated.
+        $ranges = $this->get_all_ranges();
         if (count($ranges) > 1) {
             foreach ($ranges as $rangeindex => $range) {
                 // Starting from 1 when displaying it.

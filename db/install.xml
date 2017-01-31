@@ -35,7 +35,7 @@
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
     </TABLE>
-    <TABLE NAME="tool_inspire_predict_ranges" COMMENT="Stores ranges already used for predictions.">
+    <TABLE NAME="tool_inspire_predict_ranges" COMMENT="Stores time ranges already used for predictions.">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="modelid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>

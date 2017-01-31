@@ -50,9 +50,25 @@ class tool_inspire_model_testcase extends advanced_testcase {
         $this->modelobj->timecreated = time();
         $this->modelobj->timemodified = time();
         $this->modelobj->usermodified = $USER->id;
-        $this->modelobj->id = $DB->insert_record('tool_inspire_models', $this->modelobj);
+        $id = $DB->insert_record('tool_inspire_models', $this->modelobj);
+
+        // To load db defaults as well.
+        $this->modelobj = $DB->get_record('tool_inspire_models', array('id' => $id));
 
         $this->model = new testable_model($this->modelobj);
+    }
+
+    public function test_enable() {
+        $this->resetAfterTest(true);
+
+        $this->assertEquals(0, $this->model->get_model_obj()->enabled);
+        $this->assertEquals(0, $this->model->get_model_obj()->trained);
+        $this->assertEquals('', $this->model->get_model_obj()->timesplitting);
+
+        $this->model->enable('quarters');
+        $this->assertEquals(1, $this->model->get_model_obj()->enabled);
+        $this->assertEquals(0, $this->model->get_model_obj()->trained);
+        $this->assertEquals('quarters', $this->model->get_model_obj()->timesplitting);
     }
 
     public function test_model_manager() {

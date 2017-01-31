@@ -45,10 +45,6 @@ class course_dropout extends binary {
         return get_string('target:coursedropout', 'tool_inspire');
     }
 
-    public function is_linear() {
-        return false;
-    }
-
     /**
      * Returns the predicted classes that will be ignored.
      *

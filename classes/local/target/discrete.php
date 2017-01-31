@@ -39,6 +39,10 @@ abstract class discrete extends base {
         return false;
     }
 
+    protected static function is_a_class($class) {
+        return (in_array($class, static::get_classes()));
+    }
+
     /**
      * Returns the target discrete values.
      *

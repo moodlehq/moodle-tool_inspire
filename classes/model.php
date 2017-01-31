@@ -77,6 +77,10 @@ class model {
         return $this->model->id;
     }
 
+    public function get_model_obj() {
+        return $this->model;
+    }
+
     public function get_target() {
         if ($this->target !== null) {
             return $this->target;
@@ -262,6 +266,7 @@ class model {
     }
 
     public function predict() {
+        global $DB;
 
         if ($this->model->enabled == false || empty($this->model->timesplitting)) {
             throw new \moodle_exception('invalidtimesplitting', 'tool_inspire', '', $this->model->id);

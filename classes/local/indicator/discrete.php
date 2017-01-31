@@ -40,7 +40,9 @@ abstract class discrete extends base {
      *
      * @return string[]
      */
-    abstract static protected function get_classes();
+    protected static function get_classes() {
+        throw new \coding_exception('Please overwrite get_classes() specifying your discrete-values\' indicator classes');
+    }
 
     public static function get_feature_headers() {
         $codename = clean_param(static::get_codename(), PARAM_ALPHANUMEXT);
