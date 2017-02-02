@@ -45,7 +45,7 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
      * @param int $npredictedranges
      * @return void
      */
-    public function test_training_and_prediction($timesplittingcodename, $npredictedranges) {
+    public function test_training_and_prediction($timesplittingcodename, $npredictedranges, $predictionsprocessorclass) {
         global $DB;
 
         $ncourses = 10;
@@ -68,66 +68,66 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
             $this->getDataGenerator()->create_course($courseparams);
         }
 
-        // We repeat the test for all prediction processors.
+        $predictionsprocessor = \tool_inspire\manager::get_predictions_processor($predictionsprocessorclass);
         $predictionprocessors = \tool_inspire\manager::get_all_prediction_processors();
-unset($predictionprocessors['\predict_php\processor']);
-        foreach ($predictionprocessors as $classfullname => $predictionsprocessor) {
 
-            set_config('predictionsprocessor', $classfullname, 'tool_inspire');
+        set_config('predictionsprocessor', $predictionsprocessorclass, 'tool_inspire');
 
-            $modelobj = $this->add_perfect_model();
-            $model = new \tool_inspire\model($modelobj);
-            $model->enable($timesplittingcodename);
+        $modelobj = $this->add_perfect_model();
+        $model = new \tool_inspire\model($modelobj);
+        $model->enable($timesplittingcodename);
 
-            // No samples trained yet.
-            $this->assertEquals(0, $DB->count_records('tool_inspire_train_samples', array('modelid' => $model->get_id())));
+        // No samples trained yet.
+        $this->assertEquals(0, $DB->count_records('tool_inspire_train_samples', array('modelid' => $model->get_id())));
 
-            $results = $model->train();
-            $this->assertEquals(1, $model->get_model_obj()->enabled);
-            $this->assertEquals(1, $model->get_model_obj()->trained);
+        $results = $model->train();
+        $this->assertEquals(1, $model->get_model_obj()->enabled);
+        $this->assertEquals(1, $model->get_model_obj()->trained);
 
-            // 1 training file was created.
-            $trainedsamples = $DB->get_records('tool_inspire_train_samples', array('modelid' => $model->get_id()));
-            $this->assertEquals(1, count($trainedsamples));
-            $samples = json_decode(reset($trainedsamples)->sampleids, true);
-            $this->assertEquals($ncourses * 2, count($samples));
-            $this->assertEquals(1, $DB->count_records('tool_inspire_used_files',
-                array('modelid' => $model->get_id(), 'action' => 'trained')));
+        // 1 training file was created.
+        $trainedsamples = $DB->get_records('tool_inspire_train_samples', array('modelid' => $model->get_id()));
+        $this->assertEquals(1, count($trainedsamples));
+        $samples = json_decode(reset($trainedsamples)->sampleids, true);
+        $this->assertEquals($ncourses * 2, count($samples));
+        $this->assertEquals(1, $DB->count_records('tool_inspire_used_files',
+            array('modelid' => $model->get_id(), 'action' => 'trained')));
 
-            // Now we create 2 hidden courses (they should not be used for training by the target).
-            $courseparams = $params + array('shortname' => 'aaaaaa', 'fullname' => 'aaaaaa', 'visible' => 0);
-            $course1 = $this->getDataGenerator()->create_course($courseparams);
-            $courseparams = $params + array('shortname' => 'bbbbbb', 'fullname' => 'bbbbbb', 'visible' => 0);
-            $course2 = $this->getDataGenerator()->create_course($courseparams);
+        // Now we create 2 hidden courses (they should not be used for training by the target).
+        $courseparams = $params + array('shortname' => 'aaaaaa', 'fullname' => 'aaaaaa', 'visible' => 0);
+        $course1 = $this->getDataGenerator()->create_course($courseparams);
+        $courseparams = $params + array('shortname' => 'bbbbbb', 'fullname' => 'bbbbbb', 'visible' => 0);
+        $course2 = $this->getDataGenerator()->create_course($courseparams);
 
-            // No more files should be created as the 2 new courses should be skipped by the target (not ready for training).
-            $results = $model->train();
-            $trainedsamples = $DB->get_records('tool_inspire_train_samples', array('modelid' => $model->get_id()));
-            $this->assertEquals(1, count($trainedsamples));
-            $this->assertEquals(1, $DB->count_records('tool_inspire_used_files',
-                array('modelid' => $model->get_id(), 'action' => 'trained')));
+        // No more files should be created as the 2 new courses should be skipped by the target (not ready for training).
+        $results = $model->train();
+        $trainedsamples = $DB->get_records('tool_inspire_train_samples', array('modelid' => $model->get_id()));
+        $this->assertEquals(1, count($trainedsamples));
+        $this->assertEquals(1, $DB->count_records('tool_inspire_used_files',
+            array('modelid' => $model->get_id(), 'action' => 'trained')));
 
-            $model->predict();
-            // 2 ranges will be predicted.
-            $trainedsamples = $DB->get_records('tool_inspire_predict_ranges', array('modelid' => $model->get_id()));
-            $this->assertEquals($npredictedranges, count($trainedsamples));
-            $this->assertEquals(1, $DB->count_records('tool_inspire_used_files',
-                array('modelid' => $model->get_id(), 'action' => 'predicted')));
+        $model->predict();
+        // 2 ranges will be predicted.
+        $trainedsamples = $DB->get_records('tool_inspire_predict_ranges', array('modelid' => $model->get_id()));
+        $this->assertEquals($npredictedranges, count($trainedsamples));
+        $this->assertEquals(1, $DB->count_records('tool_inspire_used_files',
+            array('modelid' => $model->get_id(), 'action' => 'predicted')));
 
-            // No new generated files nor records as there are no new courses available.
-            $model->predict();
-            $trainedsamples = $DB->get_records('tool_inspire_predict_ranges', array('modelid' => $model->get_id()));
-            $this->assertEquals($npredictedranges, count($trainedsamples));
-            $this->assertEquals(1, $DB->count_records('tool_inspire_used_files',
-                array('modelid' => $model->get_id(), 'action' => 'predicted')));
-        }
+        // No new generated files nor records as there are no new courses available.
+        $model->predict();
+        $trainedsamples = $DB->get_records('tool_inspire_predict_ranges', array('modelid' => $model->get_id()));
+        $this->assertEquals($npredictedranges, count($trainedsamples));
+        $this->assertEquals(1, $DB->count_records('tool_inspire_used_files',
+            array('modelid' => $model->get_id(), 'action' => 'predicted')));
     }
 
     public function provider_training_and_prediction() {
-        return array(
+        $cases = array(
             'no_splitting' => array('no_splitting', 1),
             'quarters' => array('quarters', 2)
         );
+
+        // We need to test all system prediction processors.
+        return $this->add_prediction_processors($cases);
     }
 
 
@@ -136,9 +136,9 @@ unset($predictionprocessors['\predict_php\processor']);
      *
      * @dataProvider provider_test_evaluation
      */
-    public function test_evaluation($modelquality, $ncourses, $expected) {
+    public function test_evaluation($modelquality, $ncourses, $expected, $predictionsprocessorclass) {
         $this->resetAfterTest(true);
-return;
+
         set_config('timesplittings', 'weekly,single_range,quarters', 'tool_inspire');
 
         if ($modelquality === 'perfect') {
@@ -167,28 +167,24 @@ return;
         }
 
         // We repeat the test for all prediction processors.
-        $predictionprocessors = \tool_inspire\manager::get_all_prediction_processors();
+        $predictionsprocessor = \tool_inspire\manager::get_predictions_processor($predictionsprocessorclass);
 
-        foreach ($predictionprocessors as $classfullname => $predictionsprocessor) {
+        set_config('predictionsprocessor', $predictionsprocessorclass, 'tool_inspire');
 
-            set_config('predictionsprocessor', $classfullname, 'tool_inspire');
+        $model = new \tool_inspire\model($modelobj);
+        $results = $model->evaluate();
 
-            $model = new \tool_inspire\model($modelobj);
-            $results = $model->evaluate();
-
-            // We check that the returned status includes at least $expectedcode code.
-            foreach ($results as $timesplitting => $result) {
-                $message = 'The returned status code should include ' . $expected[$timesplitting] . ', ' .
-                    $result->status . ' returned';
-                $this->assertEquals($expected[$timesplitting], $result->status & $expected[$timesplitting], $message);
-            }
+        // We check that the returned status includes at least $expectedcode code.
+        foreach ($results as $timesplitting => $result) {
+            $message = 'The returned status code should include ' . $expected[$timesplitting] . ', ' .
+                $result->status . ' returned';
+            $this->assertEquals($expected[$timesplitting], $result->status & $expected[$timesplitting], $message);
         }
-
     }
 
     public function provider_test_evaluation() {
 
-        return array(
+        $cases = array(
             'bad-and-no-enough-data' => array(
                 'modelquality' => 'random',
                 'ncourses' => 10,
@@ -220,8 +216,8 @@ return;
                     'quarters' => \tool_inspire\model::OK,
                 )
             )
-
         );
+        return $this->add_prediction_processors($cases);
     }
 
     protected function add_random_model() {
@@ -260,4 +256,19 @@ return;
         return $DB->get_record('tool_inspire_models', array('id' => $id));
     }
 
+    protected function add_prediction_processors($cases) {
+
+        $return = array();
+
+        // We need to test all system prediction processors.
+        $predictionprocessors = \tool_inspire\manager::get_all_prediction_processors();
+        foreach ($predictionprocessors as $classfullname => $unused) {
+            foreach ($cases as $key => $case) {
+                $newkey = $key . '-' . $classfullname;
+                $return[$newkey] = $case + array('predictionsprocessorclass' => $classfullname);
+            }
+        }
+
+        return $return;
+    }
 }
