@@ -50,10 +50,10 @@ class Cluster extends Point implements IteratorAggregate, Countable
      */
     public function toArray()
     {
-        return array(
+        return [
             'centroid' => parent::toArray(),
             'points' => $this->getPoints(),
-        );
+        ];
     }
 
     /**
@@ -135,5 +135,13 @@ class Cluster extends Point implements IteratorAggregate, Countable
     public function count()
     {
         return count($this->points);
+    }
+    
+    /**
+    * @param array $newCoordinates
+    */
+    public function setCoordinates(array $newCoordinates)
+    {
+        $this->coordinates = $newCoordinates;
     }
 }
