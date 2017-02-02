@@ -33,8 +33,7 @@ spl_autoload_register(function($class) {
     }
 });
 
-use Phpml\NeuralNetwork\Network\MultilayerPerceptron;
-use Phpml\NeuralNetwork\Training\Backpropagation;
+use Phpml\Classification\NaiveBayes;
 use Phpml\CrossValidation\RandomSplit;
 use Phpml\Dataset\ArrayDataset;
 
@@ -49,21 +48,14 @@ defined('MOODLE_INTERNAL') || die();
  */
 class processor implements \tool_inspire\predictor {
 
+    const MODEL_FILENAME = 'model.ser';
+
     public function train($uniqueid, \stored_file $dataset, $outputdir) {
-        throw new \Exception('Not implemented');
-    }
-
-    public function predict($uniqueid, \stored_file $dataset, $outputdir) {
-        throw new \Exception('Not implemented');
-    }
-
-    public function evaluate($uniqueid, $minscore, $resultsdeviation, $niterations, \stored_file $dataset, $outputdir) {
 
         $fh = $dataset->get_content_file_handle();
 
         // The first lines are var names and the second one values.
-        $metadata = fgetcsv($fh);
-        $metadata = array_combine($metadata, fgetcsv($fh));
+        $metadata = $this->extract_metadata($fh);
 
         // Skip headers.
         fgets($fh);
@@ -74,7 +66,94 @@ class processor implements \tool_inspire\predictor {
         while (($data = fgetcsv($fh)) !== false) {
             $sampledata = array_map('floatval', $data);
             $samples[] = array_slice($sampledata, 0, $metadata['nfeatures']);
-            $targets[] = array(intval($data[$metadata['nfeatures']]));
+            $targets[] = intval($data[$metadata['nfeatures']]);
+        }
+        fclose($fh);
+
+        // Output directory is already unique to the model.
+        $modelfilepath = $outputdir . DIRECTORY_SEPARATOR . self::MODEL_FILENAME;
+
+        $modelmanager = new \Phpml\ModelManager();
+
+        if (file_exists($modelfilepath)) {
+            $classifier = $modelmanager->restoreFromFile($modelfilepath);
+        } else {
+            $classifier = new \Phpml\Classification\NaiveBayes();
+        }
+
+        $classifier->train($samples, $targets);
+
+        $resultobj = new \stdClass();
+        $resultobj->status = \tool_inspire\model::OK;
+        $resultobj->errors = array();
+
+        // Store the trained model.
+        $modelmanager->saveToFile($classifier, $modelfilepath);
+
+        return $resultobj;
+    }
+
+    public function predict($uniqueid, \stored_file $dataset, $outputdir) {
+
+        // Output directory is already unique to the model.
+        $modelfilepath = $outputdir . DIRECTORY_SEPARATOR . self::MODEL_FILENAME;
+
+        if (!file_exists($modelfilepath)) {
+            throw new \moodle_exception('errorcantloadmodel', 'tool_inspire', '', $modelfilepath);
+        }
+
+        $modelmanager = new \Phpml\ModelManager();
+        $classifier = $modelmanager->restoreFromFile($modelfilepath);
+
+        $fh = $dataset->get_content_file_handle();
+
+        // The first lines are var names and the second one values.
+        $metadata = $this->extract_metadata($fh);
+
+        // Skip headers.
+        fgets($fh);
+
+        // TODO This should be processed in chunks if we expect it to scale.
+        $sampleids = array();
+        $samples = array();
+        while (($data = fgetcsv($fh)) !== false) {
+            $sampledata = array_map('floatval', $data);
+            $sampleids[] = $data[0];
+            $samples[] = array_slice($sampledata, 1, $metadata['nfeatures']);
+        }
+        fclose($fh);
+
+        // Execute the predictions.
+        $predictions = $classifier->predict($samples);
+
+        $resultobj = new \stdClass();
+        $resultobj->status = \tool_inspire\model::OK;
+        $resultobj->errors = array();
+
+        foreach ($predictions as $key => $prediction) {
+            $resultobj->predictions[$key] = array($sampleids[$key], $prediction);
+        }
+
+        return $resultobj;
+    }
+
+    public function evaluate($uniqueid, $minscore, $resultsdeviation, $niterations, \stored_file $dataset, $outputdir) {
+
+        $fh = $dataset->get_content_file_handle();
+
+        // The first lines are var names and the second one values.
+        $metadata = $this->extract_metadata($fh);
+
+        // Skip headers.
+        fgets($fh);
+
+        // TODO This should be processed in chunks if we expect it to scale.
+        $samples = array();
+        $targets = array();
+        while (($data = fgetcsv($fh)) !== false) {
+            $sampledata = array_map('floatval', $data);
+            $samples[] = array_slice($sampledata, 0, $metadata['nfeatures']);
+            $targets[] = intval($data[$metadata['nfeatures']]);
         }
         fclose($fh);
 
@@ -83,46 +162,30 @@ class processor implements \tool_inspire\predictor {
         // Evaluate the model multiple times to confirm the results are not significantly random due to a short amount of data.
         for ($i = 0; $i < $niterations; $i++) {
 
-            // Binary classification.
-            $network = new MultilayerPerceptron([intval($metadata['nfeatures']), 2, 1]);
-            $training = new Backpropagation($network);
+            $classifier = new \Phpml\Classification\NaiveBayes();
 
-            // Split up the dataset in training and testing.
+            // Split up the dataset in classifier and testing.
             $data = new RandomSplit(new ArrayDataset($samples, $targets), 0.2);
 
-            // For evaluation 0.1 error and 100 should be enough.
-            $training->train($data->getTrainSamples(), $data->getTrainLabels(), 0.1, 100);
+            $classifier->train($data->getTrainSamples(), $data->getTrainLabels());
 
-            $predictedlabels = array();
-            $scores = array();
-            foreach ($data->getTestSamples() as $input) {
+            $predictedlabels = $classifier->predict($data->getTestSamples());
+            $scores = array_fill(0, count($predictedlabels), 1);
 
-                // This [0] must change if the output have more than 1 neuron.
-                $probs = $network->setInput($input)->getOutput()[0];
-                if ($probs >= 0.5) {
-                    $predictedlabels[] = 1;
-                    $scores[] = $probs;
-                } else {
-                    $predictedlabels[] = 0;
-                    $scores[] = 1 - $probs;
-                }
-            }
-            $testlabels = array_reduce($data->getTestLabels(), 'array_merge', array());
-
-            $phis[] = $this->get_phi($testlabels, $predictedlabels);
+            $phis[] = $this->get_phi($data->getTestLabels(), $predictedlabels);
         }
 
         // Let's fill the results changing the returned status code depending on the phi-related calculated metrics.
-        return $this->get_result_object($phis, $resultsdeviation, $minscore);
+        return $this->get_evaluation_result_object($phis, $resultsdeviation, $minscore);
     }
 
-    protected function get_result_object($phis, $resultsdeviation, $minscore) {
+    protected function get_evaluation_result_object($phis, $resultsdeviation, $minscore) {
 
         // We convert phi (from -1 to 1) to a value between 0 and 1.
-        $avgphi = Phpml\Math\Statistic\Mean::arithmetic($phis);
+        $avgphi = \Phpml\Math\Statistic\Mean::arithmetic($phis);
 
         // Standard deviation should ideally be calculated against the area under the curve.
-        $stddev = Phpml\Math\Statistic\StandardDeviation::population($phis);
+        $stddev = \Phpml\Math\Statistic\StandardDeviation::population($phis);
 
         // Let's fill the results object.
         $resultobj = new \stdClass();
@@ -167,5 +230,10 @@ class processor implements \tool_inspire\predictor {
         }
 
         return $phi;
+    }
+
+    protected function extract_metadata($fh) {
+        $metadata = fgetcsv($fh);
+        return array_combine($metadata, fgetcsv($fh));
     }
 }
