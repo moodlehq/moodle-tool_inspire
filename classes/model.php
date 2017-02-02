@@ -85,8 +85,8 @@ class model {
         if ($this->target !== null) {
             return $this->target;
         }
-        $classname = $this->model->target;
-        $this->target = new $classname();
+        $instance = \tool_inspire\manager::get_target($this->model->target);
+        $this->target = $instance;
 
         return $this->target;
     }

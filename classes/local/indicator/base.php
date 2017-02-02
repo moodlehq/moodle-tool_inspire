@@ -48,13 +48,6 @@ abstract class base extends \tool_inspire\calculable {
     abstract protected function to_features($calculatedvalues);
 
     /**
-     * @return null|string
-     */
-    public static function required_sample() {
-        return null;
-    }
-
-    /**
      * Calculates the sample.
      *
      * Return a value from self::MIN_VALUE to self::MAX_VALUE or null if the indicator can not be calculated for this sample.
@@ -68,6 +61,17 @@ abstract class base extends \tool_inspire\calculable {
      * @return float|null
      */
     abstract protected function calculate_sample($sampleid, $tablename, \tool_inspire\analysable $analysable, $data, $starttime, $endtime);
+
+    /**
+     * @return null|string
+     */
+    public static function required_sample() {
+        return null;
+    }
+
+    public static function instance() {
+        return new static();
+    }
 
     public static function get_max_value() {
         return self::MAX_VALUE;

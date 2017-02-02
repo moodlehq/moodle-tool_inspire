@@ -83,6 +83,10 @@ abstract class base extends \tool_inspire\calculable {
      */
     abstract public function callback($sampleid, $prediction, $predictionscore);
 
+    public static function instance() {
+        return new static();
+    }
+
     /**
      * Defines a boundary to ignore predictions below the specified prediction score.
      *

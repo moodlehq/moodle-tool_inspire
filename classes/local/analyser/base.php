@@ -121,9 +121,12 @@ abstract class base {
         $files = array();
         $message = null;
 
+        // Target instances scope is per-analysable (it can't be lower as calculations run once per analysable, not range).
+        $target = $this->target::instance();
+
         // We need to check that the analysable is valid for the target even if we don't include targets
         // as we still need to discard invalid analysables for the target.
-        $result = $this->target->is_valid_analysable($analysable);
+        $result = $target->is_valid_analysable($analysable);
         if ($result !== true) {
             return [
                 \tool_inspire\model::ANALYSABLE_STATUS_INVALID_FOR_TARGET,
@@ -135,7 +138,13 @@ abstract class base {
         // Process all provided time splitting methods.
         $results = array();
         foreach ($this->timesplittings as $timesplitting) {
-            $result = $this->process_range($timesplitting, $analysable, $includetarget);
+
+            if ($includetarget) {
+                $result = $this->process_range($timesplitting, $analysable, $target);
+            } else {
+                $result = $this->process_range($timesplitting, $analysable);
+            }
+
             if (!empty($result->file)) {
                 $files[$timesplitting->get_codename()] = $result->file;
             }
@@ -163,7 +172,7 @@ abstract class base {
         ];
     }
 
-    protected function process_range($timesplitting, $analysable, $includetarget) {
+    protected function process_range($timesplitting, $analysable, $target = false) {
 
         $result = new \stdClass();
 
@@ -184,7 +193,7 @@ abstract class base {
             return $result;
         }
 
-        if ($includetarget) {
+        if ($target) {
             // All ranges are used when we are calculating data for training.
             $ranges = $timesplitting->get_all_ranges();
         } else {
@@ -211,7 +220,7 @@ abstract class base {
             }
 
             // Only when processing data for predictions.
-            if ($includetarget === false) {
+            if ($target === false) {
                 // We also filter out ranges that have already been used for predictions.
                 $ranges = $this->filter_out_prediction_ranges($ranges, $analysable, $timesplitting);
             }
@@ -226,18 +235,20 @@ abstract class base {
         $timesplitting->set_samples($samples, $this->get_samples_tablename());
 
         $dataset = new \tool_inspire\dataset_manager($this->modelid, $analysable->get_id(), $timesplitting->get_codename(),
-            $this->options['evaluation'], $includetarget);
+            $this->options['evaluation'], !empty($target));
 
         // Flag the model + analysable + timesplitting as being analysed (prevent concurrent executions).
         $dataset->init_process();
 
+        // Indicators' instances scope is per-range.
+        $indicators = array();
+        foreach ($this->indicators as $key => $indicator) {
+            $indicators[$key] = $indicator->instance();
+        }
+
         // Here we start the memory intensive process that will last until $data var is
         // unset (until the method is finished basically).
-        if ($includetarget) {
-            $data = $timesplitting->calculate($this->indicators, $ranges, $this->target);
-        } else {
-            $data = $timesplitting->calculate($this->indicators, $ranges);
-        }
+        $data = $timesplitting->calculate($indicators, $ranges, $target);
 
         if (!$data) {
             $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;
@@ -255,7 +266,7 @@ abstract class base {
         if ($this->options['evaluation'] === false) {
             // Save the samples that have been already analysed so they are not analysed again in future.
 
-            if ($includetarget) {
+            if ($target) {
                 $this->save_train_samples($samples, $analysable, $timesplitting, $file);
             } else {
                 $this->save_prediction_ranges($ranges, $analysable, $timesplitting);

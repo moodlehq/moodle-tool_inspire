@@ -203,6 +203,13 @@ class manager {
         return self::$allindicators;
     }
 
+    public static function get_target($fullclassname) {
+        if (!self::is_valid($fullclassname, 'tool_inspire\local\target\base')) {
+            return false;
+        }
+        return new $fullclassname();
+    }
+
     /**
      * Returns an instance of the provided indicator.
      *
@@ -213,7 +220,7 @@ class manager {
         if (!self::is_valid($fullclassname, 'tool_inspire\local\indicator\base')) {
             return false;
         }
-        return new $fullclassname;
+        return new $fullclassname();
     }
 
     /**
