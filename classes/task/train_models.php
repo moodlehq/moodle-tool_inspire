@@ -47,14 +47,14 @@ class train_models extends \core\task\scheduled_task {
         }
         foreach ($models as $modelobj) {
             $model = new \tool_inspire\model($modelobj);
-            $results = $model->train();
 
-            foreach ($results as $timesplittingcodename => $result) {
-                mtrace($timesplittingcodename . ' results:');
+            $result = $model->train();
+            if ($result) {
+                mtrace('Results:');
                 mtrace(' - Status code: ' . $result->status);
                 if (!empty($result->errors)) {
-                    foreach ($result->errors as $error) {
-                        mtrace('   - ' . $error);
+                    foreach ($result->errors as $errorkey => $error) {
+                        mtrace('   - ' . $errorkey . ': ' . $error);
                     }
                 }
             }

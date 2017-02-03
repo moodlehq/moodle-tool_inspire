@@ -48,14 +48,14 @@ class predict_models extends \core\task\scheduled_task {
 
         foreach ($models as $modelobj) {
             $model = new \tool_inspire\model($modelobj);
-            $results = $model->predict();
 
-            foreach ($results as $timesplittingcodename => $result) {
-                mtrace($timesplittingcodename . ' results:');
+            $result = $model->predict();
+            if ($result) {
+                mtrace('Results:');
                 mtrace(' - Status code: ' . $result->status);
                 if (!empty($result->errors)) {
-                    foreach ($result->errors as $error) {
-                        mtrace('   - ' . $error);
+                    foreach ($result->errors as $errorkey => $error) {
+                        mtrace('   - ' . $errorkey . ': ' . $error);
                     }
                 }
             }

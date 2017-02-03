@@ -130,8 +130,8 @@ class model {
             // TODO This may get time splitting methods from different moodle components.
             $fullclassname = '\\tool_inspire\\local\\time_splitting\\' . $this->model->timesplitting;
 
-            // Returned as an array in case we decide to allow multiple time splitting methods enabled for a single model.
-            $timesplittings = array(\tool_inspire\manager::get_time_splitting($fullclassname));
+            // Returned as an array as all actions (evaluation, training and prediction) go through the same process.
+            $timesplittings = array($this->model->timesplitting => \tool_inspire\manager::get_time_splitting($fullclassname));
         }
 
         if (empty($target)) {
@@ -222,47 +222,35 @@ class model {
             throw new \moodle_exception('invalidtimesplitting', 'tool_inspire', '', $this->model->id);
         }
 
-        $results = array();
-
         $analysed = $this->get_analyser()->get_labelled_data();
 
         // No training if no files have been provided.
-        if (empty($analysed['files'])) {
+        if (empty($analysed['files']) || empty($analysed['files'][$this->model->timesplitting])) {
             $result = new \stdClass();
             $result->status = self::NO_DATASET;
-            $result->errors = array('No files suitable for training') + $analysed['messages'];
-
-            // Copy the result to all time splitting methods.
-            foreach ($analysed as $timesplittingcodename => $unused) {
-                $results[$timesplittingcodename] = $result;
-            }
-            return $results;
+            $result->errors = array('general' => 'No files suitable for training') + $analysed['messages'];
+            return $result;
         }
+        $samplesfile = $analysed['files'][$this->model->timesplitting];
 
-        foreach ($analysed['files'] as $timesplittingcodename => $dataset) {
+        $outputdir = $this->get_output_dir($this->model->timesplitting);
+        $predictor = \tool_inspire\manager::get_predictions_processor();
 
-            $result = new \stdClass();
+        // Train using the dataset.
+        $predictorresult = $predictor->train($this->get_unique_id(), $samplesfile, $outputdir);
 
-            $outputdir = $this->get_output_dir($timesplittingcodename);
-            $predictor = \tool_inspire\manager::get_predictions_processor();
+        $result = new \stdClass();
+        $result->status = $predictorresult->status;
+        $result->errors = $predictorresult->errors;
 
-            // Train using the dataset.
-            $predictorresult = $predictor->train($this->get_unique_id(), $dataset, $outputdir);
-
-            $result->status = $predictorresult->status;
-            $result->errors = $predictorresult->errors;
-
-            $results[$timesplittingcodename] = $result;
-
-            $this->flag_file_as_used($dataset, 'trained');
-        }
+        $this->flag_file_as_used($samplesfile, 'trained');
 
         // Mark the model as trained if it wasn't.
         if ($this->model->trained == false) {
             $this->mark_as_trained();
         }
 
-        return $results;
+        return $result;
     }
 
     public function predict() {
@@ -274,53 +262,59 @@ class model {
 
         $samplesdata = $this->get_analyser()->get_unlabelled_data();
 
-        foreach ($samplesdata['files'] as $timesplittingcodename => $samplesfile) {
-
-            // We need to throw an exception if we are trying to predict stuff that was already predicted.
-            $params = array('fileid' => $samplesfile->get_id(), 'action' => 'predicted', 'modelid' => $this->model->id);
-            if ($predicted = $DB->get_record('tool_inspire_used_files', $params)) {
-                throw new \moodle_exception('erroralreadypredict', 'tool_inspire', '', $samplesfile->get_id());
-            }
-
-            $outputdir = $this->get_output_dir($timesplittingcodename);
-
-            $predictor = \tool_inspire\manager::get_predictions_processor();
-            $predictorresult = $predictor->predict($this->get_unique_id(), $samplesfile, $outputdir);
-
+        // Get the prediction samples file.
+        if (empty($samplesdata['files']) || empty($samplesdata['files'][$this->model->timesplitting])) {
             $result = new \stdClass();
-            $result->status = $predictorresult->status;
-            $result->errors = $predictorresult->errors;
-            $result->predictions = $predictorresult->predictions;
+            $result->status = \tool_inspire\model::NO_DATASET;
+            $result->errors = array('general' => 'No files suitable for prediction') + $samplesdata['messages'];
+            return $result;
+        }
+        $samplesfile = $samplesdata['files'][$this->model->timesplitting];
 
-            foreach ($result->predictions as $sampleinfo) {
+        // We need to throw an exception if we are trying to predict stuff that was already predicted.
+        $params = array('fileid' => $samplesfile->get_id(), 'action' => 'predicted', 'modelid' => $this->model->id);
+        if ($predicted = $DB->get_record('tool_inspire_used_files', $params)) {
+            throw new \moodle_exception('erroralreadypredict', 'tool_inspire', '', $samplesfile->get_id());
+        }
 
-                switch (count($sampleinfo)) {
-                    case 1:
-                        // For whatever reason the predictions processor could not process this sample, we
-                        // skip it and do nothing with it.
-                        debugging($this->model->id . ' model predictions processor could not process the sample with id ' .
-                            $sampleinfo[0], DEBUG_DEVELOPER);
-                        continue;
-                    case 2:
-                        // Prediction processors that do not return a prediction score will have the maximum prediction
-                        // score.
-                        list($sampleid, $prediction) = $sampleinfo;
-                        $predictionscore = 1;
-                        break;
-                    case 3:
-                        list($sampleid, $prediction, $predictionscore) = $sampleinfo;
-                        break;
-                    default:
-                        break;
-                }
+        $outputdir = $this->get_output_dir($this->model->timesplitting);
 
-                if ($this->get_target()->triggers_callback($prediction, $predictionscore)) {
-                    $this->get_target()->callback($sampleid, $prediction, $predictionscore);
-                }
+        $predictor = \tool_inspire\manager::get_predictions_processor();
+        $predictorresult = $predictor->predict($this->get_unique_id(), $samplesfile, $outputdir);
+
+        $result = new \stdClass();
+        $result->status = $predictorresult->status;
+        $result->errors = $predictorresult->errors;
+        $result->predictions = $predictorresult->predictions;
+
+        foreach ($result->predictions as $sampleinfo) {
+
+            switch (count($sampleinfo)) {
+                case 1:
+                    // For whatever reason the predictions processor could not process this sample, we
+                    // skip it and do nothing with it.
+                    debugging($this->model->id . ' model predictions processor could not process the sample with id ' .
+                        $sampleinfo[0], DEBUG_DEVELOPER);
+                    continue;
+                case 2:
+                    // Prediction processors that do not return a prediction score will have the maximum prediction
+                    // score.
+                    list($sampleid, $prediction) = $sampleinfo;
+                    $predictionscore = 1;
+                    break;
+                case 3:
+                    list($sampleid, $prediction, $predictionscore) = $sampleinfo;
+                    break;
+                default:
+                    break;
             }
 
-            $this->flag_file_as_used($samplesfile, 'predicted');
+            if ($this->get_target()->triggers_callback($prediction, $predictionscore)) {
+                $this->get_target()->callback($sampleid, $prediction, $predictionscore);
+            }
         }
+
+        $this->flag_file_as_used($samplesfile, 'predicted');
     }
 
     public function enable($timesplittingcodename = false) {
