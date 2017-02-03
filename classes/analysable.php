@@ -39,8 +39,6 @@ interface analysable {
 
     public function get_context();
 
-    public function get_usual_required_records();
-
     public function get_metadata();
 
     public function get_start();

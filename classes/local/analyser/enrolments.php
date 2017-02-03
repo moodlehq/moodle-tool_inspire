@@ -25,6 +25,8 @@ namespace tool_inspire\local\analyser;
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once($CFG->dirroot . '/lib/enrollib.php');
+
 /**
  *
  * @package   tool_inspire
@@ -33,11 +35,33 @@ defined('MOODLE_INTERNAL') || die();
  */
 class enrolments extends by_course {
 
-    public function get_samples_tablename() {
-        return 'user';
+    protected function get_samples_origin() {
+        return 'user_enrolments';
     }
 
-    public function get_all_samples(\tool_inspire\analysable $course) {
-        return $course->get_students();
+    protected function provided_samples_data() {
+        return array('user_enrolments', 'course', 'user');
+    }
+
+    protected function get_samples(\tool_inspire\analysable $course) {
+        global $DB;
+
+        // All course enrolments.
+        $instances = enrol_get_instances($course->get_id(), true);
+        $enrolids = array_keys($instances);
+        list($sql, $params) = $DB->get_in_or_equal($enrolids, SQL_PARAMS_NAMED);
+        $enrolments = $DB->get_records_select('user_enrolments', "enrolid $sql", $params);
+        $students = $course->get_students();
+
+        $samplesdata = array();
+        foreach ($enrolments as $sampleid => $enrolment) {
+            $samplesdata['course'][$sampleid] = $course->get_course_data();
+
+            // TODO Use $course for this.
+            $samplesdata['user'][$sampleid] = $DB->get_record('user', array('id' => $enrolment->userid));
+        }
+
+        $enrolids = array_keys($enrolments);
+        return array(array_combine($enrolids, $enrolids), $samplesdata);
     }
 }

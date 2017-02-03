@@ -19,7 +19,7 @@ class test_target_shortname extends \tool_inspire\local\target\binary {
         return true;
     }
 
-    protected function calculate_sample($sampleid, $tablename, \tool_inspire\analysable $analysable, $data) {
+    protected function calculate_sample($sampleid, \tool_inspire\analysable $analysable) {
         global $DB;
 
         $sample = $DB->get_record('course', array('id' => $sampleid));

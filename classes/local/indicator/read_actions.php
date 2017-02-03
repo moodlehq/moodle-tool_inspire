@@ -39,15 +39,15 @@ class read_actions extends linear {
         return get_string('indicator:readactions', 'tool_inspire');
     }
 
-    public function calculate_sample($sampleid, $tablename, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
+    public function calculate_sample($sampleid, $sampleorigin, \tool_inspire\analysable $analysable, $starttime = false, $endtime = false) {
         global $DB;
 
         $select = '';
         $params = array();
 
-        if ($tablename === 'user') {
-            $select = "userid = :userid AND ";
-            $params = array('userid' => $sampleid);
+        if ($user = $this->retrieve('user', $sampleid)) {
+            $select .= "userid = :userid AND ";
+            $params = $params + array('userid' => $user->id);
         }
 
         // Filter by context to use the db table index.

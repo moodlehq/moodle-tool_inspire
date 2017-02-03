@@ -34,7 +34,7 @@ abstract class base {
     protected $codename;
 
     /**
-     * @var \stdClass
+     * @var \tool_inspire\analysable
      */
     protected $analysable;
 
@@ -42,27 +42,17 @@ abstract class base {
     /**
      * @var int[]
      */
-    protected $samples;
+    protected $sampleids;
 
     /**
      * @var string
      */
-    protected $samplestablename;
+    protected $samplesorigin;
 
     /**
      * @var array
      */
     protected $ranges = [];
-
-    /**
-     * Array used to store all db records indicators are interested in using.
-     *
-     * This will be big, indicators should be concerned about performance, as they
-     * may increase memory usage significantly if they require text fields.
-     *
-     * @var []
-     */
-    protected $storage = [];
 
     /**
      * @var \tool_inspire\indicator\base
@@ -89,9 +79,8 @@ abstract class base {
         $this->analysable = $analysable;
     }
 
-    public function set_samples($samples, $tablename) {
-        $this->samples = $samples;
-        $this->samplestablename = $tablename;
+    public function get_analysable() {
+        return $this->analysable;
     }
 
     /**
@@ -115,39 +104,16 @@ abstract class base {
      *
      * @return void
      */
-    public function calculate($indicators, $ranges, $target = false) {
-
-        // We load the usual data required to analyse the analyser (e.g. if it is a course teachers and students may be a
-        // popular requirement.
-        $this->storage = $this->analysable->get_usual_required_records();
-
-        // We now load all data required by the indicators and the target. Indicators and targets should be
-        // aware that they shouldn't load a crazy amount of data because of memory usage possible problems.
-        // In any case we run this in per-analysable batches, which means that we are not going to get all
-        // site courses data at the same time but in batches.
-
-        // Fetch all database items required records.
-        foreach ($indicators as $indicator) {
-            if ($records = $indicator->fill_cache($this->analysable)) {
-                $this->merge_into_cache($records);
-            }
-        }
-
-        // We only add target required records if we calculate the target.
-        if ($target) {
-            if ($records = $target->fill_cache($this->analysable)) {
-                $this->merge_into_cache($records);
-            }
-        }
+    public function calculate($sampleids, $samplesorigin, $indicators, $ranges, $target = false) {
 
         $calculatedtarget = false;
         if ($target) {
             // We first calculate the target because analysable data may still be invalid, we need to stop if it is not.
-            $calculatedtarget = $target->calculate($this->samples, $this->samplestablename, $this->analysable, $this->storage);
+            $calculatedtarget = $target->calculate($sampleids, $samplesorigin, $this->analysable);
 
             // We remove samples we can not calculate their target.
-            $this->samples = array_filter($this->samples, function($sample) use ($calculatedtarget) {
-                if (is_null($calculatedtarget[$sample])) {
+            $sampleids = array_filter($sampleids, function($sampleid) use ($calculatedtarget) {
+                if (is_null($calculatedtarget[$sampleid])) {
                     return false;
                 }
                 return true;
@@ -155,14 +121,14 @@ abstract class base {
         }
 
         // No need to continue calculating if the target couldn't be calculated for any sample.
-        if (empty($this->samples)) {
+        if (empty($sampleids)) {
             return false;
         }
 
         // Empty dataset, passed by reference below.
         $dataset = [];
 
-        $this->calculate_indicators($dataset, $indicators, $ranges);
+        $this->calculate_indicators($dataset, $sampleids, $samplesorigin, $indicators, $ranges);
 
         // Now that we have the indicators in place we can add the time range indicators (and target if provided) to each of them.
         $this->fill_dataset($dataset, $calculatedtarget);
@@ -177,7 +143,7 @@ abstract class base {
      *
      * @return void
      */
-    protected function calculate_indicators(&$dataset, $indicators, $ranges) {
+    protected function calculate_indicators(&$dataset, $sampleids, $samplesorigin, $indicators, $ranges) {
 
         // Fill the dataset samples with indicators data.
         foreach ($indicators as $indicator) {
@@ -186,7 +152,7 @@ abstract class base {
             foreach ($ranges as $rangeindex => $range) {
 
                 // Calculate the indicator for each sample in this time range.
-                $calculated = $indicator->calculate($this->samples, $this->samplestablename, $this->analysable, $this->storage, $range['start'], $range['end']);
+                $calculated = $indicator->calculate($sampleids, $samplesorigin, $this->analysable, $range['start'], $range['end']);
 
                 // Copy the calculated data to the dataset.
                 foreach ($calculated as $analysersampleid => $calculatedvalues) {
@@ -339,52 +305,6 @@ abstract class base {
         }
 
         return $headers;
-    }
-
-    /**
-     * Merge the required info the indicator specified into the internal cache.
-     *
-     * @param array $info
-     * @return void
-     */
-    protected function merge_into_cache($info) {
-
-        foreach ($info as $tablename => $records) {
-
-            if (empty($this->storage[$tablename])) {
-                // New table info - just move there all new records.
-                $this->storage[$tablename] = $records;
-            } else {
-                // Merge records.
-
-                foreach ($records as $id => $record) {
-                    if (empty($this->storage[$tablename][$id])) {
-                        // Add new records if no records present with that id.
-                        $this->storage[$tablename][$id] = $record;
-                    } else {
-                        // Merge objects if that object already have some fields.
-
-                        // TODO We could have a tablename+id mapping to crc32 hashes so we don't need
-                        // to calculate them all again.
-                        if (crc32(json_encode($this->storage[$tablename][$id])) === crc32(json_encode($record))) {
-                            // Skip the record if it is exactly the same one we already have.
-                            continue;
-                        }
-
-                        // This should be safe as indicators are not allowed to modify the database contents in
-                        // \tool_inspire\local\base::fill_cache and all fill_cache calls are sequential.
-                        //
-                        // In case any indicator has the great idea of modifying the database and returning a modified record
-                        // we give preference to the value that was already set so the issue should be detected by the indicator
-                        // that modified the object, not the previous one.
-                        //
-                        // TODO We could improve this merge robustness by throwing an exception if any field value do not match
-                        // but the cost is performance.
-                        $this->storage[$tablename][$id] = (object) (array)$this->storage[$tablename][$id] + (array)$record;
-                    }
-                }
-            }
-        }
     }
 
     /**

@@ -43,9 +43,11 @@ class user_track_forums extends binary {
         return 'user';
     }
 
-    public function calculate_sample($sampleid, $tablename, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
+    public function calculate_sample($sampleid, $samplesorigin, \tool_inspire\analysable $analysable, $starttime = false, $endtime = false) {
+
+        $user = $this->retrieve('user', $sampleid);
 
         // TODO Return null if forums tracking is the default.
-        return ($data['user'][$sampleid]->trackforums) ? self::get_max_value() : self::get_min_value();
+        return ($user->trackforums) ? self::get_max_value() : self::get_min_value();
     }
 }

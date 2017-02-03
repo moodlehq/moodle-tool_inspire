@@ -39,7 +39,7 @@ require_once($CFG->dirroot . '/completion/completion_completion.php');
  */
 class course_dropout extends binary {
 
-    protected static $coursegradeitems = array();
+    protected $coursegradeitem = null;
 
     public static function get_name() {
         return get_string('target:coursedropout', 'tool_inspire');
@@ -113,12 +113,12 @@ class course_dropout extends binary {
         }
 
         // Not a valid target if there is no course grade item.
-        self::$coursegradeitems[$course->get_id()] = \grade_item::fetch(array('itemtype' => 'course', 'courseid' => $course->get_id()));
-        if (empty(self::$coursegradeitems[$course->get_id()])) {
+        $this->coursegradeitem = \grade_item::fetch(array('itemtype' => 'course', 'courseid' => $course->get_id()));
+        if (empty($this->coursegradeitems)) {
             $nogradeitem = true;
         }
 
-        if (self::$coursegradeitems[$course->get_id()]->gradetype !== GRADE_TYPE_VALUE) {
+        if ($this->coursegradeitem->gradetype !== GRADE_TYPE_VALUE) {
             $nogradevalue = true;
         }
 
@@ -139,17 +139,20 @@ class course_dropout extends binary {
      * 4.- Course final grade below 50% of the course maximum grade
      *
      * @param int $sampleid
-     * @param string $tablename
      * @param \tool_inspire\analysable $course
-     * @param array $data
      * @return void
      */
-    public function calculate_sample($sampleid, $tablename, \tool_inspire\analysable $course, $data) {
+    public function calculate_sample($sampleid, \tool_inspire\analysable $course) {
+        global $DB;
+
+        // TODO We can probably feed samples data here as well.
+        $userenrolment = $DB->get_record('user_enrolments', array('id' => $sampleid));
+        $user = $DB->get_record('user', array('id' => $userenrolment->userid));
 
         // We use completion as a success metric only when it is enabled.
         $completion = new \completion_info($course->get_course_data());
         if ($completion->is_enabled() && $completion->has_criteria()) {
-            $ccompletion = new \completion_completion(array('userid' => $sampleid, 'course' => $course->get_id()));
+            $ccompletion = new \completion_completion(array('userid' => $user->id, 'course' => $course->get_id()));
             if ($ccompletion->is_complete()) {
                 return 0;
             } else {
@@ -162,7 +165,7 @@ class course_dropout extends binary {
             $ncoursecompetencies = \core_competency\api::count_competencies_in_course($course->get_id());
             if ($ncoursecompetencies > 0) {
                 $nusercompetencies = \core_competency\api::count_proficient_competencies_in_course_for_user(
-                    $course->get_id(), $sampleid);
+                    $course->get_id(), $user->id);
                 if ($ncoursecompetencies > $nusercompetencies) {
                     return 1;
                 } else {
@@ -172,7 +175,7 @@ class course_dropout extends binary {
         }
 
         // Falling back to the course grades.
-        $params = array('userid' => $sampleid, 'itemid' => self::$coursegradeitems[$data['course']->id]->id);
+        $params = array('userid' => $user->id, 'itemid' => $this->coursegradeitem->id);
         $grade = \grade_grade::fetch($params);
         if (!$grade || !$grade->finalgrade) {
             // We checked that the course is suitable for being analysed in is_valid_analysable so if the

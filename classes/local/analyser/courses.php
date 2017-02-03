@@ -33,18 +33,22 @@ defined('MOODLE_INTERNAL') || die();
  */
 class courses extends sitewide {
 
-    public function get_samples_tablename() {
+    public function get_samples_origin() {
         return 'course';
     }
 
-    public function get_all_samples(\tool_inspire\analysable $site) {
+    protected function get_samples(\tool_inspire\analysable $site) {
         global $DB;
 
         // Getting courses from DB instead of from the site as these samples
         // will be stored in memory and we just want the id.
         $select = 'id != 1';
-        $courseids = array_keys($DB->get_records_select('course', $select, null, 'sortorder', 'id'));
-        return array_combine($courseids, $courseids);
-    }
+        $courses = $DB->get_records_select('course', $select, null, '', '*');
 
+        $courseids = array_keys($courses);
+        $sampleids = array_combine($courseids, $courseids);
+
+        // No related data attached.
+        return array($sampleids, array('course' => $courses));
+    }
 }

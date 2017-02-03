@@ -62,9 +62,13 @@ abstract class base {
      * @param \tool_inspire\analysable $analysable
      * @return array
      */
-    abstract public function get_all_samples(\tool_inspire\analysable $analysable);
+    abstract protected function get_samples(\tool_inspire\analysable $analysable);
 
-    abstract protected function get_samples_tablename();
+    abstract protected function get_samples_origin();
+
+    protected function provided_samples_data() {
+        return array($this->get_samples_origin());
+    }
 
     /**
      * Main analyser method which processes the site analysables.
@@ -94,11 +98,11 @@ abstract class base {
      */
     protected function check_indicators_requirements() {
 
-        $sampletablename = $this->get_samples_tablename();
+        $providedsamplesdata = $this->provided_samples_data();
 
         foreach ($this->indicators as $indicator) {
             $tablename = $indicator::required_sample();
-            if ($tablename && $tablename !== $sampletablename) {
+            if ($tablename && !in_array($tablename, $providedsamplesdata)) {
                 throw new \tool_inspire\requirements_exception($indicator->get_codename() . ' indicator requires ' .
                     $tablename . ' samples which are not provided by ' . get_class($this));
             }
@@ -185,9 +189,9 @@ abstract class base {
 
         // What is a sample is defined by the analyser, it can be an enrolment, a course, a user, a question
         // attempt... it is on what we will base indicators calculations.
-        $samples = $this->get_all_samples($analysable);
+        list($sampleids, $samplesdata) = $this->get_samples($analysable);
 
-        if (count($samples) === 0) {
+        if (count($sampleids) === 0) {
             $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;
             $result->message = 'No data available';
             return $result;
@@ -211,18 +215,20 @@ abstract class base {
             }
 
             // We skip all samples that are already part of a training dataset, even if they have noe been used for training yet.
-            $samples = $this->filter_out_train_samples($samples, $analysable, $timesplitting);
+            $sampleids = $this->filter_out_train_samples($sampleids, $timesplitting);
 
-            if (count($samples) === 0) {
+            if (count($sampleids) === 0) {
                 $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;
                 $result->message = 'No new data available';
                 return $result;
             }
 
+            // TODO We may be interested in limiting $samplesdata contents to $sampleids after filtering out some sampleids.
+
             // Only when processing data for predictions.
             if ($target === false) {
                 // We also filter out ranges that have already been used for predictions.
-                $ranges = $this->filter_out_prediction_ranges($ranges, $analysable, $timesplitting);
+                $ranges = $this->filter_out_prediction_ranges($ranges, $timesplitting);
             }
 
             if (count($ranges) === 0) {
@@ -231,8 +237,6 @@ abstract class base {
                 return $result;
             }
         }
-
-        $timesplitting->set_samples($samples, $this->get_samples_tablename());
 
         $dataset = new \tool_inspire\dataset_manager($this->modelid, $analysable->get_id(), $timesplitting->get_codename(),
             $this->options['evaluation'], !empty($target));
@@ -244,11 +248,14 @@ abstract class base {
         $indicators = array();
         foreach ($this->indicators as $key => $indicator) {
             $indicators[$key] = $indicator->instance();
+            // The analyser attaches the main entities the sample depends on and are provided to the
+            // indicator to calculate the sample.
+            $indicators[$key]->set_sample_data($samplesdata);
         }
 
         // Here we start the memory intensive process that will last until $data var is
         // unset (until the method is finished basically).
-        $data = $timesplitting->calculate($indicators, $ranges, $target);
+        $data = $timesplitting->calculate($sampleids, $this->get_samples_origin(), $indicators, $ranges, $target);
 
         if (!$data) {
             $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;
@@ -267,9 +274,9 @@ abstract class base {
             // Save the samples that have been already analysed so they are not analysed again in future.
 
             if ($target) {
-                $this->save_train_samples($samples, $analysable, $timesplitting, $file);
+                $this->save_train_samples($sampleids, $timesplitting, $file);
             } else {
-                $this->save_prediction_ranges($ranges, $analysable, $timesplitting);
+                $this->save_prediction_ranges($ranges, $timesplitting);
             }
         }
 
@@ -295,10 +302,10 @@ abstract class base {
         return $predictionranges;
     }
 
-    protected function filter_out_train_samples($samples, $analysable, $timesplitting) {
+    protected function filter_out_train_samples($sampleids, $timesplitting) {
         global $DB;
 
-        $params = array('modelid' => $this->modelid, 'analysableid' => $analysable->get_id(),
+        $params = array('modelid' => $this->modelid, 'analysableid' => $timesplitting->get_analysable()->get_id(),
             'timesplitting' => $timesplitting->get_codename());
 
         $trainingsamples = $DB->get_records('tool_inspire_train_samples', $params);
@@ -309,18 +316,18 @@ abstract class base {
             $usedsamples = json_decode($trainingfile->sampleids, true);
 
             if (!empty($usedsamples)) {
-                // Reset $samples to $samples minus this file's $usedsamples.
-                $samples = array_diff_key($samples, $usedsamples);
+                // Reset $sampleids to $sampleids minus this file's $usedsamples.
+                $sampleids = array_diff_key($sampleids, $usedsamples);
             }
         }
 
-        return $samples;
+        return $sampleids;
     }
 
-    protected function filter_out_prediction_ranges($ranges, $analysable, $timesplitting) {
+    protected function filter_out_prediction_ranges($ranges, $timesplitting) {
         global $DB;
 
-        $params = array('modelid' => $this->modelid, 'analysableid' => $analysable->get_id(),
+        $params = array('modelid' => $this->modelid, 'analysableid' => $timesplitting->get_analysable()->get_id(),
             'timesplitting' => $timesplitting->get_codename());
 
         $predictedranges = $DB->get_records('tool_inspire_predict_ranges', $params);
@@ -334,28 +341,28 @@ abstract class base {
 
     }
 
-    protected function save_train_samples($samples, $analysable, $timesplitting, $file) {
+    protected function save_train_samples($sampleids, $timesplitting, $file) {
         global $DB;
 
         $trainingsamples = new \stdClass();
         $trainingsamples->modelid = $this->modelid;
-        $trainingsamples->analysableid = $analysable->get_id();
+        $trainingsamples->analysableid = $timesplitting->get_analysable()->get_id();
         $trainingsamples->timesplitting = $timesplitting->get_codename();
         $trainingsamples->fileid = $file->get_id();
 
         // TODO We just need the keys, we can save some space by removing the values.
-        $trainingsamples->sampleids = json_encode($samples);
+        $trainingsamples->sampleids = json_encode($sampleids);
         $trainingsamples->timecreated = time();
 
         return $DB->insert_record('tool_inspire_train_samples', $trainingsamples);
     }
 
-    protected function save_prediction_ranges($ranges, $analysable, $timesplitting) {
+    protected function save_prediction_ranges($ranges, $timesplitting) {
         global $DB;
 
         $predictionrange = new \stdClass();
         $predictionrange->modelid = $this->modelid;
-        $predictionrange->analysableid = $analysable->get_id();
+        $predictionrange->analysableid = $timesplitting->get_analysable()->get_id();
         $predictionrange->timesplitting = $timesplitting->get_codename();
         $predictionrange->timecreated = time();
 

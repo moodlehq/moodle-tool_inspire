@@ -44,8 +44,9 @@ class user_profile_set extends linear {
         return 'user';
     }
 
-    public function calculate_sample($sampleid, $tablename, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
-        $user = $data['user'][$sampleid];
+    public function calculate_sample($sampleid, $sampleorigin, \tool_inspire\analysable $analysable, $starttime = false, $endtime = false) {
+
+        $user = $this->retrieve('user', $sampleid);
 
         // Nothing set results in -1.
         $calculatedvalue = self::MIN_VALUE;

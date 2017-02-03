@@ -98,19 +98,6 @@ class course implements \tool_inspire\analysable {
         return \context_course::instance($this->course->id);
     }
 
-    public function get_usual_required_records() {
-        global $DB;
-
-        $storage = [];
-
-        $storage['course'] = $this->course;
-
-        list($sql, $params) = $DB->get_in_or_equal(array_keys($this->studentids + $this->teacherids));
-        $storage['user'] = $DB->get_records_select('user', 'id ' . $sql, $params);
-
-        return $storage;
-    }
-
     public function get_metadata() {
         // TODO We should be very careful with what we include here this is a WIP example.
         return [

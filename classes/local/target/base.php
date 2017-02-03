@@ -66,12 +66,10 @@ abstract class base extends \tool_inspire\calculable {
      * In case there are no values to return or the provided sample is not applicable just return null.
      *
      * @param int $sample
-     * @param string $tablename
      * @param \tool_inspire\analysable $analysable
-     * @param array $data
      * @return float|null
      */
-    abstract protected function calculate_sample($sampleid, $tablename, \tool_inspire\analysable $analysable, $data);
+    abstract protected function calculate_sample($sampleid, \tool_inspire\analysable $analysable);
 
     /**
      * Callback to execute once a prediction has been returned from the predictions processor.
@@ -131,23 +129,22 @@ abstract class base extends \tool_inspire\calculable {
     /**
      * Calculates the target.
      *
-     * Returns an array of values which size matches $samples size.
+     * Returns an array of values which size matches $sampleids size.
      *
      * Rows with null values will be skipped as invalid by time splitting methods.
      *
-     * @param array $samples
-     * @param string $tablename
+     * @param array $sampleids
+     * @param string $samplesorigin
      * @param \tool_inspire\analysable $analysable
-     * @param array $data All required data.
      * @param integer $starttime startime is not necessary when calculating targets
      * @param integer $endtime endtime is not necessary when calculating targets
      * @return array The format to follow is [userid] = scalar|null
      */
-    public function calculate($samples, $tablename, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
+    public function calculate($sampleids, $samplesorigin, \tool_inspire\analysable $analysable, $starttime = false, $endtime = false) {
 
         $calculations = [];
-        foreach ($samples as $sampleid => $sample) {
-            $calculatedvalue = $this->calculate_sample($sampleid, $tablename, $analysable, $data);
+        foreach ($sampleids as $sampleid => $unusedsampleid) {
+            $calculatedvalue = $this->calculate_sample($sampleid, $analysable);
 
             if (!is_null($calculatedvalue)) {
                 if ($this->is_linear() && ($calculatedvalue > static::get_max_value() || $calculatedvalue < static::get_min_value())) {

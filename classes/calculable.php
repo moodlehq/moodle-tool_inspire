@@ -39,39 +39,13 @@ abstract class calculable {
      * Calculation for all provided samples.
      *
      * @param int[] $samples
-     * @param string $tablename
+     * @param string $samplesorigin
      * @param \tool_inspire\analysable $analysable
-     * @param array $data
      * @param int $starttime
      * @param int $endtime
      * @return int[]|float[]
      */
-    abstract public function calculate($samples, $tablename, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false);
-
-    /**
-     * Specify db records to store in-memory during the whole analysis.
-     *
-     * This function is useful to fill a pool of data that will be available across indicators,
-     * saving db queries.
-     *
-     * Please, only load whatever info you really need as all this data will be stored in
-     * memory so only include boolean and integer fields, you can also include string fields if you know
-     * that they will not contain big chunks of text or the amount of records that is available is not
-     * massive.
-     *
-     * You can just return null if:
-     * - The records you need to calculate the indicator are hardly reusable
-     * - You can sort the calculation out easily using a single query fetching data from multiple db tables
-     * - You need fields that can be potentially big (varchars and texts)
-     *
-     * IMPORTANT! No database writes are allowed here as we keep track of all different dataset items requirements.
-     *
-     * @param \tool_inspire\local\analysable $analysable
-     * @return null|array The format to follow is [tablename][id] = stdClass(dbrecord)
-     */
-    public function fill_cache(\tool_inspire\analysable $analysable) {
-        return null;
-    }
+    abstract public function calculate($samples, $samplesorigin, \tool_inspire\analysable $analysable, $starttime = false, $endtime = false);
 
     /**
      * Returns codename for the indicator.

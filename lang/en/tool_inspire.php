@@ -43,6 +43,7 @@ $string['evaluationminscore'] = 'Evaluation minimum score';
 $string['indicator:accessesafterend'] = 'Accesses after the end date';
 $string['indicator:accessesbeforestart'] = 'Accesses before the start date';
 $string['indicator:anywrite'] = 'Any write action';
+$string['indicator:cognitivedepthfolder'] = 'Folder activity cognitive depth';
 $string['indicator:readactions'] = 'Read actions amount';
 $string['indicator:completeduserprofile'] = 'User profile is completed';
 $string['indicator:userforumstracking'] = 'User is tracking forums';

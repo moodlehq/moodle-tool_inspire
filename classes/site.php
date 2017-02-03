@@ -41,10 +41,6 @@ class site implements \tool_inspire\analysable {
         return \context_system::instance();
     }
 
-    public function get_usual_required_records() {
-        return array();
-    }
-
     public function get_metadata() {
         // TODO We should be very careful with what we include here this is a WIP example.
         return [

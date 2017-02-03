@@ -39,13 +39,16 @@ class any_access_after_end extends binary {
         return get_string('target:accessesafterend', 'tool_inspire');
     }
 
-    public function calculate_sample($sampleid, $tablename, \tool_inspire\analysable $analysable, $data, $starttime = false, $endtime = false) {
+    public function calculate_sample($sampleid, $samplesorigin, \tool_inspire\analysable $analysable, $starttime = false, $endtime = false) {
         global $DB;
+
+        $user = $this->retrieve('user', $sampleid);
+
         // Filter by context to use the db table index.
         $context = $analysable->get_context();
         $select = "userid = :userid AND contextlevel = :contextlevel AND contextinstanceid = :contextinstanceid AND " .
             "timecreated > :end";
-        $params = array('userid' => $sampleid, 'contextlevel' => $context->contextlevel,
+        $params = array('userid' => $user->id, 'contextlevel' => $context->contextlevel,
             'contextinstanceid' => $context->instanceid, 'end' => $analysable->get_end());
         return $DB->record_exists_select('logstore_standard_log', $select, $params) ? self::get_max_value() : self::get_min_value();
     }
