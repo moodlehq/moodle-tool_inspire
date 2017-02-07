@@ -105,7 +105,19 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
         $this->assertEquals(1, $DB->count_records('tool_inspire_used_files',
             array('modelid' => $model->get_id(), 'action' => 'trained')));
 
-        $model->predict();
+        // They will not be skipped for prediction though.
+        $result = $model->predict();
+
+        // $course1 predictions should be 1 == 'a', $course2 predictions should be 0 == 'b'.
+        $correct = array($course1->id => 1, $course2->id => 0);
+        foreach ($result->predictions as $sampleprediction) {
+            list($sampleid, $prediction) = $sampleprediction;
+            list($sampleid, $rangeindex) = $model->get_timesplitting()->infer_sample_info($sampleid);
+
+            // The range index is not important here, both ranges prediction will be the same.
+            $this->assertEquals($correct[$sampleid], $prediction);
+        }
+
         // 2 ranges will be predicted.
         $trainedsamples = $DB->get_records('tool_inspire_predict_ranges', array('modelid' => $model->get_id()));
         $this->assertEquals($npredictedranges, count($trainedsamples));
@@ -118,6 +130,7 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
         $this->assertEquals($npredictedranges, count($trainedsamples));
         $this->assertEquals(1, $DB->count_records('tool_inspire_used_files',
             array('modelid' => $model->get_id(), 'action' => 'predicted')));
+        $this->assertEquals(2 * $npredictedranges, $DB->count_records('tool_inspire_predictions', array('modelid' => $model->get_id())));
     }
 
     public function provider_training_and_prediction() {

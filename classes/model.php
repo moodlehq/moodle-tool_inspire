@@ -127,11 +127,8 @@ class model {
                 throw new \moodle_exception('invalidtimesplitting', 'tool_inspire', '', $this->model->id);
             }
 
-            // TODO This may get time splitting methods from different moodle components.
-            $fullclassname = '\\tool_inspire\\local\\time_splitting\\' . $this->model->timesplitting;
-
             // Returned as an array as all actions (evaluation, training and prediction) go through the same process.
-            $timesplittings = array($this->model->timesplitting => \tool_inspire\manager::get_time_splitting($fullclassname));
+            $timesplittings = array($this->model->timesplitting => $this->get_timesplitting());
         }
 
         if (empty($target)) {
@@ -153,6 +150,17 @@ class model {
 
         // Returns a \tool_inspire\local\analyser\base class.
         return new $classname($this->model->id, $target, $indicators, $timesplittings, $options);
+    }
+
+    public function get_timesplitting() {
+        if (empty($this->model->timesplitting)) {
+            return false;
+        }
+
+        // TODO This may get time splitting methods from different moodle components.
+        $fullclassname = '\\tool_inspire\\local\\time_splitting\\' . $this->model->timesplitting;
+
+        return \tool_inspire\manager::get_time_splitting($fullclassname);
     }
 
     /**
@@ -285,36 +293,75 @@ class model {
         $result = new \stdClass();
         $result->status = $predictorresult->status;
         $result->errors = $predictorresult->errors;
-        $result->predictions = $predictorresult->predictions;
 
-        foreach ($result->predictions as $sampleinfo) {
+        // Here we will store all predictions' contexts, this will be used to limit which users will see those predictions.
+        $samplecontexts = array();
 
-            switch (count($sampleinfo)) {
-                case 1:
-                    // For whatever reason the predictions processor could not process this sample, we
-                    // skip it and do nothing with it.
-                    debugging($this->model->id . ' model predictions processor could not process the sample with id ' .
-                        $sampleinfo[0], DEBUG_DEVELOPER);
-                    continue;
-                case 2:
-                    // Prediction processors that do not return a prediction score will have the maximum prediction
-                    // score.
-                    list($sampleid, $prediction) = $sampleinfo;
-                    $predictionscore = 1;
-                    break;
-                case 3:
-                    list($sampleid, $prediction, $predictionscore) = $sampleinfo;
-                    break;
-                default:
-                    break;
-            }
+        if ($predictorresult) {
+            $result->predictions = $predictorresult->predictions;
+            foreach ($result->predictions as $sampleinfo) {
 
-            if ($this->get_target()->triggers_callback($prediction, $predictionscore)) {
-                $this->get_target()->callback($sampleid, $prediction, $predictionscore);
+                // We parse each prediction
+                switch (count($sampleinfo)) {
+                    case 1:
+                        // For whatever reason the predictions processor could not process this sample, we
+                        // skip it and do nothing with it.
+                        debugging($this->model->id . ' model predictions processor could not process the sample with id ' .
+                            $sampleinfo[0], DEBUG_DEVELOPER);
+                        continue;
+                    case 2:
+                        // Prediction processors that do not return a prediction score will have the maximum prediction
+                        // score.
+                        list($uniquesampleid, $prediction) = $sampleinfo;
+                        $predictionscore = 1;
+                        break;
+                    case 3:
+                        list($uniquesampleid, $prediction, $predictionscore) = $sampleinfo;
+                        break;
+                    default:
+                        break;
+                }
+
+                if ($this->get_target()->triggers_callback($prediction, $predictionscore)) {
+
+                    // The unique sample id contains both the sampleid and the rangeindex.
+                    list($sampleid, $rangeindex) = $this->get_timesplitting()->infer_sample_info($uniquesampleid);
+
+                    // Store the predicted values.
+                    $samplecontext = $this->save_prediction($sampleid, $rangeindex, $prediction, $predictionscore);
+                    $samplecontexts[$samplecontext->id] = $samplecontext;
+
+                    $this->get_target()->prediction_callback($this->model->id, $sampleid, $rangeindex, $samplecontext, $prediction, $predictionscore);
+                }
             }
         }
 
+        if (!empty($samplecontexts)) {
+            // Notify the target that all predictions have been processed.
+            $this->get_target()->generate_insights($this->model->id, $samplecontexts);
+        }
+
         $this->flag_file_as_used($samplesfile, 'predicted');
+
+        return $result;
+    }
+
+    protected function save_prediction($sampleid, $rangeindex, $prediction, $predictionscore) {
+        global $DB;
+
+        $samplecontext = $this->get_analyser()->get_sample_context($sampleid);
+
+        $record = new \stdClass();
+        $record->modelid = $this->model->id;
+        $record->contextid = $samplecontext->id;
+        $record->sampleid = $sampleid;
+        $record->rangeindex = $rangeindex;
+        $record->prediction = $prediction;
+        $record->predictionscore = $predictionscore;
+        $record->timecreated = time();
+        $DB->insert_record('tool_inspire_predictions', $record);
+
+        return $samplecontext;
     }
 
     public function enable($timesplittingcodename = false) {
@@ -328,6 +375,9 @@ class model {
 
         // We don't always update timemodified intentionally as we reserve it for target, indicators or timesplitting updates.
         $DB->update_record('tool_inspire_models', $this->model);
+
+        // It needs to be reset.
+        $this->uniqueid = null;
     }
 
     public function mark_as_trained() {

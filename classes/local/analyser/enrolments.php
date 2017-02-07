@@ -35,8 +35,32 @@ require_once($CFG->dirroot . '/lib/enrollib.php');
  */
 class enrolments extends by_course {
 
+    /**
+     * @var array Cache for user_enrolment id - course id relation.
+     */
+    protected $samplecourses = array();
+
     protected function get_samples_origin() {
         return 'user_enrolments';
+    }
+
+    public function get_sample_context($sampleid) {
+        return \context_course::instance($this->get_sample_course($sampleid));
+    }
+
+    protected function get_sample_course($sampleid) {
+        global $DB;
+
+        if (empty($this->samplecourses[$sampleid])) {
+            $sql = "SELECT e.courseid
+                      FROM {enrol} e
+                      JOIN {user_enrolments} ue ON ue.enrolid = e.id
+                     WHERE ue.id = :userenrolmentid";
+
+            $this->samplecourses[$sampleid] = $DB->get_field_sql($sql, array('userenrolmentid' => $sampleid));
+        }
+
+        return $this->samplecourses[$sampleid];
     }
 
     protected function provided_samples_data() {
@@ -59,6 +83,9 @@ class enrolments extends by_course {
 
             // TODO Use $course for this.
             $samplesdata['user'][$sampleid] = $DB->get_record('user', array('id' => $enrolment->userid));
+
+            // Fill the cache.
+            $this->samplecourses[$sampleid] = $course->get_id();
         }
 
         $enrolids = array_keys($enrolments);

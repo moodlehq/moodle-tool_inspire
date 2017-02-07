@@ -85,14 +85,14 @@ class Classifier(object):
 
     def get_unlabelled_samples(self, filepath):
 
-        # We skip 3 rows of metadata.
-        samples = np.loadtxt(filepath, delimiter=',', dtype='float', skiprows=3)
+        # We skip 3 rows of metadata and retrieve it as a string because of the sampleid.
+        samples = np.loadtxt(filepath, delimiter=',', dtype=np.str, skiprows=3)
 
         # Only the first column and as an integer
-        sampleids = np.array(samples[:,0:1]).astype(int)
+        sampleids = np.array(samples[:,0:1])
 
         # All columns but the first one.
-        x = np.array(samples[:,1:])
+        x = np.array(samples[:,1:]).astype(float)
 
         return [sampleids, x]
 

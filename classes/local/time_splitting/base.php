@@ -204,7 +204,7 @@ abstract class base {
             } else {
                 // Add this sampleid, it will be used to identify the prediction that comes back from
                 // the predictions processor.
-                array_unshift($dataset[$uniquesampleid], $analysersampleid);
+                array_unshift($dataset[$uniquesampleid], $uniquesampleid);
             }
         }
     }
@@ -267,11 +267,11 @@ abstract class base {
         return $this->ranges;
     }
 
-    protected function append_rangeindex($sampleid, $rangeindex) {
+    public function append_rangeindex($sampleid, $rangeindex) {
         return $sampleid . '-' . $rangeindex;
     }
 
-    protected function infer_sample_info($sampleid) {
+    public function infer_sample_info($sampleid) {
         return explode('-', $sampleid);
     }
 

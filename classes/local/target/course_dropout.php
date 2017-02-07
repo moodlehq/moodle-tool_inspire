@@ -60,16 +60,11 @@ class course_dropout extends binary {
         return '\\tool_inspire\\local\\analyser\\enrolments';
     }
 
-    public function is_valid_analysable(\tool_inspire\analysable $course) {
+    public function is_valid_analysable(\tool_inspire\analysable $course, $fortraining = true) {
         global $DB;
 
         if (!$course->was_started()) {
             return 'Course is not yet started';
-        }
-
-        // Ongoing courses data can not be used to train.
-        if (!$course->is_finished()) {
-            return 'Course is not yet finished';
         }
 
         // Courses that last more than 1 year may not have a regular usage.
@@ -79,6 +74,11 @@ class course_dropout extends binary {
 
         if (!$students = $course->get_students()) {
             return 'No students';
+        }
+
+        // Ongoing courses data can not be used to train.
+        if (!$course->is_finished() && $fortraining) {
+            return 'Course is not yet finished';
         }
 
         // Not a valid target if there are not enough course accesses.
@@ -174,6 +174,11 @@ class course_dropout extends binary {
             }
         }
 
+        // At this stage we know that the course grade item exists.
+        if (empty($this->coursegradeitem)) {
+            $this->coursegradeitem = \grade_item::fetch(array('itemtype' => 'course', 'courseid' => $course->get_id()));
+        }
+
         // Falling back to the course grades.
         $params = array('userid' => $user->id, 'itemid' => $this->coursegradeitem->id);
         $grade = \grade_grade::fetch($params);
@@ -200,9 +205,5 @@ class course_dropout extends binary {
         }
 
         return 1;
-    }
-
-    public function callback($sampleid, $prediction, $predictionscore) {
-        var_dump('AAAAAAAAAAAAAAA: ' . $sampleid . '-' . $prediction . '-' . $predictionscore);
     }
 }

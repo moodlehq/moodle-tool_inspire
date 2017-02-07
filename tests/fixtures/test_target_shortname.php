@@ -2,19 +2,29 @@
 
 class test_target_shortname extends \tool_inspire\local\target\binary {
 
+    protected $predictions = array();
+
     public function get_analyser_class() {
         return '\tool_inspire\local\analyser\courses';
     }
 
     /**
-     * High value as we want to discard random stuff and we don't want any false positives.
+     * We don't want to discard results.
      * @return float
      */
     protected function min_prediction_score() {
-        return 0.8;
+        return null;
     }
 
-    public function is_valid_analysable(\tool_inspire\analysable $analysable) {
+    /**
+     * We don't want to discard results.
+     * @return array
+     */
+    protected function ignored_predicted_classes() {
+        return array();
+    }
+
+    public function is_valid_analysable(\tool_inspire\analysable $analysable, $fortraining = true) {
         // This is testing, let's make things easy.
         return true;
     }
@@ -28,6 +38,7 @@ class test_target_shortname extends \tool_inspire\local\target\binary {
             // We skip not-visible courses as a way to emulate the training data / prediction data difference.
             // In normal circumstances targets will return null when they receive a sample that can not be
             // processed, that same sample may be used for prediction.
+            // We can not do this in is_valid_analysable because the analysable there is the site not the course.
             return null;
         }
 
@@ -37,9 +48,5 @@ class test_target_shortname extends \tool_inspire\local\target\binary {
         } else if ($firstchar === 'b') {
             return 0;
         }
-    }
-
-    public function callback($sampleid, $prediction, $predictionscore) {
-        return 'yeah-' . $sampleid . '-' . $prediction . '-' . $predictionscore;
     }
 }

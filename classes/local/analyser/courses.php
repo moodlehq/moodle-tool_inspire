@@ -37,6 +37,10 @@ class courses extends sitewide {
         return 'course';
     }
 
+    public function get_sample_context($sampleid) {
+        return \context_system::instance();
+    }
+
     protected function get_samples(\tool_inspire\analysable $site) {
         global $DB;
 

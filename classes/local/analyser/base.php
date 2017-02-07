@@ -66,6 +66,8 @@ abstract class base {
 
     abstract protected function get_samples_origin();
 
+    abstract public function get_sample_context($sampleid);
+
     protected function provided_samples_data() {
         return array($this->get_samples_origin());
     }
@@ -130,7 +132,7 @@ abstract class base {
 
         // We need to check that the analysable is valid for the target even if we don't include targets
         // as we still need to discard invalid analysables for the target.
-        $result = $target->is_valid_analysable($analysable);
+        $result = $target->is_valid_analysable($analysable, $includetarget);
         if ($result !== true) {
             return [
                 \tool_inspire\model::ANALYSABLE_STATUS_INVALID_FOR_TARGET,

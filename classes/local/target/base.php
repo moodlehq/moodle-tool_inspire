@@ -58,7 +58,7 @@ abstract class base extends \tool_inspire\calculable {
      * @param \tool_inspire\analysable $analysable
      * @return true|string
      */
-    abstract public function is_valid_analysable(\tool_inspire\analysable $analysable);
+    abstract public function is_valid_analysable(\tool_inspire\analysable $analysable, $fortraining = true);
 
     /**
      * Calculates this target for the provided samples.
@@ -79,7 +79,59 @@ abstract class base extends \tool_inspire\calculable {
      * @param float $predictionscore
      * @return void
      */
-    abstract public function callback($sampleid, $prediction, $predictionscore);
+    public function prediction_callback($modelid, $sampleid, $samplecontext, $prediction, $predictionscore) {
+        return;
+    }
+
+    public function generate_insights($modelid, $samplecontexts) {
+        global $CFG;
+
+        foreach ($samplecontexts as $context) {
+
+            $insightinfo = new \stdClass();
+            $insightinfo->insightname = $this->get_name();
+            $insightinfo->contextname = $context->get_context_name();
+            $subject = get_string('insightincontext', 'tool_inspire', $insightinfo);
+
+            if ($context->contextlevel >= CONTEXT_COURSE) {
+                // Course level notification.
+                $users = get_enrolled_users($context, 'tool/inspire:listinsights');
+            } else {
+                // TODO Category level and their managers should also get notifications.
+                $users = get_admins();
+            }
+
+            if (!$course = $context->get_course_context(false)) {
+                $course = get_site();
+            }
+
+            foreach ($users as $user) {
+
+                $message = new \core\message\message();
+                $message->component = 'tool_inspire';
+                $message->name = 'insights';
+
+                $message->userfrom = get_admin();
+                $message->userto = $user;
+
+                $insighturl = new \moodle_url('/admin/tool/inspire/insight.php?modelid=' . $modelid . '&contextid=' . $context->id);
+                $message->subject = $subject;
+                // Same than the subject.
+                $message->contexturlname = $message->subject;
+                $message->courseid = $course->id;
+
+                $message->fullmessage = get_string('insightinfo', 'tool_inspire', $insighturl->out());
+                $message->fullmessageformat = FORMAT_PLAIN;
+                $message->fullmessagehtml = get_string('insightinfo', 'tool_inspire', $insighturl->out());
+                $message->smallmessage = get_string('insightinfo', 'tool_inspire', $insighturl->out());
+                $message->contexturl = $insighturl->out(false);
+
+
+                message_send($message);
+            }
+        }
+
+    }
 
     public static function instance() {
         return new static();
@@ -103,7 +155,7 @@ abstract class base extends \tool_inspire\calculable {
      * @param mixed $class
      * @return bool
      */
-    public function triggers_callback($predictedclass, $predictionscore) {
+    public function triggers_callback($predictedvalue, $predictionscore) {
 
         $minscore = floatval($this->min_prediction_score());
         if ($minscore < 0) {
@@ -112,13 +164,13 @@ abstract class base extends \tool_inspire\calculable {
             debugging(get_class($this) . ' minimum prediction score is above 1, please update it to a value between 0 and 1.');
         }
 
-        // Targets may be interested in not having a min score.
-        if (!empty($minscore) && floatval($predictionscore)) {
+        // We need to consider that targets may not have a min score.
+        if (!empty($minscore) && floatval($predictionscore) < $minscore) {
             return false;
         }
 
         if (!$this->is_linear()) {
-            if (in_array($predictedclass, $this->ignored_predicted_classes())) {
+            if (in_array($predictedvalue, $this->ignored_predicted_classes())) {
                 return false;
             }
         }
