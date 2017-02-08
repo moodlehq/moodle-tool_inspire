@@ -41,14 +41,6 @@ class site implements \tool_inspire\analysable {
         return \context_system::instance();
     }
 
-    public function get_metadata() {
-        // TODO We should be very careful with what we include here this is a WIP example.
-        return [
-            'var1' => 'value1',
-            'var2' => 'value2',
-        ];
-    }
-
     public function get_start() {
         global $DB;
         $start = $DB->get_record_sql("SELECT MIN(timecreated) AS time FROM {logstore_standard_log}");

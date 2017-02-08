@@ -125,10 +125,7 @@ abstract class base {
             return false;
         }
 
-        // Empty dataset, passed by reference below.
-        $dataset = [];
-
-        $this->calculate_indicators($dataset, $sampleids, $samplesorigin, $indicators, $ranges);
+        $dataset = $this->calculate_indicators($sampleids, $samplesorigin, $indicators, $ranges);
 
         // Now that we have the indicators in place we can add the time range indicators (and target if provided) to each of them.
         $this->fill_dataset($dataset, $calculatedtarget);
@@ -141,9 +138,11 @@ abstract class base {
     /**
      * Calculates indicators for all course students.
      *
-     * @return void
+     * @return array
      */
-    protected function calculate_indicators(&$dataset, $sampleids, $samplesorigin, $indicators, $ranges) {
+    protected function calculate_indicators($sampleids, $samplesorigin, $indicators, $ranges) {
+
+        $dataset = array();
 
         // Fill the dataset samples with indicators data.
         foreach ($indicators as $indicator) {
@@ -169,6 +168,8 @@ abstract class base {
                 }
             }
         }
+
+        return $dataset;
     }
 
     /**
@@ -237,8 +238,6 @@ abstract class base {
             $metadata['targetclasses'] = json_encode($target::get_classes());
             $metadata['targettype'] = ($target->is_linear()) ? 'linear' : 'discrete';
         }
-
-        $metadata = array_merge($metadata, $this->analysable->get_metadata());
 
         // The first 2 samples will be used to store metadata about the dataset.
         $metadatacolumns = [];

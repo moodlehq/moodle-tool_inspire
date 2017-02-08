@@ -102,15 +102,6 @@ class course implements \tool_inspire\analysable {
         return \context_course::instance($this->course->id);
     }
 
-    public function get_metadata() {
-        // TODO We should be very careful with what we include here this is a WIP example.
-        return [
-            'courseid' => $this->course->id,
-            'courseshortname' => $this->course->shortname,
-        ];
-    }
-
-
     /**
      * Get the course start timestamp.
      *
