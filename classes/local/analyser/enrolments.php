@@ -48,10 +48,69 @@ class enrolments extends by_course {
         return \context_course::instance($this->get_sample_course($sampleid));
     }
 
+    protected function provided_samples_data() {
+        return array('user_enrolments', 'course', 'user');
+    }
+
+    protected function get_all_samples(\tool_inspire\analysable $course) {
+        global $DB;
+
+        // All course enrolments.
+        $instances = enrol_get_instances($course->get_id(), true);
+        $enrolids = array_keys($instances);
+        list($sql, $params) = $DB->get_in_or_equal($enrolids, SQL_PARAMS_NAMED);
+        $enrolments = $DB->get_records_select('user_enrolments', "enrolid $sql", $params);
+
+        $samplesdata = array();
+        foreach ($enrolments as $sampleid => $enrolment) {
+            // TODO Confirm that this is not a in-memory object copy but just a reference to the same object.
+            $samplesdata[$sampleid]['course'] = $course->get_course_data();
+
+            // TODO Use $course for this.
+            $samplesdata[$sampleid]['user'] = $DB->get_record('user', array('id' => $enrolment->userid));
+
+            // Fill the cache.
+            $this->samplecourses[$sampleid] = $course->get_id();
+        }
+
+        $enrolids = array_keys($enrolments);
+        return array(array_combine($enrolids, $enrolids), $samplesdata);
+    }
+
+    public function get_samples($sampleids) {
+        global $DB;
+
+        // All course enrolments.
+        list($sql, $params) = $DB->get_in_or_equal($sampleids, SQL_PARAMS_NAMED);
+        $enrolments = $DB->get_records_select('user_enrolments', "id $sql", $params);
+
+        $samplesdata = array();
+        foreach ($enrolments as $sampleid => $enrolment) {
+
+            // Enrolment samples are grouped by the course they belong to, so all $sampleids belong to the same
+            // course, $courseid and $coursemodinfo will only query the DB once and cache the course data in memory.
+            $courseid = $this->get_sample_course($sampleid);
+            $coursemodinfo = get_fast_modinfo($courseid);
+
+            // TODO Confirm that this is not a in-memory object copy but just a reference to the same object.
+            $samplesdata[$sampleid]['course'] = $coursemodinfo->get_course();
+
+            // TODO Use $course for this.
+            $samplesdata[$sampleid]['user'] = $DB->get_record('user', array('id' => $enrolment->userid));
+
+            // Fill the cache.
+            $this->samplecourses[$sampleid] = $coursemodinfo->get_course()->id;
+        }
+
+        $enrolids = array_keys($enrolments);
+        return array(array_combine($enrolids, $enrolids), $samplesdata);
+    }
+
     protected function get_sample_course($sampleid) {
         global $DB;
 
         if (empty($this->samplecourses[$sampleid])) {
+            // TODO New function in enrollib.php
             $sql = "SELECT e.courseid
                       FROM {enrol} e
                       JOIN {user_enrolments} ue ON ue.enrolid = e.id
@@ -63,32 +122,4 @@ class enrolments extends by_course {
         return $this->samplecourses[$sampleid];
     }
 
-    protected function provided_samples_data() {
-        return array('user_enrolments', 'course', 'user');
-    }
-
-    protected function get_samples(\tool_inspire\analysable $course) {
-        global $DB;
-
-        // All course enrolments.
-        $instances = enrol_get_instances($course->get_id(), true);
-        $enrolids = array_keys($instances);
-        list($sql, $params) = $DB->get_in_or_equal($enrolids, SQL_PARAMS_NAMED);
-        $enrolments = $DB->get_records_select('user_enrolments', "enrolid $sql", $params);
-        $students = $course->get_students();
-
-        $samplesdata = array();
-        foreach ($enrolments as $sampleid => $enrolment) {
-            $samplesdata['course'][$sampleid] = $course->get_course_data();
-
-            // TODO Use $course for this.
-            $samplesdata['user'][$sampleid] = $DB->get_record('user', array('id' => $enrolment->userid));
-
-            // Fill the cache.
-            $this->samplecourses[$sampleid] = $course->get_id();
-        }
-
-        $enrolids = array_keys($enrolments);
-        return array(array_combine($enrolids, $enrolids), $samplesdata);
-    }
 }

@@ -62,7 +62,9 @@ abstract class base {
      * @param \tool_inspire\analysable $analysable
      * @return array
      */
-    abstract protected function get_samples(\tool_inspire\analysable $analysable);
+    abstract protected function get_all_samples(\tool_inspire\analysable $analysable);
+
+    abstract public function get_samples($sampleids);
 
     abstract protected function get_samples_origin();
 
@@ -191,7 +193,7 @@ abstract class base {
 
         // What is a sample is defined by the analyser, it can be an enrolment, a course, a user, a question
         // attempt... it is on what we will base indicators calculations.
-        list($sampleids, $samplesdata) = $this->get_samples($analysable);
+        list($sampleids, $samplesdata) = $this->get_all_samples($analysable);
 
         if (count($sampleids) === 0) {
             $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;

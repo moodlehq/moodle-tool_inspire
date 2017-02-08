@@ -28,6 +28,7 @@ defined('MOODLE_INTERNAL') || die();
 
 use plugin_renderer_base;
 use templatable;
+use renderable;
 
 /**
  * Renderer class.
@@ -47,5 +48,19 @@ class renderer extends plugin_renderer_base {
     public function render_models_list(templatable $renderable) {
         $data = $renderable->export_for_template($this);
         return parent::render_from_template('tool_inspire/models_list', $data);
+    }
+
+    public function render_predictions_list(renderable $renderable) {
+
+        $output = '';
+
+        $data = $renderable->export_for_template($this);
+
+        // No predictions_list.mustache because we can't have dynamic partial names.
+        foreach ($data->predictions as $sampleid => $prediction) {
+            $output .= parent::render_from_template($data->templatename, $prediction);
+        }
+
+        return $output;
     }
 }

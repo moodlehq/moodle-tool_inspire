@@ -45,6 +45,10 @@ class course_dropout extends binary {
         return get_string('target:coursedropout', 'tool_inspire');
     }
 
+    public function prediction_template() {
+        return 'tool_inspire/dropout_student';
+    }
+
     /**
      * Returns the predicted classes that will be ignored.
      *

@@ -72,6 +72,25 @@ abstract class base extends \tool_inspire\calculable {
     abstract protected function calculate_sample($sampleid, \tool_inspire\analysable $analysable);
 
     /**
+     * Returns the template used to render the sample.
+     *
+     * @return string
+     */
+    abstract public function prediction_template();
+
+    /**
+     * A chance for targets to add extra stuff before showing self::prediction_template template.
+     *
+     * The default implementation does nothing, in most of the cases analysers should already return
+     * enough info about the samples to display them.
+     *
+     * @return stdClass[]
+     */
+    public function add_display_extra_sample_data($predictions) {
+        return $predictions;
+    }
+
+    /**
      * Callback to execute once a prediction has been returned from the predictions processor.
      *
      * @param int $sampleid
@@ -91,7 +110,7 @@ abstract class base extends \tool_inspire\calculable {
             $insightinfo = new \stdClass();
             $insightinfo->insightname = $this->get_name();
             $insightinfo->contextname = $context->get_context_name();
-            $subject = get_string('insightincontext', 'tool_inspire', $insightinfo);
+            $subject = get_string('insightmessagesubject', 'tool_inspire', $insightinfo);
 
             if ($context->contextlevel >= CONTEXT_COURSE) {
                 // Course level notification.
@@ -101,8 +120,8 @@ abstract class base extends \tool_inspire\calculable {
                 $users = get_admins();
             }
 
-            if (!$course = $context->get_course_context(false)) {
-                $course = get_site();
+            if (!$coursecontext = $context->get_course_context(false)) {
+                $coursecontext = \context_course::instance(SITEID);
             }
 
             foreach ($users as $user) {
@@ -114,16 +133,16 @@ abstract class base extends \tool_inspire\calculable {
                 $message->userfrom = get_admin();
                 $message->userto = $user;
 
-                $insighturl = new \moodle_url('/admin/tool/inspire/insight.php?modelid=' . $modelid . '&contextid=' . $context->id);
+                $insighturl = new \moodle_url('/admin/tool/inspire/insights.php?modelid=' . $modelid . '&contextid=' . $context->id);
                 $message->subject = $subject;
                 // Same than the subject.
                 $message->contexturlname = $message->subject;
-                $message->courseid = $course->id;
+                $message->courseid = $coursecontext->instanceid;
 
-                $message->fullmessage = get_string('insightinfo', 'tool_inspire', $insighturl->out());
+                $message->fullmessage = get_string('insightinfomessage', 'tool_inspire', $insighturl->out());
                 $message->fullmessageformat = FORMAT_PLAIN;
-                $message->fullmessagehtml = get_string('insightinfo', 'tool_inspire', $insighturl->out());
-                $message->smallmessage = get_string('insightinfo', 'tool_inspire', $insighturl->out());
+                $message->fullmessagehtml = get_string('insightinfomessage', 'tool_inspire', $insighturl->out());
+                $message->smallmessage = get_string('insightinfomessage', 'tool_inspire', $insighturl->out());
                 $message->contexturl = $insighturl->out(false);
 
 

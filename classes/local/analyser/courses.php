@@ -41,7 +41,7 @@ class courses extends sitewide {
         return \context_system::instance();
     }
 
-    protected function get_samples(\tool_inspire\analysable $site) {
+    protected function get_all_samples(\tool_inspire\analysable $site) {
         global $DB;
 
         // Getting courses from DB instead of from the site as these samples
@@ -52,7 +52,29 @@ class courses extends sitewide {
         $courseids = array_keys($courses);
         $sampleids = array_combine($courseids, $courseids);
 
+        $courses = array_map(function($course) {
+            return array('course' => $course);
+        }, $courses);
+
         // No related data attached.
-        return array($sampleids, array('course' => $courses));
+        return array($sampleids, $courses);
     }
+
+    public function get_samples($sampleids) {
+        global $DB;
+
+        list($sql, $params) = $DB->get_in_or_equal($sampleids, SQL_PARAMS_NAMED);
+        $courses = $DB->get_records_select('course', "id $sql", $params);
+
+        $courseids = array_keys($courses);
+        $sampleids = array_combine($courseids, $courseids);
+
+        $courses = array_map(function($course) {
+            return array('course' => $course);
+        }, $courses);
+
+        // No related data attached.
+        return array($sampleids, $courses);
+    }
+
 }

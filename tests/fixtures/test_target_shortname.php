@@ -8,6 +8,10 @@ class test_target_shortname extends \tool_inspire\local\target\binary {
         return '\tool_inspire\local\analyser\courses';
     }
 
+    public function prediction_template() {
+        return 'tool_inspire/unexisting';
+    }
+
     /**
      * We don't want to discard results.
      * @return float

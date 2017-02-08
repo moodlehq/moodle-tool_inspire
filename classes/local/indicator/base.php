@@ -128,12 +128,12 @@ abstract class base extends \tool_inspire\calculable {
     }
 
     protected function retrieve($tablename, $sampleid) {
-        if (empty($this->sampledata[$tablename]) || empty($this->sampledata[$tablename][$sampleid])) {
+        if (empty($this->sampledata[$sampleid]) || empty($this->sampledata[$sampleid][$tablename])) {
             // We don't throw an exception because indicators should be able to
             // try multiple tables until they find something they can use.
             return false;
         }
-        return $this->sampledata[$tablename][$sampleid];
+        return $this->sampledata[$sampleid][$tablename];
     }
 
     protected function get_middle_value() {

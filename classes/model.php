@@ -69,7 +69,18 @@ class model {
      */
     protected $uniqueid = null;
 
+    /**
+     * __construct
+     *
+     * @param int|stdClass $model
+     * @return void
+     */
     public function __construct($model) {
+        global $DB;
+
+        if (is_scalar($model)) {
+            $model = $DB->get_record('tool_inspire_models', array('id' => $model));
+        }
         $this->model = $model;
     }
 
@@ -385,6 +396,62 @@ class model {
 
         $this->model->trained = 1;
         $DB->update_record('tool_inspire_models', $this->model);
+    }
+
+    public function get_predictions($context) {
+        global $DB;
+
+        // Filters out previous predictions keeping only the last time range one.
+        $sql = "SELECT tip.*
+                  FROM mdl_tool_inspire_predictions tip
+                  JOIN (
+                    SELECT sampleid, max(rangeindex) AS rangeindex
+                      FROM mdl_tool_inspire_predictions
+                     WHERE modelid = ? and contextid = ?
+                    GROUP BY sampleid
+                  ) tipsub
+                  ON tip.sampleid = tipsub.sampleid AND tip.rangeindex = tipsub.rangeindex
+                 WHERE tip.modelid = ? and tip.contextid = ?";
+        $params = array($this->model->id, $context->id, $this->model->id, $context->id);
+        if (!$predictions = $DB->get_records_sql($sql, $params)) {
+            return false;
+        }
+        //$params = array('modelid' => $this->model->id, 'contextid' => $context->id);
+        //if (!$predictions = $DB->get_records('tool_inspire_predictions', $params, 'sampleid, rangeindex DESC')) {
+            //return false;
+        //}
+
+        // Get predicted samples' ids.
+        $sampleids = array_map(function($prediction) {
+            return $prediction->sampleid;
+        }, $predictions);
+
+        list($unused, $samplesdata) = $this->get_analyser()->get_samples($sampleids);
+
+        // Add samples data as part of each prediction.
+        foreach ($predictions as $predictionid => $prediction) {
+
+            $sampleid = $prediction->sampleid;
+
+            // Filter out predictions which samples are not available anymore.
+            if (empty($samplesdata[$sampleid])) {
+                unset($predictions[$predictionid]);
+                continue;
+            }
+
+            foreach ($samplesdata[$sampleid] as $key => $data) {
+                if (!empty($predictions[$sampleid]->{$key})) {
+                    // Please no, this would be horrible, would involve a core table named like one of
+                    // the tool_inspire_predictions' fields, which is really unlikely (and ugly).
+                    throw new \coding_exception('\O/ Samples data ' . $key . ' have the same name than a '.
+                        'tool_inspire_predictions\' field which is really unfortunate, please use another key for ' .
+                        'the sample data');
+                }
+                $predictions[$predictionid]->{$key} = $data;
+            }
+        }
+
+        return $predictions;
     }
 
     protected function get_output_dir($subdir = false) {

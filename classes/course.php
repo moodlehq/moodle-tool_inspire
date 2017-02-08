@@ -61,14 +61,18 @@ class course implements \tool_inspire\analysable {
      *
      * Let's try to keep this computationally inexpensive.
      *
-     * @param $courseid Course id
+     * @param int|stdClass $course Course id
      * @param array $studentroles
      * @param array $teacherroles
      * @return void
      */
-    public function __construct($courseid) {
+    public function __construct($course) {
 
-        $this->course = get_course($courseid);
+        if (is_scalar($course)) {
+            $this->course = get_course($course);
+        } else {
+            $this->course = $course;
+        }
 
         $this->coursecontext = \context_course::instance($this->course->id);
 
