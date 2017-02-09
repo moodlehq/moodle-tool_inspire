@@ -39,7 +39,7 @@ class any_write_action extends binary {
         return get_string('indicator:anywrite', 'tool_inspire');
     }
 
-    public function calculate_sample($sampleid, $sampleorigin, \tool_inspire\analysable $analysable, $starttime = false, $endtime = false) {
+    public function calculate_sample($sampleid, $sampleorigin, $starttime = false, $endtime = false) {
         global $DB;
 
         $select = '';
@@ -51,7 +51,7 @@ class any_write_action extends binary {
         }
 
         // Filter by context to use the db table index.
-        $context = $analysable->get_context();
+        $context = $this->retrieve('context', $sampleid);
         $select .= "contextlevel = :contextlevel AND contextinstanceid = :contextinstanceid AND " .
             "(crud = 'c' OR crud = 'u') AND timecreated > :starttime AND timecreated <= :endtime";
         $params = $params + array('contextlevel' => $context->contextlevel,

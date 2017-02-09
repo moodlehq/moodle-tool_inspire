@@ -360,11 +360,11 @@ class model {
     protected function save_prediction($sampleid, $rangeindex, $prediction, $predictionscore) {
         global $DB;
 
-        $samplecontext = $this->get_analyser()->get_sample_context($sampleid);
+        $context = $this->get_analyser()->sample_access_context($sampleid);
 
         $record = new \stdClass();
         $record->modelid = $this->model->id;
-        $record->contextid = $samplecontext->id;
+        $record->contextid = $context->id;
         $record->sampleid = $sampleid;
         $record->rangeindex = $rangeindex;
         $record->prediction = $prediction;

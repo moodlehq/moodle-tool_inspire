@@ -60,7 +60,7 @@ abstract class base {
      * This function returns the list of samples that can be calculated.
      *
      * @param \tool_inspire\analysable $analysable
-     * @return array
+     * @return array array[0] = int[], array[1] = array
      */
     abstract protected function get_all_samples(\tool_inspire\analysable $analysable);
 
@@ -68,7 +68,13 @@ abstract class base {
 
     abstract protected function get_samples_origin();
 
-    abstract public function get_sample_context($sampleid);
+    /**
+     * tool/inspire:listinsights will be required at this level to access the sample predictions.
+     *
+     * @param int $sampleid
+     * @return \context
+     */
+    abstract public function sample_access_context($sampleid);
 
     protected function provided_samples_data() {
         return array($this->get_samples_origin());

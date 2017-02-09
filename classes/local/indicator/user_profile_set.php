@@ -44,7 +44,7 @@ class user_profile_set extends linear {
         return 'user';
     }
 
-    public function calculate_sample($sampleid, $sampleorigin, \tool_inspire\analysable $analysable, $starttime = false, $endtime = false) {
+    public function calculate_sample($sampleid, $sampleorigin, $starttime = false, $endtime = false) {
 
         $user = $this->retrieve('user', $sampleid);
 

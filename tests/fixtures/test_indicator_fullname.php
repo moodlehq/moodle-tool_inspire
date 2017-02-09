@@ -10,7 +10,7 @@ class test_indicator_fullname extends \tool_inspire\local\indicator\linear {
         return false;
     }
 
-    protected function calculate_sample($sampleid, $samplesorigin, \tool_inspire\analysable $analysable, $starttime, $endtime) {
+    protected function calculate_sample($sampleid, $samplesorigin, $starttime, $endtime) {
         global $DB;
 
         $course = $this->retrieve('course', $sampleid);

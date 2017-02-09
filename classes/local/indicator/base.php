@@ -59,12 +59,11 @@ abstract class base extends \tool_inspire\calculable {
      *
      * @param int $sampleid
      * @param string $sampleorigin
-     * @param \tool_inspire\analysable $analysable
      * @param integer $starttime Limit the calculation to this timestart
      * @param integer $endtime Limit the calculation to this timeend
      * @return float|null
      */
-    abstract protected function calculate_sample($sampleid, $sampleorigin, \tool_inspire\analysable $analysable, $starttime, $endtime);
+    abstract protected function calculate_sample($sampleid, $sampleorigin, $starttime, $endtime);
 
     /**
      * @return null|string
@@ -92,17 +91,16 @@ abstract class base extends \tool_inspire\calculable {
      *
      * @param array $sampleids
      * @param string $samplesorigin
-     * @param \tool_inspire\analysable $analysable
      * @param integer $starttime Limit the calculation to this timestart
      * @param integer $endtime Limit the calculation to this timeend
      * @return array The format to follow is [userid] = int|float[]
      */
-    public function calculate($sampleids, $samplesorigin, \tool_inspire\analysable $analysable, $starttime = false, $endtime = false) {
+    public function calculate($sampleids, $samplesorigin, $starttime = false, $endtime = false) {
 
         $calculations = array();
         foreach ($sampleids as $sampleid => $unusedsampleid) {
 
-            $calculatedvalue = $this->calculate_sample($sampleid, $samplesorigin, $analysable, $starttime, $endtime);
+            $calculatedvalue = $this->calculate_sample($sampleid, $samplesorigin, $starttime, $endtime);
 
             if (is_null($calculatedvalue)) {
                 // Converted to 0 = unknown.

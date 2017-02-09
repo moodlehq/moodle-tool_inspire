@@ -109,7 +109,7 @@ abstract class base {
         $calculatedtarget = false;
         if ($target) {
             // We first calculate the target because analysable data may still be invalid, we need to stop if it is not.
-            $calculatedtarget = $target->calculate($sampleids, $samplesorigin, $this->analysable);
+            $calculatedtarget = $target->calculate($sampleids, $this->analysable);
 
             // We remove samples we can not calculate their target.
             $sampleids = array_filter($sampleids, function($sampleid) use ($calculatedtarget) {
@@ -151,7 +151,7 @@ abstract class base {
             foreach ($ranges as $rangeindex => $range) {
 
                 // Calculate the indicator for each sample in this time range.
-                $calculated = $indicator->calculate($sampleids, $samplesorigin, $this->analysable, $range['start'], $range['end']);
+                $calculated = $indicator->calculate($sampleids, $samplesorigin, $range['start'], $range['end']);
 
                 // Copy the calculated data to the dataset.
                 foreach ($calculated as $analysersampleid => $calculatedvalues) {
@@ -228,7 +228,6 @@ abstract class base {
      */
     protected function add_metadata(&$dataset, $indicators, $target = false) {
 
-        // Metadata is mainly provided by the analysable.
         $metadata = array(
             'timesplitting' => $this->get_codename(),
             // If no target the first column is the sampleid, if target the last column is the target.

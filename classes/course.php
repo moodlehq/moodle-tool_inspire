@@ -99,7 +99,10 @@ class course implements \tool_inspire\analysable {
     }
 
     public function get_context() {
-        return \context_course::instance($this->course->id);
+        if ($this->coursecontext === null) {
+            $this->coursecontext = \context_course::instance($this->course->id);
+        }
+        return $this->coursecontext;
     }
 
     /**

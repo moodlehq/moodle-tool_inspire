@@ -44,7 +44,7 @@ class enrolments extends by_course {
         return 'user_enrolments';
     }
 
-    public function get_sample_context($sampleid) {
+    public function sample_access_context($sampleid) {
         return \context_course::instance($this->get_sample_course($sampleid));
     }
 
@@ -65,6 +65,7 @@ class enrolments extends by_course {
         foreach ($enrolments as $sampleid => $enrolment) {
             // TODO Confirm that this is not a in-memory object copy but just a reference to the same object.
             $samplesdata[$sampleid]['course'] = $course->get_course_data();
+            $samplesdata[$sampleid]['context'] = $course->get_context();
 
             // TODO Use $course for this.
             $samplesdata[$sampleid]['user'] = $DB->get_record('user', array('id' => $enrolment->userid));
@@ -91,9 +92,11 @@ class enrolments extends by_course {
             // course, $courseid and $coursemodinfo will only query the DB once and cache the course data in memory.
             $courseid = $this->get_sample_course($sampleid);
             $coursemodinfo = get_fast_modinfo($courseid);
+            $coursecontext = \context_course::instance($courseid);
 
             // TODO Confirm that this is not a in-memory object copy but just a reference to the same object.
             $samplesdata[$sampleid]['course'] = $coursemodinfo->get_course();
+            $samplesdata[$sampleid]['context'] = $coursecontext;
 
             // TODO Use $course for this.
             $samplesdata[$sampleid]['user'] = $DB->get_record('user', array('id' => $enrolment->userid));

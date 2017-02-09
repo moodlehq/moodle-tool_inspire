@@ -205,13 +205,12 @@ abstract class base extends \tool_inspire\calculable {
      * Rows with null values will be skipped as invalid by time splitting methods.
      *
      * @param array $sampleids
-     * @param string $samplesorigin
      * @param \tool_inspire\analysable $analysable
      * @param integer $starttime startime is not necessary when calculating targets
      * @param integer $endtime endtime is not necessary when calculating targets
      * @return array The format to follow is [userid] = scalar|null
      */
-    public function calculate($sampleids, $samplesorigin, \tool_inspire\analysable $analysable, $starttime = false, $endtime = false) {
+    public function calculate($sampleids, \tool_inspire\analysable $analysable) {
 
         $calculations = [];
         foreach ($sampleids as $sampleid => $unusedsampleid) {

@@ -37,7 +37,7 @@ class courses extends sitewide {
         return 'course';
     }
 
-    public function get_sample_context($sampleid) {
+    public function sample_access_context($sampleid) {
         return \context_system::instance();
     }
 
@@ -53,7 +53,7 @@ class courses extends sitewide {
         $sampleids = array_combine($courseids, $courseids);
 
         $courses = array_map(function($course) {
-            return array('course' => $course);
+            return array('course' => $course, 'context' => \context_course::instance($course->id));
         }, $courses);
 
         // No related data attached.
@@ -70,7 +70,7 @@ class courses extends sitewide {
         $sampleids = array_combine($courseids, $courseids);
 
         $courses = array_map(function($course) {
-            return array('course' => $course);
+            return array('course' => $course, 'context' => \context_course::instance($course->id));
         }, $courses);
 
         // No related data attached.

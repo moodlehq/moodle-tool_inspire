@@ -36,18 +36,6 @@ defined('MOODLE_INTERNAL') || die();
 abstract class calculable {
 
     /**
-     * Calculation for all provided samples.
-     *
-     * @param int[] $samples
-     * @param string $samplesorigin
-     * @param \tool_inspire\analysable $analysable
-     * @param int $starttime
-     * @param int $endtime
-     * @return int[]|float[]
-     */
-    abstract public function calculate($samples, $samplesorigin, \tool_inspire\analysable $analysable, $starttime = false, $endtime = false);
-
-    /**
      * Returns codename for the indicator.
      *
      * Used as column identificator.

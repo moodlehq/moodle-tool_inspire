@@ -43,17 +43,18 @@ class any_access_before_start extends binary {
         return get_string('target:accessesbeforestart', 'tool_inspire');
     }
 
-    public function calculate_sample($sampleid, $samplesorigin, \tool_inspire\analysable $analysable, $starttime = false, $endtime = false) {
+    public function calculate_sample($sampleid, $samplesorigin, $starttime = false, $endtime = false) {
         global $DB;
 
         $user = $this->retrieve('user', $sampleid);
+        $course = new \tool_analysable\course($this->retrieve('course', $sampleid));
 
         // Filter by context to use the db table index.
-        $context = $analysable->get_context();
+        $context = $this->retrieve('context', $sampleid);
         $select = "userid = :userid AND contextlevel = :contextlevel AND contextinstanceid = :contextinstanceid AND " .
             "timecreated < :start";
         $params = array('userid' => $user->id, 'contextlevel' => $context->contextlevel,
-            'contextinstanceid' => $context->instanceid, 'start' => $analysable->get_start());
+            'contextinstanceid' => $context->instanceid, 'start' => $course->get_start());
         return $DB->record_exists_select('logstore_standard_log', $select, $params) ? self::get_max_value() : self::get_min_value();
     }
 }
