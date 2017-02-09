@@ -123,6 +123,8 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
         $this->assertEquals($npredictedranges, count($trainedsamples));
         $this->assertEquals(1, $DB->count_records('tool_inspire_used_files',
             array('modelid' => $model->get_id(), 'action' => 'predicted')));
+        // 2 predictions for each range.
+        $this->assertEquals(2 * $npredictedranges, $DB->count_records('tool_inspire_predictions', array('modelid' => $model->get_id())));
 
         // No new generated files nor records as there are no new courses available.
         $model->predict();

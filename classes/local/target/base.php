@@ -56,6 +56,7 @@ abstract class base extends \tool_inspire\calculable {
      * e.g. Imagine that your analysable don't have students and you need them.
      *
      * @param \tool_inspire\analysable $analysable
+     * @param bool $fortraining
      * @return true|string
      */
     abstract public function is_valid_analysable(\tool_inspire\analysable $analysable, $fortraining = true);
@@ -86,7 +87,7 @@ abstract class base extends \tool_inspire\calculable {
      *
      * @return stdClass[]
      */
-    public function add_display_extra_sample_data($predictions) {
+    public function add_extra_data_for_display($predictions) {
         return $predictions;
     }
 

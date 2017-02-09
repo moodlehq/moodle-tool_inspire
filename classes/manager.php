@@ -190,6 +190,9 @@ class manager {
             return self::$allindicators;
         }
 
+        // Useful to ensure there are no duplicate codenames, we need them to be unique.
+        $codenames = array();
+
         self::$allindicators = [];
 
         $classes = \core_component::get_component_classes_in_namespace('tool_inspire', 'local\\indicator');
@@ -197,6 +200,14 @@ class manager {
             $instance = self::get_indicator($fullclassname);
             if ($instance) {
                 self::$allindicators[$fullclassname] = $instance;
+
+                // Look for wrong definitions.
+                $codename = $instance::get_codename();
+                if (!empty($codenames[$codename])) {
+                    throw new \coding_exception('Indicators codenames must be unique, ' . $codenames[$codename] .
+                        ' and ' . $fullclassname . ' have the same one');
+                }
+                $codenames[$codename] = $fullclassname;
             }
         }
 

@@ -248,6 +248,32 @@ class dataset_manager {
         return $fs->create_file_from_pathname($filerecord, $tmpfilepath);
     }
 
+    public static function get_structured_data(\stored_file $dataset) {
+
+        if ($dataset->get_filearea() !== 'unlabelled') {
+            throw new \coding_exception('Sorry, only support for unlabelled data');
+        }
+
+        $rh = $dataset->get_content_file_handle();
+
+        // Skip dataset info.
+        fgets($rh);
+        fgets($rh);
+
+        $calculations = array();
+
+        $headers = fgetcsv($rh);
+        // Get rid of the sampleid column name.
+        array_shift($headers);
+
+        while ($columns = fgetcsv($rh)) {
+            $uniquesampleid = array_shift($columns);
+            $calculations[$uniquesampleid] = array_combine($headers, $columns);
+        }
+
+        return $calculations;
+    }
+
     /**
      * I know it is not very orthodox...
      *

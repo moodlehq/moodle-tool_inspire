@@ -305,6 +305,10 @@ class model {
         $result->status = $predictorresult->status;
         $result->errors = $predictorresult->errors;
 
+        // TODO We already loaded this big array when creating the dataset file, but now we will also have predictions data
+        // we need to check that this is not getting crazy.
+        $calculations = \tool_inspire\dataset_manager::get_structured_data($samplesfile);
+
         // Here we will store all predictions' contexts, this will be used to limit which users will see those predictions.
         $samplecontexts = array();
 
@@ -339,10 +343,14 @@ class model {
                     list($sampleid, $rangeindex) = $this->get_timesplitting()->infer_sample_info($uniquesampleid);
 
                     // Store the predicted values.
-                    $samplecontext = $this->save_prediction($sampleid, $rangeindex, $prediction, $predictionscore);
+                    $samplecontext = $this->save_prediction($sampleid, $rangeindex, $prediction, $predictionscore,
+                        json_encode($calculations[$uniquesampleid]));
+
+                    // Also store all samples context to later generate insights or whatever action the target wants to perform.
                     $samplecontexts[$samplecontext->id] = $samplecontext;
 
-                    $this->get_target()->prediction_callback($this->model->id, $sampleid, $rangeindex, $samplecontext, $prediction, $predictionscore);
+                    $this->get_target()->prediction_callback($this->model->id, $sampleid, $rangeindex, $samplecontext,
+                        $prediction, $predictionscore);
                 }
             }
         }
@@ -357,7 +365,7 @@ class model {
         return $result;
     }
 
-    protected function save_prediction($sampleid, $rangeindex, $prediction, $predictionscore) {
+    protected function save_prediction($sampleid, $rangeindex, $prediction, $predictionscore, $calculations) {
         global $DB;
 
         $context = $this->get_analyser()->sample_access_context($sampleid);
@@ -369,10 +377,11 @@ class model {
         $record->rangeindex = $rangeindex;
         $record->prediction = $prediction;
         $record->predictionscore = $predictionscore;
+        $record->calculations = $calculations;
         $record->timecreated = time();
         $DB->insert_record('tool_inspire_predictions', $record);
 
-        return $samplecontext;
+        return $context;
     }
 
     public function enable($timesplittingcodename = false) {

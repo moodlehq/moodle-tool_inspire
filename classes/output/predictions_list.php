@@ -61,7 +61,7 @@ class predictions_list implements \renderable, \templatable {
         // Targets have a last chance to add extra stuff, they decide on which template
         // predictions will be displayed, it is fair to give them powers to add extra
         // info for the template.
-        $data->predictions = $this->model->get_target()->add_display_extra_sample_data($data->predictions);
+        $data->predictions = $this->model->get_target()->add_extra_data_for_display($data->predictions);
 
         return $data;
     }
