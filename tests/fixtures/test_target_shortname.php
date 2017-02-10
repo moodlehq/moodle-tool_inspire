@@ -8,8 +8,15 @@ class test_target_shortname extends \tool_inspire\local\target\binary {
         return '\tool_inspire\local\analyser\courses';
     }
 
-    public function prediction_template() {
+    public function sample_template() {
         return 'tool_inspire/unexisting';
+    }
+
+    public function classes_description() {
+        return array(
+            'Course fullname first char is A',
+            'Course fullname first char is not A'
+        );
     }
 
     /**
@@ -49,7 +56,7 @@ class test_target_shortname extends \tool_inspire\local\target\binary {
         $firstchar = substr($sample->shortname, 0, 1);
         if ($firstchar === 'a') {
             return 1;
-        } else if ($firstchar === 'b') {
+        } else {
             return 0;
         }
     }

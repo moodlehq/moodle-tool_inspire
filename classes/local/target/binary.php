@@ -55,4 +55,31 @@ abstract class binary extends discrete {
         // Zero-value class is usually ignored in binary classifiers.
         return array(0);
     }
+
+    public function get_value_style($value) {
+
+        if (!self::is_a_class($value)) {
+            throw new \moodle_exception('errorpredictionformat', 'tool_inspire');
+        }
+
+        if (in_array($value, $this->ignored_predicted_classes())) {
+            // Just in case, if it is ignored the prediction should not even be recorded but if it would, it is ignored now,
+            // which should mean that is it nothing serious.
+            return 'alert alert-success';
+        }
+
+        // Default binaries are danger when prediction = 1.
+        if ($value) {
+            return 'alert alert-danger';
+        }
+        return 'alert alert-success';
+    }
+
+    protected function classes_description() {
+        return array(
+            get_string('yes'),
+            get_string('no')
+        );
+    }
+
 }

@@ -65,6 +65,11 @@ abstract class base extends \tool_inspire\calculable {
      */
     abstract protected function calculate_sample($sampleid, $sampleorigin, $starttime, $endtime);
 
+    public function should_be_displayed($value, $subtype) {
+        // We should everything by default.
+        return true;
+    }
+
     /**
      * @return null|string
      */

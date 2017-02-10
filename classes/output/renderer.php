@@ -45,12 +45,12 @@ class renderer extends plugin_renderer_base {
      * @param templatable $renderable
      * @return string HTML
      */
-    public function render_models_list(templatable $renderable) {
+    protected function render_models_list(templatable $renderable) {
         $data = $renderable->export_for_template($this);
         return parent::render_from_template('tool_inspire/models_list', $data);
     }
 
-    public function render_predictions_list(renderable $renderable) {
+    protected function render_predictions_list(renderable $renderable) {
 
         $output = '';
 
@@ -63,4 +63,10 @@ class renderer extends plugin_renderer_base {
 
         return $output;
     }
+
+    protected function render_prediction(renderable $renderable) {
+        $data = $renderable->export_for_template($this);
+        return parent::render_from_template('tool_inspire/prediction', $data);
+    }
+
 }

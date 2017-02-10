@@ -287,8 +287,7 @@ abstract class base {
         $ranges = $this->get_all_ranges();
         if (count($ranges) > 1) {
             foreach ($ranges as $rangeindex => $range) {
-                // Starting from 1 when displaying it.
-                $headers[] = 'range-' . ($rangeindex + 1);
+                $headers[] = 'range/' . $rangeindex;
             }
         }
 
@@ -299,7 +298,7 @@ abstract class base {
 
         // The target as well.
         if ($target) {
-            $headers[] = clean_param($target::get_codename(), PARAM_ALPHANUMEXT);
+            $headers[] = get_class($target);
         }
 
         return $headers;

@@ -45,8 +45,15 @@ class course_dropout extends binary {
         return get_string('target:coursedropout', 'tool_inspire');
     }
 
-    public function prediction_template() {
+    public function sample_template() {
         return 'tool_inspire/dropout_student';
+    }
+
+    protected function classes_description() {
+        return array(
+            get_string('labelstudentdropoutno', 'tool_inspire'),
+            get_string('labelstudentdropoutyes', 'tool_inspire')
+        );
     }
 
     /**

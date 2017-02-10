@@ -45,14 +45,45 @@ abstract class discrete extends base {
     }
 
     public static function get_feature_headers() {
-        $codename = clean_param(static::get_codename(), PARAM_ALPHANUMEXT);
+        $codename = get_called_class();
 
         $headers = array($codename);
         foreach (self::get_classes() as $class) {
-            $headers[] = $codename . '-' . $class;
+            $headers[] = $codename . '/' . $class;
         }
 
         return $headers;
+    }
+
+    public function should_be_displayed($value, $subtype) {
+        if ($value != static::get_max_value()) {
+            // Discrete values indicators are converted internally to 1 feature per indicator, we are only interested
+            // in showing the feature flagged with the max value.
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Returns the value to display when the prediction is $value.
+     *
+     * @param mixed $value
+     * @param string $subtype
+     * @return void
+     */
+    public function get_display_value($value, $subtype) {
+
+        $displayvalue = array_search($subtype, static::get_classes());
+
+        debugging('Please overwrite \tool_inspire\local\indicator\discrete::get_display_value to show something different than the default "' . $displayvalue . '"', DEBUG_DEVELOPER);
+
+        return $displayvalue;
+    }
+
+    public function get_display_style($value, $subtype) {
+        // No style attached to indicators classes, they are what they are, a cat,
+        // a horse or a sandwich, they are not good or bad.
+        return '';
     }
 
     protected function to_features($calculatedvalues) {

@@ -43,6 +43,42 @@ abstract class discrete extends base {
         return (in_array($class, static::get_classes()));
     }
 
+    public function get_display_value($value) {
+
+        if (!self::is_a_class($value)) {
+            throw new \moodle_exception('errorpredictionformat', 'tool_inspire');
+        }
+
+        $classes = static::get_classes();
+        $descriptions = $this->classes_description();
+
+        // TODO Confirm that get_classes array indexes are 100% ignored.
+        $desckeys = array_keys($descriptions);
+        sort($classes);
+        sort($desckeys);
+        if ($desckeys !== $classes) {
+            throw new \coding_exception('You need to describe all your classes (' . json_encode($classes) . ') in self::classes_description');
+        }
+
+        return $descriptions[$value];
+    }
+
+    public function get_value_style($value) {
+
+        if (!self::is_a_class($value)) {
+            throw new \moodle_exception('errorpredictionformat', 'tool_inspire');
+        }
+
+        if (in_array($value, $this->ignored_predicted_classes())) {
+            // Just in case, if it is ignored the prediction should not even be recorded.
+            return '';
+        }
+
+        debugging('Please overwrite \tool_inspire\local\target\discrete::get_value_style, all your target classes are styled ' .
+            'the same way otherwise', DEBUG_DEVELOPER);
+        return 'alert alert-danger';
+    }
+
     /**
      * Returns the target discrete values.
      *
@@ -53,6 +89,11 @@ abstract class discrete extends base {
     public static function get_classes() {
         // Coding exception as this will only be called if this target have non-linear values.
         throw new \coding_exception('Overwrite get_classes() and return an array with the different target classes');
+    }
+
+    protected function classes_description() {
+        throw new \coding_exception('Overwrite classes_description() and return an array with the target classes description and ' .
+            'indexes matching self::get_classes');
     }
 
     /**

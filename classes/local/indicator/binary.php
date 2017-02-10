@@ -39,11 +39,33 @@ abstract class binary extends discrete {
         return array(0, 1);
     }
 
+    public function get_display_value($value, $subtype = false) {
+
+        // No subtypes for binary values by default.
+        if ($value == -1) {
+            return get_string('no');
+        } else if ($value == 1) {
+            return get_string('yes');
+        } else {
+            throw new \moodle_exception('errorpredictionformat', 'tool_inspire');
+        }
+    }
+
+    public function get_value_style($value, $subtype = false) {
+
+        // No subtypes for binary values by default.
+        if ($value == -1) {
+            return 'alert alert-warning';
+        } else if ($value == 1) {
+            return 'alert alert-info';
+        } else {
+            throw new \moodle_exception('errorpredictionformat', 'tool_inspire');
+        }
+    }
+
     public static function get_feature_headers() {
         // Just 1 single feature obtained from the calculated value.
-        return array(
-            clean_param(static::get_codename(), PARAM_ALPHANUMEXT)
-        );
+        return array(get_called_class());
     }
 
     protected function to_features($calculatedvalues) {

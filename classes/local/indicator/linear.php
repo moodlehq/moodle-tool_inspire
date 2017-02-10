@@ -45,15 +45,29 @@ abstract class linear extends base {
     }
 
     public static function get_feature_headers() {
-        $codename = clean_param(static::get_codename(), PARAM_ALPHANUMEXT);
+
+        $codename = get_called_class();
 
         if (static::include_averages()) {
             // The calculated value + context indicators.
-            $headers = array($codename, $codename . '-mean');
+            $headers = array($codename, $codename . '/mean');
         } else {
             $headers = array($codename);
         }
         return $headers;
+    }
+
+    public function get_display_value($value, $subtype = false) {
+        $diff = static::get_max_value() - static::get_min_value();
+        return round(100 * ($value - static::get_min_value()) / $diff) . '%';
+    }
+
+    public function get_value_style($value, $subtype = false) {
+        if ($value < 0) {
+            return 'alert alert-warning';
+        } else {
+            return 'alert alert-info';
+        }
     }
 
     protected function to_features($calculatedvalues) {

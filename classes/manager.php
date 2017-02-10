@@ -207,6 +207,9 @@ class manager {
                     throw new \coding_exception('Indicators codenames must be unique, ' . $codenames[$codename] .
                         ' and ' . $fullclassname . ' have the same one');
                 }
+                if (strstr($codename, '/') !== false) {
+                    throw new \coding_exception('You can not use "/" as part of an indicator codebase, it is a reserved character');
+                }
                 $codenames[$codename] = $fullclassname;
             }
         }
@@ -240,7 +243,7 @@ class manager {
      * @param string $fullclassname
      * @return bool
      */
-    protected static function is_valid($fullclassname, $baseclass) {
+    public static function is_valid($fullclassname, $baseclass) {
         if (is_subclass_of($fullclassname, $baseclass)) {
             if ((new \ReflectionClass($fullclassname))->isInstantiable()) {
                 return true;

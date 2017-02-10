@@ -39,6 +39,16 @@ abstract class linear extends base {
         return true;
     }
 
+    public function get_value_style($value) {
+
+        // This is very generic, targets will probably be interested in overwriting this.
+        $diff = static::get_max_value() - static::get_min_value();
+        if (($value - static::get_min_value()) / $diff >= 0.5) {
+            return 'alert alert-success';
+        }
+        return 'alert alert-danger';
+    }
+
     /**
      * Gets the maximum value for this target
      *

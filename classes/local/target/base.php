@@ -77,10 +77,18 @@ abstract class base extends \tool_inspire\calculable {
      *
      * @return string
      */
-    abstract public function prediction_template();
+    abstract public function sample_template();
+
+    public function get_display_value($value) {
+        return $value;
+    }
+
+    public function get_value_style($value) {
+        throw new \coding_exception('Please overwrite \tool_inspire\local\target\base::get_value_style');
+    }
 
     /**
-     * A chance for targets to add extra stuff before showing self::prediction_template template.
+     * A chance for targets to add extra stuff before showing self::sample_template template.
      *
      * The default implementation does nothing, in most of the cases analysers should already return
      * enough info about the samples to display them.

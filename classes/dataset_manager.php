@@ -268,7 +268,19 @@ class dataset_manager {
 
         while ($columns = fgetcsv($rh)) {
             $uniquesampleid = array_shift($columns);
-            $calculations[$uniquesampleid] = array_combine($headers, $columns);
+
+            // Unfortunately fgetcsv does not respect the line's var types.
+            $calculations[$uniquesampleid] = array_map(function($value) {
+
+                if ($value === '') {
+                    // We really want them as null because converted to float become 0
+                    // and we need to tret the values separately.
+                    return null;
+                } else if (is_numeric($value)) {
+                    return floatval($value);
+                }
+                return $value;
+            }, array_combine($headers, $columns));
         }
 
         return $calculations;

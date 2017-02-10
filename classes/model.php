@@ -425,10 +425,6 @@ class model {
         if (!$predictions = $DB->get_records_sql($sql, $params)) {
             return false;
         }
-        //$params = array('modelid' => $this->model->id, 'contextid' => $context->id);
-        //if (!$predictions = $DB->get_records('tool_inspire_predictions', $params, 'sampleid, rangeindex DESC')) {
-            //return false;
-        //}
 
         // Get predicted samples' ids.
         $sampleids = array_map(function($prediction) {

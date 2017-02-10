@@ -113,7 +113,7 @@ abstract class base {
         foreach ($this->indicators as $indicator) {
             $tablename = $indicator::required_sample();
             if ($tablename && !in_array($tablename, $providedsamplesdata)) {
-                throw new \tool_inspire\requirements_exception($indicator->get_codename() . ' indicator requires ' .
+                throw new \tool_inspire\requirements_exception(get_class($indicator) . ' indicator requires ' .
                     $tablename . ' samples which are not provided by ' . get_class($this));
             }
         }
