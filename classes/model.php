@@ -407,6 +407,12 @@ class model {
         $DB->update_record('tool_inspire_models', $this->model);
     }
 
+    /**
+     * get_predictions
+     *
+     * @param \context $context
+     * @return \tool_inspire\prediction[]
+     */
     public function get_predictions($context) {
         global $DB;
 
@@ -434,9 +440,9 @@ class model {
         list($unused, $samplesdata) = $this->get_analyser()->get_samples($sampleids);
 
         // Add samples data as part of each prediction.
-        foreach ($predictions as $predictionid => $prediction) {
+        foreach ($predictions as $predictionid => $predictiondata) {
 
-            $sampleid = $prediction->sampleid;
+            $sampleid = $predictiondata->sampleid;
 
             // Filter out predictions which samples are not available anymore.
             if (empty($samplesdata[$sampleid])) {
@@ -444,16 +450,11 @@ class model {
                 continue;
             }
 
-            foreach ($samplesdata[$sampleid] as $key => $data) {
-                if (!empty($predictions[$sampleid]->{$key})) {
-                    // Please no, this would be horrible, would involve a core table named like one of
-                    // the tool_inspire_predictions' fields, which is really unlikely (and ugly).
-                    throw new \coding_exception('\O/ Samples data ' . $key . ' have the same name than a '.
-                        'tool_inspire_predictions\' field which is really unfortunate, please use another key for ' .
-                        'the sample data');
-                }
-                $predictions[$predictionid]->{$key} = $data;
-            }
+            // Replace stdClass object by \tool_inspire\prediction objects.
+            $prediction = new \tool_inspire\prediction($predictiondata);
+            $prediction->set_sample_data($samplesdata[$sampleid]);
+
+            $predictions[$predictionid] = $prediction;
         }
 
         return $predictions;

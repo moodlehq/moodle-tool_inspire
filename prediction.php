@@ -44,10 +44,11 @@ if ($context->contextlevel === CONTEXT_MODULE) {
 
 require_capability('tool/inspire:listinsights', $context);
 
-$model = new \tool_inspire\model($prediction->modelid);
-
 $params = array('id' => $prediction->id);
 $url = new \moodle_url('/admin/tool/inspire/prediction.php', $params);
+
+$model = new \tool_inspire\model($prediction->modelid);
+$prediction = new \tool_inspire\prediction($prediction, $model);
 
 $insightinfo = new stdClass();
 $insightinfo->contextname = $context->get_context_name();
@@ -62,7 +63,7 @@ $PAGE->set_heading($title);
 echo $OUTPUT->header();
 echo $OUTPUT->heading($title);
 
-$renderable = new \tool_inspire\output\prediction($model, $prediction);
+$renderable = new \tool_inspire\output\prediction($prediction, $model);
 $renderer = $PAGE->get_renderer('tool_inspire');
 echo $renderer->render($renderable);
 

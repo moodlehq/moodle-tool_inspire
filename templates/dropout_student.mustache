@@ -32,9 +32,16 @@
     {
     }
 }}
-<div class="box">
-<a href="admin/tool/inspire/prediction.php?id={{id}}">Prediction</a>
-{{user.firstname}}
-{{prediction}}
-{{predictionscore}}
+<div class="container">
+    <div class="row">
+        <div class="col-xs-6">
+            <a href="{{predictionurl}}">Prediction</a>
+        </div>
+        <div class="col-xs-6">
+            {{sampledata.user.firstname}}
+        </div>
+        <div class="col-xs-6">
+            <div class="{{predictionstyle}}">{{predictiondisplayvalue}}</div>
+        </div>
+    </div>
 </div>

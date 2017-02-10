@@ -91,12 +91,12 @@ abstract class base extends \tool_inspire\calculable {
      * A chance for targets to add extra stuff before showing self::sample_template template.
      *
      * The default implementation does nothing, in most of the cases analysers should already return
-     * enough info about the samples to display them.
+     * enough info about the sample to display them.
      *
-     * @return stdClass[]
+     * @return \tool_inspire\prediction
      */
-    public function add_extra_data_for_display($predictions) {
-        return $predictions;
+    public function add_extra_data_for_display($prediction) {
+        return $prediction;
     }
 
     /**

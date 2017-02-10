@@ -38,9 +38,9 @@ class prediction implements \renderable, \templatable {
     protected $model;
     protected $prediction;
 
-    public function __construct(\tool_inspire\model $model, $prediction) {
-        $this->model = $model;
+    public function __construct(\tool_inspire\prediction $prediction, \tool_inspire\model $model) {
         $this->prediction = $prediction;
+        $this->model = $model;
     }
 
     /**
@@ -53,51 +53,43 @@ class prediction implements \renderable, \templatable {
 
         $data = new \stdClass();
 
-        $data->predictiondisplayvalue = $this->model->get_target()->get_display_value($this->prediction->prediction);
-        $data->predictionstyle = $this->model->get_target()->get_value_style($this->prediction->prediction);
+        $data->sampledata = $this->prediction->get_sample_data();
 
-        $calculations = json_decode($this->prediction->calculations, true);
+        $predictedvalue = $this->prediction->get_prediction_data()->prediction;
+        $predictionid = $this->prediction->get_prediction_data()->id;
+        $data->predictiondisplayvalue = $this->model->get_target()->get_display_value($predictedvalue);
+        $data->predictionstyle = $this->model->get_target()->get_value_style($predictedvalue);
+        $predictionurl = new \moodle_url('/admin/tool/inspire/prediction.php', array('id' => $predictionid));
+        $data->predictionurl = $predictionurl->out(false);
 
-        $info = array();
-        foreach ($calculations as $indicatorkey => $value) {
+        $data->calculations = array();
 
-            // Some indicator result in more than 1 feature, we need to see which feature are we dealing with.
-            $separatorpos = strpos($indicatorkey, '/');
-            if ($separatorpos !== false) {
-                $subtype = substr($indicatorkey, ($separatorpos + 1));
-                $indicatorkey = substr($indicatorkey, 0, $separatorpos);
-            } else {
-                $subtype = false;
-            }
+        $calculations = $this->prediction->get_calculations();
+        foreach ($calculations as $calculation) {
 
-            if ($indicatorkey === 'range') {
-                // Time range indicators don't belong to any indicator class, we don't show them.
-                continue;
-            } else if (!\tool_inspire\manager::is_valid($indicatorkey, '\tool_inspire\local\indicator\base')) {
-                throw new \moodle_exception('errorpredictionformat', 'tool_inspire');
-            }
-
-            $indicator = \tool_inspire\manager::get_indicator($indicatorkey);
-
-            // Hook for indicators with extra features that should not be displayed (like discrete indicators).
-            if (!$indicator->should_be_displayed($value, $subtype)) {
+            // Hook for indicators with extra features that should not be displayed (e.g. discrete indicators).
+            if (!$calculation->indicator->should_be_displayed($calculation->value, $calculation->subtype)) {
                 continue;
             }
 
             $obj = new \stdClass();
-            $obj->name = $indicator::get_name($subtype);
-            if ($value !== null) {
-                $obj->displayvalue = $indicator->get_display_value($value, $subtype);
-                $obj->style = $indicator->get_value_style($value, $subtype);
+            $obj->name = $calculation->indicator::get_name($calculation->subtype);
+            if ($calculation->value !== null) {
+                $obj->displayvalue = $calculation->indicator->get_display_value($calculation->value, $calculation->subtype);
+                $obj->style = $calculation->indicator->get_value_style($calculation->value, $calculation->subtype);
             } else {
                 // Null case is special, it does not represent a central value but a "can't be calculated".
                 $obj->displayvalue = '';
                 $obj->style = '';
             }
-            $info[] = $obj;
+            $data->calculations[] = $obj;
         }
 
-        $data->calculations = $info;
+        // Targets have a last chance to add extra stuff, they decide on which template
+        // predictions will be displayed, it is fair to give them powers to add extra
+        // info for the template.
+        //$data->prediction = $this->model->get_target()->add_extra_data_for_display($data->prediction);
+
         return $data;
     }
 }

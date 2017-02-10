@@ -57,6 +57,13 @@ abstract class linear extends base {
         return $headers;
     }
 
+    public function should_be_displayed($value, $subtype) {
+        if ($subtype != false) {
+            return false;
+        }
+        return true;
+    }
+
     public function get_display_value($value, $subtype = false) {
         $diff = static::get_max_value() - static::get_min_value();
         return round(100 * ($value - static::get_min_value()) / $diff) . '%';

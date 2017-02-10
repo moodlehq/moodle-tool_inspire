@@ -56,12 +56,13 @@ class predictions_list implements \renderable, \templatable {
         // The model target is responsible of defining the template where the samples will be shown.
         $data->templatename = $this->model->get_target()->sample_template();
 
-        $data->predictions = $this->model->get_predictions($this->context);
+        $predictions = $this->model->get_predictions($this->context);
 
-        // Targets have a last chance to add extra stuff, they decide on which template
-        // predictions will be displayed, it is fair to give them powers to add extra
-        // info for the template.
-        $data->predictions = $this->model->get_target()->add_extra_data_for_display($data->predictions);
+        $data->predictions = array();
+        foreach ($predictions as $prediction) {
+            $predictionrenderable = new \tool_inspire\output\prediction($prediction, $this->model);
+            $data->predictions[] = $predictionrenderable->export_for_template($output);
+        }
 
         return $data;
     }
