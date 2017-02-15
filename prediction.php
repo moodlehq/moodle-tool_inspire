@@ -47,6 +47,9 @@ require_capability('tool/inspire:listinsights', $context);
 $params = array('id' => $predictionobj->id);
 $url = new \moodle_url('/admin/tool/inspire/prediction.php', $params);
 
+$PAGE->set_url($url);
+$PAGE->set_pagelayout('report');
+
 $model = new \tool_inspire\model($predictionobj->modelid);
 $sampledata = $model->prediction_sample_data($predictionobj);
 $prediction = new \tool_inspire\prediction($predictionobj, $sampledata);
@@ -56,8 +59,6 @@ $insightinfo->contextname = $context->get_context_name();
 $insightinfo->insightname = $model->get_target()->get_name();
 $title = get_string('insightinfo', 'tool_inspire', $insightinfo);
 
-$PAGE->set_url($url);
-$PAGE->set_pagelayout('report');
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
 

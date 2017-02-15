@@ -73,11 +73,18 @@ abstract class base extends \tool_inspire\calculable {
     abstract protected function calculate_sample($sampleid, \tool_inspire\analysable $analysable);
 
     public function prediction_actions(\tool_inspire\prediction $prediction) {
+        global $PAGE;
+
+        $params = array('id' => $prediction->get_prediction_data()->id);
+        $predictionurl = new \moodle_url('/admin/tool/inspire/prediction.php', $params);
+        if ($predictionurl->compare($PAGE->url)) {
+            // We don't show the link to prediction.php if we are already in prediction.php
+            // prediction.php's $PAGE->set_url call is prior to any tool_inspire namespace method call.
+            return array();
+        }
 
         $viewpredictionaction = new \stdClass();
-        $params = array('id' => $prediction->get_prediction_data()->id);
-        $url = new \moodle_url('/admin/tool/inspire/prediction.php', $params);
-        $viewpredictionaction->url = $url->out(false);
+        $viewpredictionaction->url = $predictionurl->out(false);
         $viewpredictionaction->text = get_string('viewprediction', 'tool_inspire');
         $viewpredictionaction->classes = 'btn btn-secondary';
 

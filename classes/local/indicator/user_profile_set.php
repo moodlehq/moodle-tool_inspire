@@ -40,8 +40,8 @@ class user_profile_set extends linear {
         return get_string('indicator:completeduserprofile', 'tool_inspire');
     }
 
-    public static function required_sample() {
-        return 'user';
+    public static function required_sample_data() {
+        return array('user');
     }
 
     public function calculate_sample($sampleid, $sampleorigin, $starttime = false, $endtime = false) {

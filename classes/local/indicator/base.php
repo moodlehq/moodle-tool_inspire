@@ -73,7 +73,7 @@ abstract class base extends \tool_inspire\calculable {
     /**
      * @return null|string
      */
-    public static function required_sample() {
+    public static function required_sample_data() {
         return null;
     }
 

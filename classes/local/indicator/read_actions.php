@@ -39,6 +39,11 @@ class read_actions extends linear {
         return get_string('indicator:readactions', 'tool_inspire');
     }
 
+    public static function required_sample_data() {
+        // User is not required, calculate_sample can handle its absence.
+        return array('context');
+    }
+
     public function calculate_sample($sampleid, $sampleorigin, $starttime = false, $endtime = false) {
         global $DB;
 

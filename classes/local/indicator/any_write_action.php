@@ -39,6 +39,11 @@ class any_write_action extends binary {
         return get_string('indicator:anywrite', 'tool_inspire');
     }
 
+    public static function required_sample_data() {
+        // User is not required, calculate_sample can handle its absence.
+        return array('context');
+    }
+
     public function calculate_sample($sampleid, $sampleorigin, $starttime = false, $endtime = false) {
         global $DB;
 

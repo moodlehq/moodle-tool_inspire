@@ -35,12 +35,12 @@ defined('MOODLE_INTERNAL') || die();
  */
 class any_access_before_start extends binary {
 
-    public static function required_sample() {
-        return 'user';
-    }
-
     public static function get_name() {
         return get_string('target:accessesbeforestart', 'tool_inspire');
+    }
+
+    public static function required_sample_data() {
+        return array('user', 'course', 'context');
     }
 
     public function calculate_sample($sampleid, $samplesorigin, $starttime = false, $endtime = false) {

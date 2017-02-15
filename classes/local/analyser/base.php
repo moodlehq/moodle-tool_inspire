@@ -78,7 +78,7 @@ abstract class base {
 
     abstract public function sample_description($sampleid, $contextid, $sampledata);
 
-    protected function provided_samples_data() {
+    protected function provided_sample_data() {
         return array($this->get_samples_origin());
     }
 
@@ -110,13 +110,18 @@ abstract class base {
      */
     protected function check_indicators_requirements() {
 
-        $providedsamplesdata = $this->provided_samples_data();
+        $providedsampledata = $this->provided_sample_data();
 
         foreach ($this->indicators as $indicator) {
-            $tablename = $indicator::required_sample();
-            if ($tablename && !in_array($tablename, $providedsamplesdata)) {
+            $requiredsampledata = $indicator::required_sample_data();
+            if (empty($requiredsampledata)) {
+                // The indicator does not need any sample data.
+                continue;
+            }
+            $missingrequired = array_diff($requiredsampledata, $providedsampledata);
+            if (!empty($missingrequired)) {
                 throw new \tool_inspire\requirements_exception(get_class($indicator) . ' indicator requires ' .
-                    $tablename . ' samples which are not provided by ' . get_class($this));
+                    json_encode($missingrequired) . ' sample data which is not provided by ' . get_class($this));
             }
         }
     }

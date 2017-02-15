@@ -48,8 +48,8 @@ class enrolments extends by_course {
         return \context_course::instance($this->get_sample_course($sampleid));
     }
 
-    protected function provided_samples_data() {
-        return array('user_enrolments', 'course', 'user');
+    protected function provided_sample_data() {
+        return array('user_enrolments', 'context', 'course', 'user');
     }
 
     protected function get_all_samples(\tool_inspire\analysable $course) {

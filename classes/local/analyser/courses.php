@@ -37,6 +37,10 @@ class courses extends sitewide {
         return 'course';
     }
 
+    protected function provided_sample_data() {
+        return array('course', 'context');
+    }
+
     public function sample_access_context($sampleid) {
         return \context_system::instance();
     }

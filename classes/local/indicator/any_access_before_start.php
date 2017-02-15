@@ -39,8 +39,8 @@ class any_access_after_end extends binary {
         return get_string('target:accessesafterend', 'tool_inspire');
     }
 
-    public static function required_sample() {
-        return 'course';
+    public static function required_sample_data() {
+        return array('user', 'course', 'context');
     }
 
     public function calculate_sample($sampleid, $samplesorigin, $starttime = false, $endtime = false) {

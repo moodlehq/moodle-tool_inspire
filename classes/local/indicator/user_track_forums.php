@@ -39,8 +39,8 @@ class user_track_forums extends binary {
         return get_string('indicator:userforumstracking', 'tool_inspire');
     }
 
-    public static function required_sample() {
-        return 'user';
+    public static function required_sample_data() {
+        return array('user');
     }
 
     public function calculate_sample($sampleid, $samplesorigin, $starttime = false, $endtime = false) {
