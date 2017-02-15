@@ -72,12 +72,17 @@ abstract class base extends \tool_inspire\calculable {
      */
     abstract protected function calculate_sample($sampleid, \tool_inspire\analysable $analysable);
 
-    /**
-     * Returns the template used to render the sample.
-     *
-     * @return string
-     */
-    abstract public function sample_template();
+    public function prediction_actions(\tool_inspire\prediction $prediction) {
+
+        $viewpredictionaction = new \stdClass();
+        $params = array('id' => $prediction->get_prediction_data()->id);
+        $url = new \moodle_url('/admin/tool/inspire/prediction.php', $params);
+        $viewpredictionaction->url = $url->out(false);
+        $viewpredictionaction->text = get_string('viewprediction', 'tool_inspire');
+        $viewpredictionaction->classes = 'btn btn-secondary';
+
+        return array($viewpredictionaction);
+    }
 
     public function get_display_value($value) {
         return $value;
@@ -85,18 +90,6 @@ abstract class base extends \tool_inspire\calculable {
 
     public function get_value_style($value) {
         throw new \coding_exception('Please overwrite \tool_inspire\local\target\base::get_value_style');
-    }
-
-    /**
-     * A chance for targets to add extra stuff before showing self::sample_template template.
-     *
-     * The default implementation does nothing, in most of the cases analysers should already return
-     * enough info about the sample to display them.
-     *
-     * @return \tool_inspire\prediction
-     */
-    public function add_extra_data_for_display($prediction) {
-        return $prediction;
     }
 
     /**

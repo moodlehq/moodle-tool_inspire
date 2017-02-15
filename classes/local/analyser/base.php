@@ -76,6 +76,8 @@ abstract class base {
      */
     abstract public function sample_access_context($sampleid);
 
+    abstract public function sample_description($sampleid, $contextid, $sampledata);
+
     protected function provided_samples_data() {
         return array($this->get_samples_origin());
     }

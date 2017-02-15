@@ -53,9 +53,6 @@ class predictions_list implements \renderable, \templatable {
 
         $data = new \stdClass();
 
-        // The model target is responsible of defining the template where the samples will be shown.
-        $data->templatename = $this->model->get_target()->sample_template();
-
         $predictions = $this->model->get_predictions($this->context);
 
         $data->predictions = array();

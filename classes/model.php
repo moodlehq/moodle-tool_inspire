@@ -451,13 +451,28 @@ class model {
             }
 
             // Replace stdClass object by \tool_inspire\prediction objects.
-            $prediction = new \tool_inspire\prediction($predictiondata);
-            $prediction->set_sample_data($samplesdata[$sampleid]);
+            $prediction = new \tool_inspire\prediction($predictiondata, $samplesdata[$sampleid]);
 
             $predictions[$predictionid] = $prediction;
         }
 
         return $predictions;
+    }
+
+    public function prediction_sample_data($predictionobj) {
+
+        list($unused, $samplesdata) = $this->get_analyser()->get_samples(array($predictionobj->sampleid));
+
+        if (empty($samplesdata[$predictionobj->sampleid])) {
+            throw new \moodle_exception('errorsamplenotavailable', 'tool_inspire');
+        }
+
+        return $samplesdata[$predictionobj->sampleid];
+    }
+
+    public function prediction_sample_description(\tool_inspire\prediction $prediction) {
+        return $this->get_analyser()->sample_description($prediction->get_prediction_data()->sampleid,
+            $prediction->get_prediction_data()->contextid, $prediction->get_sample_data());
     }
 
     protected function get_output_dir($subdir = false) {

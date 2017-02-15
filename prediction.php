@@ -26,11 +26,11 @@ require_once(__DIR__ . '/../../../config.php');
 
 $predictionid = required_param('id', PARAM_INT);
 
-if (!$prediction = $DB->get_record('tool_inspire_predictions', array('id' => $predictionid))) {
+if (!$predictionobj = $DB->get_record('tool_inspire_predictions', array('id' => $predictionid))) {
     throw new \moodle_exception('errorpredictionnotfound', 'tool_inspire');
 }
 
-$context = context::instance_by_id($prediction->contextid);
+$context = context::instance_by_id($predictionobj->contextid);
 
 if ($context->contextlevel === CONTEXT_MODULE) {
     list($course, $cm) = get_module_from_cmid($context->instanceid);
@@ -44,11 +44,12 @@ if ($context->contextlevel === CONTEXT_MODULE) {
 
 require_capability('tool/inspire:listinsights', $context);
 
-$params = array('id' => $prediction->id);
+$params = array('id' => $predictionobj->id);
 $url = new \moodle_url('/admin/tool/inspire/prediction.php', $params);
 
-$model = new \tool_inspire\model($prediction->modelid);
-$prediction = new \tool_inspire\prediction($prediction, $model);
+$model = new \tool_inspire\model($predictionobj->modelid);
+$sampledata = $model->prediction_sample_data($predictionobj);
+$prediction = new \tool_inspire\prediction($predictionobj, $sampledata);
 
 $insightinfo = new stdClass();
 $insightinfo->contextname = $context->get_context_name();

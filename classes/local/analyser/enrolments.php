@@ -125,4 +125,9 @@ class enrolments extends by_course {
         return $this->samplecourses[$sampleid];
     }
 
+    public function sample_description($sampleid, $contextid, $sampledata) {
+        $description = fullname($sampledata['user'], true, array('context' => $contextid));
+        return array($description, new \user_picture($sampledata['user']));
+    }
+
 }

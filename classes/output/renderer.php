@@ -51,22 +51,13 @@ class renderer extends plugin_renderer_base {
     }
 
     protected function render_predictions_list(renderable $renderable) {
-
-        $output = '';
-
         $data = $renderable->export_for_template($this);
-
-        // No predictions_list.mustache because we can't have dynamic partial names.
-        foreach ($data->predictions as $sampleid => $prediction) {
-            $output .= parent::render_from_template($data->templatename, $prediction);
-        }
-
-        return $output;
+        return parent::render_from_template('tool_inspire/predictions_list', $data);
     }
 
     protected function render_prediction(renderable $renderable) {
         $data = $renderable->export_for_template($this);
-        return parent::render_from_template('tool_inspire/prediction', $data);
+        return parent::render_from_template('tool_inspire/prediction_details', $data);
     }
 
 }

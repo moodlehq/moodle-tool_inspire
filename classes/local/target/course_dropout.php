@@ -45,8 +45,25 @@ class course_dropout extends binary {
         return get_string('target:coursedropout', 'tool_inspire');
     }
 
-    public function sample_template() {
-        return 'tool_inspire/dropout_student';
+    public function prediction_actions(\tool_inspire\prediction $prediction) {
+        global $USER;
+
+        $actions = parent::prediction_actions($prediction);
+
+        $sampledata = $prediction->get_sample_data();
+        $studentid = $sampledata['user']->id;
+
+        $messagestudentaction = new \stdClass();
+        $url = new \moodle_url('/message/index.php', array('user' => $USER->id, 'id' => $studentid));
+        $messagestudentaction->url = $url->out(false);
+        $messagestudentaction->text = get_string('sendmessage', 'message');
+        // TODO We need to do something with this m-t-1 thing, margins should not be specified here, not even classes
+        // maybe just make this method return a URL and a text.
+        $messagestudentaction->classes = 'btn btn-primary m-t-1';
+
+        $actions[] = $messagestudentaction;
+
+        return $actions;
     }
 
     protected function classes_description() {

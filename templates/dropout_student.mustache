@@ -32,16 +32,18 @@
     {
     }
 }}
-<div class="container">
+<div class="container m-t-3">
     <div class="row">
-        <div class="col-xs-6">
-            <a href="{{predictionurl}}">Prediction</a>
-        </div>
-        <div class="col-xs-6">
+        <div class="col-sm-5">
             {{sampledata.user.firstname}}
         </div>
-        <div class="col-xs-6">
+        <div class="col-sm-2">
             <div class="{{predictionstyle}}">{{predictiondisplayvalue}}</div>
+        </div>
+        <div class="col-sm-5">
+            {{#actions}}
+                    {{> core/action_link}}
+            {{/actions}}
         </div>
     </div>
 </div>

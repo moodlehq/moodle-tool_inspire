@@ -77,4 +77,8 @@ class courses extends sitewide {
         return array($sampleids, $courses);
     }
 
+    public function sample_description($sampleid, $contextid, $sampledata) {
+        $description = format_string($sampledata['course'], true, array('context' => $contextid));
+        return array($description, false);
+    }
 }

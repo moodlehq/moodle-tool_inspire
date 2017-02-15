@@ -39,7 +39,7 @@ class prediction {
 
     private $calculations = array();
 
-    public function __construct($prediction) {
+    public function __construct($prediction, $sampledata) {
         global $DB;
 
         if (is_scalar($prediction)) {
@@ -47,15 +47,13 @@ class prediction {
         }
         $this->prediction = $prediction;
 
+        $this->sampledata = $sampledata;
+
         $this->format_calculations();
     }
 
     public function get_prediction_data() {
         return $this->prediction;
-    }
-
-    public function set_sample_data($sampledata) {
-        $this->sampledata = $sampledata;
     }
 
     public function get_sample_data() {

@@ -53,17 +53,24 @@ class prediction implements \renderable, \templatable {
 
         $data = new \stdClass();
 
-        $data->sampledata = $this->prediction->get_sample_data();
+        // Sample info (determined by the analyser).
+        list($data->sampledescription, $sampleimage) = $this->model->prediction_sample_description($this->prediction);
 
+        // Sampleimage is a renderable we should pass it to HTML.
+        if ($sampleimage) {
+            $data->sampleimage = $output->render($sampleimage);
+        }
+
+        // Prediction info.
         $predictedvalue = $this->prediction->get_prediction_data()->prediction;
         $predictionid = $this->prediction->get_prediction_data()->id;
         $data->predictiondisplayvalue = $this->model->get_target()->get_display_value($predictedvalue);
         $data->predictionstyle = $this->model->get_target()->get_value_style($predictedvalue);
-        $predictionurl = new \moodle_url('/admin/tool/inspire/prediction.php', array('id' => $predictionid));
-        $data->predictionurl = $predictionurl->out(false);
 
+        $data->actions = $this->model->get_target()->prediction_actions($this->prediction);
+
+        // Calculated indicators values.
         $data->calculations = array();
-
         $calculations = $this->prediction->get_calculations();
         foreach ($calculations as $calculation) {
 
@@ -84,11 +91,6 @@ class prediction implements \renderable, \templatable {
             }
             $data->calculations[] = $obj;
         }
-
-        // Targets have a last chance to add extra stuff, they decide on which template
-        // predictions will be displayed, it is fair to give them powers to add extra
-        // info for the template.
-        //$data->prediction = $this->model->get_target()->add_extra_data_for_display($data->prediction);
 
         return $data;
     }
