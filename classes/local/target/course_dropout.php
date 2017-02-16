@@ -105,24 +105,26 @@ class course_dropout extends binary {
         }
 
         // Ongoing courses data can not be used to train.
-        if (!$course->is_finished() && $fortraining) {
+        if ($fortraining && !$course->is_finished()) {
             return 'Course is not yet finished';
         }
 
-        // Not a valid target if there are not enough course accesses.
-        // Using anonymous to use the db index, not filtering by timecreated to speed it up.
-        $params = array('courseid' => $course->get_id(), 'anonymous' => 0, 'start' => $course->get_start(),
-            'end' => $course->get_end());
-        list($studentssql, $studentparams) = $DB->get_in_or_equal($students, SQL_PARAMS_NAMED);
-        $select = 'courseid = :courseid AND anonymous = :anonymous AND timecreated > :start AND timecreated < :end ' .
-            'AND userid ' . $studentssql;
-        $nlogs = $DB->count_records_select('logstore_standard_log', $select, array_merge($params, $studentparams));
+        // Not a valid target for training if there are not enough course accesses.
+        if ($fortraining) {
+            // Using anonymous to use the db index, not filtering by timecreated to speed it up.
+            $params = array('courseid' => $course->get_id(), 'anonymous' => 0, 'start' => $course->get_start(),
+                'end' => $course->get_end());
+            list($studentssql, $studentparams) = $DB->get_in_or_equal($students, SQL_PARAMS_NAMED);
+            $select = 'courseid = :courseid AND anonymous = :anonymous AND timecreated > :start AND timecreated < :end ' .
+                'AND userid ' . $studentssql;
+            $nlogs = $DB->count_records_select('logstore_standard_log', $select, array_merge($params, $studentparams));
 
-        // Say 5 logs per week by half of the course students.
-        $nweeks = $this->get_time_range_weeks_number($course->get_start(), $course->get_end());
-        $nstudents = count($course->get_students());
-        if ($nlogs < ($nweeks * ($nstudents / 2) * 5)) {
-            return 'Not enough logs';
+            // Say 5 logs per week by half of the course students.
+            $nweeks = $this->get_time_range_weeks_number($course->get_start(), $course->get_end());
+            $nstudents = count($course->get_students());
+            if ($nlogs < ($nweeks * ($nstudents / 2) * 5)) {
+                return 'Not enough logs';
+            }
         }
 
         // Now we check that we can analyse the course through course completion, course competencies or grades.
