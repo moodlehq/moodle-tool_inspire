@@ -30,10 +30,10 @@ require_once($CFG->libdir.'/clilib.php');
 $help = "Evaluates the provided model.
 
 Options:
---modelid      Model id
---analyseall Analyse all site or only non rencently analysed analysables (Optional)
---filter     Analyser dependant (Optional)
--h, --help   Print out this help
+--modelid           Model id
+--non-interactive   Not interactive questions
+--filter            Analyser dependant (Optional)
+-h, --help          Print out this help
 
 Example:
 \$ php admin/tool/inspire/cli/evaluate_model.php --modelid=1 --filter=123,321
@@ -42,10 +42,10 @@ Example:
 // Now get cli options.
 list($options, $unrecognized) = cli_get_params(
     array(
-        'help'          => false,
+        'help'            => false,
         'modelid'         => false,
-        'analyseall'    => false,
-        'filter'        => false
+        'non-interactive' => false,
+        'filter'          => false
     ),
     array(
         'h' => 'help',
@@ -67,8 +67,6 @@ if ($options['filter'] !== false) {
     $options['filter'] = explode(',', $options['filter']);
 }
 
-echo "\n".get_string('processingcourses', 'tool_inspire')."\n\n";
-
 // We need admin permissions.
 \core\session\manager::set_user(get_admin());
 
@@ -79,7 +77,6 @@ mtrace(get_string('analysingsitedata', 'tool_inspire'));
 
 $analyseroptions = array(
     'filter' => $options['filter'],
-    'analyseall' => $options['analyseall']
 );
 // Evaluate its suitability to predict accurately.
 $results = $model->evaluate($analyseroptions);
@@ -96,22 +93,25 @@ foreach ($results as $timesplittingcodename => $result) {
     }
 }
 
-// Select a dataset, train and enable the model.
-$input = cli_input(get_string('trainandenablemodel', 'tool_inspire'));
-$timesplittingcodename = clean_param($input, PARAM_ALPHANUMEXT);
-while (empty($results[$timesplittingcodename])) {
-    mtrace(get_string('errorunexistingtimesplitting', 'tool_inspire'));
+if ($options['non-interactive']) {
+
+    // Select a dataset, train and enable the model.
     $input = cli_input(get_string('trainandenablemodel', 'tool_inspire'));
     $timesplittingcodename = clean_param($input, PARAM_ALPHANUMEXT);
+    while (empty($results[$timesplittingcodename])) {
+        mtrace(get_string('errorunexistingtimesplitting', 'tool_inspire'));
+        $input = cli_input(get_string('trainandenablemodel', 'tool_inspire'));
+        $timesplittingcodename = clean_param($input, PARAM_ALPHANUMEXT);
+    }
+
+    // Set the time splitting method file and enable it.
+    $model->enable($timesplittingcodename);
+
+    mtrace(get_string('trainingmodel', 'tool_inspire', $timesplittingcodename));
+
+    // Train the model with the selected time splitting method.
+    $model->train();
 }
-
-// Set the time splitting method file and enable it.
-$model->enable($timesplittingcodename);
-
-mtrace(get_string('trainingmodel', 'tool_inspire', $timesplittingcodename));
-
-// Train the model with the selected time splitting method.
-$model->train();
 
 cli_heading(get_string('success'));
 exit(0);
