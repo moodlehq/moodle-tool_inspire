@@ -139,7 +139,7 @@ class model {
             }
 
             // Returned as an array as all actions (evaluation, training and prediction) go through the same process.
-            $timesplittings = array($this->model->timesplitting => $this->get_timesplitting());
+            $timesplittings = array($this->model->timesplitting => $this->get_time_splitting());
         }
 
         if (empty($target)) {
@@ -163,7 +163,12 @@ class model {
         return new $classname($this->model->id, $target, $indicators, $timesplittings, $options);
     }
 
-    public function get_timesplitting() {
+    /**
+     * get_time_splitting
+     *
+     * @return \tool_inspire\local\timesplitting\base
+     */
+    public function get_time_splitting() {
         if (empty($this->model->timesplitting)) {
             return false;
         }
@@ -340,7 +345,7 @@ class model {
                 if ($this->get_target()->triggers_callback($prediction, $predictionscore)) {
 
                     // The unique sample id contains both the sampleid and the rangeindex.
-                    list($sampleid, $rangeindex) = $this->get_timesplitting()->infer_sample_info($uniquesampleid);
+                    list($sampleid, $rangeindex) = $this->get_time_splitting()->infer_sample_info($uniquesampleid);
 
                     // Store the predicted values.
                     $samplecontext = $this->save_prediction($sampleid, $rangeindex, $prediction, $predictionscore,
@@ -396,7 +401,7 @@ class model {
         // We don't always update timemodified intentionally as we reserve it for target, indicators or timesplitting updates.
         $DB->update_record('tool_inspire_models', $this->model);
 
-        // It needs to be reset.
+        // It needs to be reset (just in case, we may already used it).
         $this->uniqueid = null;
     }
 

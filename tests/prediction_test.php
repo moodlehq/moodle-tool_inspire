@@ -112,7 +112,7 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
         $correct = array($course1->id => 1, $course2->id => 0);
         foreach ($result->predictions as $sampleprediction) {
             list($sampleid, $prediction) = $sampleprediction;
-            list($sampleid, $rangeindex) = $model->get_timesplitting()->infer_sample_info($sampleid);
+            list($sampleid, $rangeindex) = $model->get_time_splitting()->infer_sample_info($sampleid);
 
             // The range index is not important here, both ranges prediction will be the same.
             $this->assertEquals($correct[$sampleid], $prediction);
