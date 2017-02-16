@@ -45,11 +45,11 @@ abstract class discrete extends base {
     }
 
     public static function get_feature_headers() {
-        $codename = get_called_class();
+        $fullclassname = get_called_class();
 
-        $headers = array($codename);
+        $headers = array($fullclassname);
         foreach (self::get_classes() as $class) {
-            $headers[] = $codename . '/' . $class;
+            $headers[] = $fullclassname . '/' . $class;
         }
 
         return $headers;

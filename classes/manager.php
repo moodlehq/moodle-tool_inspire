@@ -133,12 +133,9 @@ class manager {
         self::$alltimesplittings = [];
         foreach ($classes as $fullclassname => $classpath) {
             $instance = self::get_time_splitting($fullclassname);
+            // We need to check that it is a valid time splitting method, it may be an abstract class.
             if ($instance) {
-                if (!empty(self::$alltimesplittings[$instance->get_codename()])) {
-                    throw new \coding_exception('Time splitting methods codename should be unique, ' .
-                        $instance->get_codename() . ' is duplicated.');
-                }
-                self::$alltimesplittings[$instance->get_codename()] = $instance;
+                self::$alltimesplittings[$instance->get_id()] = $instance;
             }
         }
 

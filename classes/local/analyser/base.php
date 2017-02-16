@@ -167,7 +167,7 @@ abstract class base {
             }
 
             if (!empty($result->file)) {
-                $files[$timesplitting->get_codename()] = $result->file;
+                $files[$timesplitting->get_id()] = $result->file;
             }
             $results[] = $result;
         }
@@ -255,7 +255,7 @@ abstract class base {
             }
         }
 
-        $dataset = new \tool_inspire\dataset_manager($this->modelid, $analysable->get_id(), $timesplitting->get_codename(),
+        $dataset = new \tool_inspire\dataset_manager($this->modelid, $analysable->get_id(), $timesplitting->get_id(),
             $this->options['evaluation'], !empty($target));
 
         // Flag the model + analysable + timesplitting as being analysed (prevent concurrent executions).
@@ -323,7 +323,7 @@ abstract class base {
         global $DB;
 
         $params = array('modelid' => $this->modelid, 'analysableid' => $timesplitting->get_analysable()->get_id(),
-            'timesplitting' => $timesplitting->get_codename());
+            'timesplitting' => $timesplitting->get_id());
 
         $trainingsamples = $DB->get_records('tool_inspire_train_samples', $params);
 
@@ -345,7 +345,7 @@ abstract class base {
         global $DB;
 
         $params = array('modelid' => $this->modelid, 'analysableid' => $timesplitting->get_analysable()->get_id(),
-            'timesplitting' => $timesplitting->get_codename());
+            'timesplitting' => $timesplitting->get_id());
 
         $predictedranges = $DB->get_records('tool_inspire_predict_ranges', $params);
         foreach ($predictedranges as $predictedrange) {
@@ -364,7 +364,7 @@ abstract class base {
         $trainingsamples = new \stdClass();
         $trainingsamples->modelid = $this->modelid;
         $trainingsamples->analysableid = $timesplitting->get_analysable()->get_id();
-        $trainingsamples->timesplitting = $timesplitting->get_codename();
+        $trainingsamples->timesplitting = $timesplitting->get_id();
         $trainingsamples->fileid = $file->get_id();
 
         // TODO We just need the keys, we can save some space by removing the values.
@@ -380,7 +380,7 @@ abstract class base {
         $predictionrange = new \stdClass();
         $predictionrange->modelid = $this->modelid;
         $predictionrange->analysableid = $timesplitting->get_analysable()->get_id();
-        $predictionrange->timesplitting = $timesplitting->get_codename();
+        $predictionrange->timesplitting = $timesplitting->get_id();
         $predictionrange->timecreated = time();
 
         foreach ($ranges as $rangeindex => $unused) {

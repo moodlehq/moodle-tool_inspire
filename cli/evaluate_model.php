@@ -81,8 +81,8 @@ $analyseroptions = array(
 // Evaluate its suitability to predict accurately.
 $results = $model->evaluate($analyseroptions);
 
-foreach ($results as $timesplittingcodename => $result) {
-    mtrace($timesplittingcodename . ' results');
+foreach ($results as $timesplittingid => $result) {
+    mtrace($timesplittingid . ' results');
     mtrace(' - status code: ' . $result->status);
     mtrace(' - score: ' . $result->score);
     if (!empty($result->errors)) {
@@ -97,17 +97,15 @@ if ($options['non-interactive']) {
 
     // Select a dataset, train and enable the model.
     $input = cli_input(get_string('trainandenablemodel', 'tool_inspire'));
-    $timesplittingcodename = clean_param($input, PARAM_ALPHANUMEXT);
-    while (empty($results[$timesplittingcodename])) {
+    while (!\tool_inspire\manager::is_valid($input, '\tool_inspire\local\time_splitting\base')) {
         mtrace(get_string('errorunexistingtimesplitting', 'tool_inspire'));
         $input = cli_input(get_string('trainandenablemodel', 'tool_inspire'));
-        $timesplittingcodename = clean_param($input, PARAM_ALPHANUMEXT);
     }
 
     // Set the time splitting method file and enable it.
-    $model->enable($timesplittingcodename);
+    $model->enable($input);
 
-    mtrace(get_string('trainingmodel', 'tool_inspire', $timesplittingcodename));
+    mtrace(get_string('trainingmodel', 'tool_inspire', $input));
 
     // Train the model with the selected time splitting method.
     $model->train();

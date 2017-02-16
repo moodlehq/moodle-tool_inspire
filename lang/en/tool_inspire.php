@@ -26,6 +26,7 @@ $string['enabled'] = 'Enabled';
 $string['enabledtimesplittings'] = 'Time splitting methods';
 $string['erroralreadypredict'] = '{$a} file has already been used to predict';
 $string['errordisabledmodel'] = '{$a} model is disabled and can not be used to predict';
+$string['errorinvalidtimesplitting'] = 'Invalid time splitting, please ensure you added the class fully qualified class name';
 $string['errornoenabledmodels'] = 'There are not enabled models to train';
 $string['errornoenabledandtrainedmodels'] = 'There are not enabled and trained models to predict';
 $string['errornoindicators'] = 'This model does not have any indicator';

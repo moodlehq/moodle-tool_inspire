@@ -71,8 +71,8 @@ abstract class by_course extends base {
 
             if ($status[$analysableid] === \tool_inspire\model::OK) {
                 // Later we will need to aggregate data by time splitting method.
-                foreach ($files as $timesplittingcodename => $file) {
-                    $filesbytimesplitting[$timesplittingcodename][$analysableid] = $file;
+                foreach ($files as $timesplittingid => $file) {
+                    $filesbytimesplitting[$timesplittingid][$analysableid] = $file;
                 }
             }
         }
@@ -90,16 +90,16 @@ abstract class by_course extends base {
     protected function merge_analysable_files($filesbytimesplitting, $includetarget) {
 
         $timesplittingfiles = array();
-        foreach ($filesbytimesplitting as $timesplittingcodename => $files) {
+        foreach ($filesbytimesplitting as $timesplittingid => $files) {
 
             if ($this->options['evaluation'] === true) {
                 // Delete the previous copy. Only when evaluating.
-                \tool_inspire\dataset_manager::delete_evaluation_file($this->modelid, $timesplittingcodename);
+                \tool_inspire\dataset_manager::delete_evaluation_file($this->modelid, $timesplittingid);
             }
 
             // Merge all course files into one.
-            $timesplittingfiles[$timesplittingcodename] = \tool_inspire\dataset_manager::merge_datasets($files,
-                $this->modelid, $timesplittingcodename, $this->options['evaluation'], $includetarget);
+            $timesplittingfiles[$timesplittingid] = \tool_inspire\dataset_manager::merge_datasets($files,
+                $this->modelid, $timesplittingid, $this->options['evaluation'], $includetarget);
         }
 
         return $timesplittingfiles;

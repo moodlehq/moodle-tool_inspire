@@ -31,7 +31,7 @@ abstract class base {
     /**
      * @var string
      */
-    protected $codename;
+    protected $id;
 
     /**
      * @var \tool_inspire\analysable
@@ -61,18 +61,17 @@ abstract class base {
 
     abstract protected function define_ranges();
 
+    public function get_name() {
+        return $this->get_id();
+    }
+
     /**
-     * Returns the time splitting method codename.
+     * Returns the time splitting method id.
      *
      * @return string
      */
-    public function get_codename() {
-        if (empty($this->codename)) {
-            $fullclassname = get_class($this);
-            $this->codename = substr($fullclassname, strrpos($fullclassname, '\\') + 1);
-        }
-
-        return $this->codename;
+    public function get_id() {
+        return '\\' . get_class($this);
     }
 
     public function set_analysable(\tool_inspire\analysable $analysable) {
@@ -229,7 +228,7 @@ abstract class base {
     protected function add_metadata(&$dataset, $indicators, $target = false) {
 
         $metadata = array(
-            'timesplitting' => $this->get_codename(),
+            'timesplitting' => $this->get_id(),
             // If no target the first column is the sampleid, if target the last column is the target.
             'nfeatures' => count(current($dataset)) - 1
         );
@@ -274,7 +273,7 @@ abstract class base {
     }
 
     protected function get_headers($indicators, $target = false) {
-        // 3th column will contain the indicators codenames.
+        // 3th column will contain the indicator ids.
         $headers = array();
 
         if (!$target) {
@@ -313,7 +312,7 @@ abstract class base {
     protected function validate_ranges() {
         foreach ($this->ranges as $key => $range) {
             if (!isset($this->ranges[$key]['start']) || !isset($this->ranges[$key]['end'])) {
-                throw new \coding_exception($this->get_codename() . ' time splitting method "' . $key .
+                throw new \coding_exception($this->get_id() . ' time splitting method "' . $key .
                     '" range is not fully defined. We need a start timestamp and an end timestamp.');
             }
         }

@@ -65,10 +65,10 @@ class tool_inspire_model_testcase extends advanced_testcase {
         $this->assertEquals(0, $this->model->get_model_obj()->trained);
         $this->assertEquals('', $this->model->get_model_obj()->timesplitting);
 
-        $this->model->enable('quarters');
+        $this->model->enable('\\tool_inspire\\local\\time_splitting\\quarters');
         $this->assertEquals(1, $this->model->get_model_obj()->enabled);
         $this->assertEquals(0, $this->model->get_model_obj()->trained);
-        $this->assertEquals('quarters', $this->model->get_model_obj()->timesplitting);
+        $this->assertEquals('\\tool_inspire\\local\\time_splitting\\quarters', $this->model->get_model_obj()->timesplitting);
     }
 
     public function test_model_manager() {
@@ -78,7 +78,7 @@ class tool_inspire_model_testcase extends advanced_testcase {
         $this->assertInstanceOf('\tool_inspire\local\target\binary', $this->model->get_target());
         $this->assertInstanceOf('\tool_inspire\local\analyser\base', $this->model->get_analyser(array('evaluation' => true)));
 
-        $this->model->enable('faketimesplitting');
+        $this->model->enable('\tool_inspire\local\time_splitting\quarters');
         $this->assertInstanceOf('\tool_inspire\local\analyser\courses', $this->model->get_analyser(array('evaluation' => false)));
     }
 
@@ -125,7 +125,7 @@ class tool_inspire_model_testcase extends advanced_testcase {
         $this->model->enable();
         $this->assertEquals($originaluniqueid, $this->model->get_unique_id());
 
-        $this->model->enable('asd');
+        $this->model->enable('\tool_inspire\local\time_splitting\quarters');
         $this->assertEquals($originaluniqueid, $this->model->get_unique_id());
 
     }

@@ -172,11 +172,7 @@ class model {
         if (empty($this->model->timesplitting)) {
             return false;
         }
-
-        // TODO This may get time splitting methods from different moodle components.
-        $fullclassname = '\\tool_inspire\\local\\time_splitting\\' . $this->model->timesplitting;
-
-        return \tool_inspire\manager::get_time_splitting($fullclassname);
+        return \tool_inspire\manager::get_time_splitting($this->model->timesplitting);
     }
 
     /**
@@ -208,7 +204,7 @@ class model {
 
             $result = new \stdClass();
 
-            $dataset = \tool_inspire\dataset_manager::get_evaluation_file($this->model->id, $timesplitting->get_codename());
+            $dataset = \tool_inspire\dataset_manager::get_evaluation_file($this->model->id, $timesplitting->get_id());
 
             if (!$dataset) {
 
@@ -216,11 +212,11 @@ class model {
                 $result->score = 0;
                 $result->errors = array('Was not possible to create a dataset for this time splitting method');
 
-                $results[$timesplitting->get_codename()] = $result;
+                $results[$timesplitting->get_id()] = $result;
                 continue;
             }
 
-            $outputdir = $this->get_output_dir($timesplitting->get_codename());
+            $outputdir = $this->get_output_dir($timesplitting->get_id());
             $predictor = \tool_inspire\manager::get_predictions_processor();
 
             // Evaluate the dataset, the deviation we accept in the results depends on the amount of iterations.
@@ -233,7 +229,7 @@ class model {
             $result->score = $predictorresult->score;
             $result->errors = $predictorresult->errors;
 
-            $results[$timesplitting->get_codename()] = $result;
+            $results[$timesplitting->get_id()] = $result;
         }
 
         return $results;
@@ -389,11 +385,20 @@ class model {
         return $context;
     }
 
-    public function enable($timesplittingcodename = false) {
+    public function enable($timesplittingid = false) {
         global $DB;
 
-        if ($timesplittingcodename) {
-            $this->model->timesplitting = $timesplittingcodename;
+        if ($timesplittingid) {
+
+            if (!\tool_inspire\manager::is_valid($timesplittingid, '\tool_inspire\local\time_splitting\base')) {
+                throw new \moodle_exception('errorinvalidtimesplitting', 'tool_inspire');
+            }
+
+            if (substr($timesplittingid, 0, 1) !== '\\') {
+                throw new \moodle_exception('errorinvalidtimesplitting', 'tool_inspire');
+            }
+
+            $this->model->timesplitting = $timesplittingid;
             $this->model->timemodified = time();
         }
         $this->model->enabled = 1;

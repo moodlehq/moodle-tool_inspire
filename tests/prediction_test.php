@@ -41,11 +41,11 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
 
     /**
      * @dataProvider provider_training_and_prediction
-     * @param string $timesplittingcodename
+     * @param string $timesplittingid
      * @param int $npredictedranges
      * @return void
      */
-    public function test_training_and_prediction($timesplittingcodename, $npredictedranges, $predictionsprocessorclass) {
+    public function test_training_and_prediction($timesplittingid, $npredictedranges, $predictionsprocessorclass) {
         global $DB;
 
         $ncourses = 10;
@@ -75,7 +75,7 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
 
         $modelobj = $this->add_perfect_model();
         $model = new \tool_inspire\model($modelobj);
-        $model->enable($timesplittingcodename);
+        $model->enable($timesplittingid);
 
         // No samples trained yet.
         $this->assertEquals(0, $DB->count_records('tool_inspire_train_samples', array('modelid' => $model->get_id())));
@@ -111,11 +111,11 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
         // $course1 predictions should be 1 == 'a', $course2 predictions should be 0 == 'b'.
         $correct = array($course1->id => 1, $course2->id => 0);
         foreach ($result->predictions as $sampleprediction) {
-            list($sampleid, $prediction) = $sampleprediction;
-            list($sampleid, $rangeindex) = $model->get_time_splitting()->infer_sample_info($sampleid);
+            list($uniquesampleid, $prediction) = $sampleprediction;
+            list($uniquesampleid, $rangeindex) = $model->get_time_splitting()->infer_sample_info($uniquesampleid);
 
             // The range index is not important here, both ranges prediction will be the same.
-            $this->assertEquals($correct[$sampleid], $prediction);
+            $this->assertEquals($correct[$uniquesampleid], $prediction);
         }
 
         // 2 ranges will be predicted.
@@ -137,8 +137,8 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
 
     public function provider_training_and_prediction() {
         $cases = array(
-            'no_splitting' => array('no_splitting', 1),
-            'quarters' => array('quarters', 2)
+            'no_splitting' => array('\tool_inspire\local\time_splitting\no_splitting', 1),
+            'quarters' => array('\tool_inspire\local\time_splitting\quarters', 2)
         );
 
         // We need to test all system prediction processors.
@@ -154,7 +154,10 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
     public function test_evaluation($modelquality, $ncourses, $expected, $predictionsprocessorclass) {
         $this->resetAfterTest(true);
 
-        set_config('timesplittings', 'weekly,single_range,quarters', 'tool_inspire');
+        $sometimesplittings = '\tool_inspire\local\time_splitting\weekly,' .
+            '\tool_inspire\local\time_splitting\single_range,' .
+            '\tool_inspire\local\time_splitting\quarters';
+        set_config('timesplittings', $sometimesplittings, 'tool_inspire');
 
         if ($modelquality === 'perfect') {
             $modelobj = $this->add_perfect_model();
@@ -205,10 +208,10 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
                 'ncourses' => 10,
                 'expectedresults' => array(
                     // The course duration is too much to be processed by in weekly basis.
-                    'weekly' => \tool_inspire\model::NO_DATASET,
+                    '\tool_inspire\local\time_splitting\weekly' => \tool_inspire\model::NO_DATASET,
                     // 10 samples is not enough to process anything.
-                    'single_range' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA & \tool_inspire\model::EVALUATE_LOW_SCORE,
-                    'quarters' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA & \tool_inspire\model::EVALUATE_LOW_SCORE,
+                    '\tool_inspire\local\time_splitting\single_range' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA & \tool_inspire\model::EVALUATE_LOW_SCORE,
+                    '\tool_inspire\local\time_splitting\quarters' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA & \tool_inspire\model::EVALUATE_LOW_SCORE,
                 )
             ),
             'bad' => array(
@@ -216,9 +219,9 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
                 'ncourses' => 50,
                 'expectedresults' => array(
                     // The course duration is too much to be processed by in weekly basis.
-                    'weekly' => \tool_inspire\model::NO_DATASET,
-                    'single_range' => \tool_inspire\model::EVALUATE_LOW_SCORE,
-                    'quarters' => \tool_inspire\model::EVALUATE_LOW_SCORE,
+                    '\tool_inspire\local\time_splitting\weekly' => \tool_inspire\model::NO_DATASET,
+                    '\tool_inspire\local\time_splitting\single_range' => \tool_inspire\model::EVALUATE_LOW_SCORE,
+                    '\tool_inspire\local\time_splitting\quarters' => \tool_inspire\model::EVALUATE_LOW_SCORE,
                 )
             ),
             'good' => array(
@@ -226,9 +229,9 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
                 'ncourses' => 50,
                 'expectedresults' => array(
                     // The course duration is too much to be processed by in weekly basis.
-                    'weekly' => \tool_inspire\model::NO_DATASET,
-                    'single_range' => \tool_inspire\model::OK,
-                    'quarters' => \tool_inspire\model::OK,
+                    '\tool_inspire\local\time_splitting\weekly' => \tool_inspire\model::NO_DATASET,
+                    '\tool_inspire\local\time_splitting\single_range' => \tool_inspire\model::OK,
+                    '\tool_inspire\local\time_splitting\quarters' => \tool_inspire\model::OK,
                 )
             )
         );

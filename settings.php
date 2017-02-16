@@ -46,7 +46,7 @@ if ($hassiteconfig) {
     $timesplittingoptions = array();
     $timesplittingdefaults = array();
     foreach ($alltimesplittings as $key => $timesplitting) {
-        $timesplittingoptions[$key] = $timesplitting->get_codename();
+        $timesplittingoptions[$key] = $timesplitting->get_name();
         $timesplittingdefaults[] = $key;
     }
     $settings->add(new admin_setting_configmultiselect('tool_inspire/timesplittings',
