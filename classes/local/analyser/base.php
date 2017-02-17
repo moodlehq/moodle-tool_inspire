@@ -143,7 +143,7 @@ abstract class base {
         $message = null;
 
         // Target instances scope is per-analysable (it can't be lower as calculations run once per analysable, not range).
-        $target = $this->target::instance();
+        $target = forward_static_call(array($this->target, 'instance'));
 
         // We need to check that the analysable is valid for the target even if we don't include targets
         // as we still need to discard invalid analysables for the target.

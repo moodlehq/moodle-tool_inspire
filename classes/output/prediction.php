@@ -80,7 +80,7 @@ class prediction implements \renderable, \templatable {
             }
 
             $obj = new \stdClass();
-            $obj->name = $calculation->indicator::get_name($calculation->subtype);
+            $obj->name = forward_static_call(array($calculation->indicator, 'get_name'), $calculation->subtype);
             if ($calculation->value !== null) {
                 $obj->displayvalue = $calculation->indicator->get_display_value($calculation->value, $calculation->subtype);
                 $obj->style = $calculation->indicator->get_value_style($calculation->value, $calculation->subtype);
