@@ -35,6 +35,10 @@ defined('MOODLE_INTERNAL') || die();
  */
 class deciles extends base {
 
+    public function get_name() {
+        return get_string('timesplitting:deciles', 'tool_inspire');
+    }
+
     protected function define_ranges() {
         $rangeduration = floor(($this->analysable->get_end() - $this->analysable->get_start()) / 10);
 

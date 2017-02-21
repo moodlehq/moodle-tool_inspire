@@ -28,6 +28,10 @@ defined('MOODLE_INTERNAL') || die();
 
 class single_range extends base {
 
+    public function get_name() {
+        return get_string('timesplitting:singlerange', 'tool_inspire');
+    }
+
     protected function define_ranges() {
         return [
             [

@@ -28,6 +28,10 @@ defined('MOODLE_INTERNAL') || die();
 
 class weekly_accum extends base {
 
+    public function get_name() {
+        return get_string('timesplitting:weeklyaccum', 'tool_inspire');
+    }
+
     public function is_valid_analysable(\tool_inspire\analysable $analysable) {
         $diff = $analysable->get_end() - $analysable->get_start();
         $nweeks = round($diff / WEEKSECS);

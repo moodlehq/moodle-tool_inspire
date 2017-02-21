@@ -30,6 +30,10 @@ defined('MOODLE_INTERNAL') || die();
 
 class no_splitting extends base {
 
+    public function get_name() {
+        return get_string('timesplitting:nosplitting', 'tool_inspire');
+    }
+
     public function ready_to_predict($range) {
         return true;
     }
