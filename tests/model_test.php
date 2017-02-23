@@ -71,6 +71,18 @@ class tool_inspire_model_testcase extends advanced_testcase {
         $this->assertEquals('\\tool_inspire\\local\\time_splitting\\quarters', $this->model->get_model_obj()->timesplitting);
     }
 
+    public function test_create() {
+        $this->resetAfterTest(true);
+
+        $target = \tool_inspire\manager::get_target('\tool_inspire\local\target\course_dropout');
+        $indicators = array(
+            \tool_inspire\manager::get_indicator('\tool_inspire\local\indicator\any_write_action'),
+            \tool_inspire\manager::get_indicator('\tool_inspire\local\indicator\read_actions')
+        );
+        $model = \tool_inspire\model::create($target, $indicators, 0.5);
+        $this->assertInstanceOf('\tool_inspire\model', $model);
+    }
+
     public function test_model_manager() {
         $this->resetAfterTest(true);
 

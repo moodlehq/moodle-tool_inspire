@@ -72,16 +72,16 @@ class model {
     /**
      * __construct
      *
-     * @param int|stdClass $model
+     * @param int|stdClass $modelobj
      * @return void
      */
-    public function __construct($model) {
+    public function __construct($modelobj) {
         global $DB;
 
-        if (is_scalar($model)) {
-            $model = $DB->get_record('tool_inspire_models', array('id' => $model));
+        if (is_scalar($modelobj)) {
+            $modelobj = $DB->get_record('tool_inspire_models', array('id' => $modelobj));
         }
-        $this->model = $model;
+        $this->model = $modelobj;
     }
 
     public function get_id() {
@@ -173,6 +173,45 @@ class model {
             return false;
         }
         return \tool_inspire\manager::get_time_splitting($this->model->timesplitting);
+    }
+
+    public static function create(\tool_inspire\local\target\base $target, array $indicators, $evaluationminscore) {
+        global $USER, $DB;
+
+        $indicatorclasses = array();
+        foreach ($indicators as $indicator) {
+            if (!\tool_inspire\manager::is_valid($indicator, '\tool_inspire\local\indicator\base')) {
+                if (!is_object($indicator) && !is_scalar($indicator)) {
+                    $indicator = strval($indicator);
+                } else if (is_object($indicator)) {
+                    $indicator = get_class($indicator);
+                }
+                throw new \moodle_exception('errorinvalidindicator', 'tool_inspire', '', $indicator);
+            }
+            $indicatorclasses[] = '\\' . get_class($indicator);
+        }
+
+        if (!is_float($evaluationminscore) && $evaluationminscore != 0 && $evaluationminscore != 1) {
+            throw new \moodle_exception('errorminscore', 'tool_inspire');
+        } else if ($evaluationminscore > 1 || $evaluationminscore <= 0) {
+            // = 0 is not documented
+            throw new \moodle_exception('errorminscore', 'tool_inspire');
+        }
+
+        $modelobj = new \stdClass();
+        $modelobj->target = '\\' . get_class($target);
+        $modelobj->indicators = json_encode($indicators);
+        $modelobj->evaluationminscore = $evaluationminscore;
+        $modelobj->timecreated = time();
+        $modelobj->timemodified = time();
+        $modelobj->usermodified = $USER->id;
+
+        $id = $DB->insert_record('tool_inspire_models', $modelobj);
+
+        // Get db defaults.
+        $modelobj = $DB->get_record('tool_inspire_models', array('id' => $id), '*', MUST_EXIST);
+
+        return new self($modelobj);
     }
 
     /**
