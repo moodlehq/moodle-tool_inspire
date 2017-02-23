@@ -15,19 +15,19 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Cognitive depth indicator - folder.
+ * Cognitive depth indicator - feedback.
  *
  * @package   tool_inspire
  * @copyright 2017 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace tool_inspire\local\indicator\folder;
+namespace tool_inspire\local\indicator\feedback;
 
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Cognitive depth indicator - folder.
+ * Cognitive depth indicator - feedback.
  *
  * @package   tool_inspire
  * @copyright 2017 David Monllao {@link http://www.davidmonllao.com}
@@ -36,15 +36,14 @@ defined('MOODLE_INTERNAL') || die();
 class cognitive_depth extends \tool_inspire\local\indicator\activity_cognitive_depth {
 
     public static function get_name() {
-        return get_string('indicator:cognitivedepthfolder', 'tool_inspire');
+        return get_string('indicator:cognitivedepthfeedback', 'tool_inspire');
     }
 
     protected function get_activity_type() {
-        return 'folder';
+        return 'feedback';
     }
 
     public function calculate_sample($sampleid, $tablename, $starttime = false, $endtime = false) {
-        // Folder activity has cognitive depth level 1.
         return $this->activities_level_1($sampleid, $tablename, $starttime, $endtime);
     }
 }
