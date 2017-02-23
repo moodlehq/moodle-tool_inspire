@@ -5,4 +5,4 @@ from BinaryClassifierSkflow import BinaryClassifierSkflow
 class BinaryClassifierDNN(BinaryClassifierSkflow):
 
     def get_classifier(self, X, y):
-        return skflow.TensorFlowDNNClassifier(hidden_units=[10, 20, 10], n_classes=2)
+        return skflow.TensorFlowDNNClassifier(hidden_units=[5, 3], n_classes=2)
