@@ -1,9 +1,6 @@
 import sys
 import json
 
-# From scratch - neural network.
-from BinaryClassifierNN import BinaryClassifierNN
-
 # Sklearn binary classifier - logistic regression.
 from BinaryClassifier import BinaryClassifier
 
@@ -37,8 +34,6 @@ Received: ' + ' '.join(sys.argv)]
 modelid = sys.argv[1]
 directory = sys.argv[2]
 
-# From scratch - neural network.
-#binary_classifier = BinaryClassifierNN(modelid, directory)
 # Sklearn binary classifier - logistic regression.
 binary_classifier = BinaryClassifier(modelid, directory)
 # TensorFlow binary classifier - NN.
