@@ -26,6 +26,7 @@ namespace tool_inspire\local\target;
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once($CFG->dirroot . '/course/lib.php');
 require_once($CFG->dirroot . '/lib/gradelib.php');
 require_once($CFG->dirroot . '/lib/completionlib.php');
 require_once($CFG->dirroot . '/completion/completion_completion.php');
@@ -104,6 +105,11 @@ class course_dropout extends binary {
             return 'No students';
         }
 
+        if (!course_format_uses_sections($course->get_course_data()->format)) {
+            // We can not split activities in time ranges.
+            return 'No course sections';
+        }
+
         // Ongoing courses data can not be used to train.
         if ($fortraining && !$course->is_finished()) {
             return 'Course is not yet finished';
@@ -144,16 +150,16 @@ class course_dropout extends binary {
 
         // Not a valid target if there is no course grade item.
         $this->coursegradeitem = \grade_item::fetch(array('itemtype' => 'course', 'courseid' => $course->get_id()));
-        if (empty($this->coursegradeitems)) {
+        if (empty($this->coursegradeitem)) {
             $nogradeitem = true;
         }
 
-        if ($this->coursegradeitem->gradetype !== GRADE_TYPE_VALUE) {
-            $nogradevalue = true;
+        if ($nocompletion && $nocompetencies && $nogradeitem) {
+            return 'No course pass method available (no completion nor competencies nor course grades)';
         }
 
-        if ($nocompletion === true && $nocompetencies === true && ($nogradeitem || $nogradevalue)) {
-            return 'No course pass method available (no completion nor competencies or course grades';
+        if ($this->coursegradeitem->gradetype != GRADE_TYPE_VALUE) {
+            return 'No course pass method available (no completion nor competencies nor course grades with numeric values)';
         }
 
         return true;
