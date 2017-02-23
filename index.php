@@ -30,7 +30,6 @@ admin_externalpage_setup('inspiremodels', '', null, '', array('pagelayout'=>'rep
 $models = \tool_inspire\manager::get_all_models();
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('pluginname', 'tool_inspire'));
 
 $renderable = new \tool_inspire\output\models_list($models);
 echo $PAGE->get_renderer('tool_inspire')->render($renderable);

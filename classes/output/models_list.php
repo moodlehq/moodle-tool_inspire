@@ -53,9 +53,32 @@ class models_list implements \renderable, \templatable {
 
         $data->models = array();
         foreach ($this->models as $model) {
-            $model = $model->export();
-            $model->timemodified = userdate($model->timemodified);
-            $data->models[] = $model;
+            $modeldata = $model->export();
+            $modeldata->timemodified = userdate($modeldata->timemodified);
+
+            $predictioncontexts = $model->get_predictions_contexts();
+            if ($predictioncontexts) {
+
+                foreach ($predictioncontexts as $contextid => $unused) {
+                    // We prepare this to be used as single_select template options.
+                    $context = \context::instance_by_id($contextid);
+                    if (empty($context)) {
+                        // The context may have been deleted.
+                        unset($predictioncontexts[$contextid]);
+                        continue;
+                    }
+                    $predictioncontexts[$contextid] = shorten_text($context->get_context_name(true, true), 90);
+                }
+                \core_collator::asort($predictioncontexts);
+
+                if (!empty($predictioncontexts)) {
+                    $url = new \moodle_url('/admin/tool/inspire/insights.php', array('modelid' => $model->get_id()));
+                    $singleselect = new \single_select($url, 'contextid', $predictioncontexts);
+                    $modeldata->predictions = $singleselect->export_for_template($output);
+                }
+            }
+
+            $data->models[] = $modeldata;
         }
 
         return $data;

@@ -45,6 +45,7 @@
             <th scope="col">{{#str}}modeltimesplitting, tool_inspire{{/str}}</th>
             <th scope="col">{{#str}}evaluationminscore, tool_inspire{{/str}}</th>
             <th scope="col">{{#str}}timemodified, tool_inspire{{/str}}</th>
+            <th scope="col">{{#str}}viewpredictions, tool_inspire{{/str}}</th>
         </tr>
     </thead>
     <tbody>
@@ -71,6 +72,14 @@
                 {{#evaluationminscore}} {{evaluationminscore}} {{/evaluationminscore}}
             </td>
             <td>{{timemodified}}</td>
+            <td>
+                {{#predictions}}
+                    {{> core/single_select }}
+                {{/predictions}}
+                {{^predictions}}
+                    {{#str}}nopredictionsyet, tool_inspire{{/str}}
+                {{/predictions}}
+            </td>
         </tr>
     {{/models}}
     </tbody>

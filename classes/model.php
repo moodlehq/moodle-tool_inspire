@@ -417,6 +417,13 @@ class model {
         $DB->update_record('tool_inspire_models', $this->model);
     }
 
+    public function get_predictions_contexts() {
+        global $DB;
+
+        $sql = "SELECT DISTINCT contextid FROM {tool_inspire_predictions} WHERE modelid = ?";
+        return $DB->get_records_sql($sql, array($this->model->id));
+    }
+
     /**
      * get_predictions
      *
@@ -439,7 +446,7 @@ class model {
                  WHERE tip.modelid = ? and tip.contextid = ?";
         $params = array($this->model->id, $context->id, $this->model->id, $context->id);
         if (!$predictions = $DB->get_records_sql($sql, $params)) {
-            return false;
+            return array();
         }
 
         // Get predicted samples' ids.
@@ -525,6 +532,7 @@ class model {
     public function export() {
         $data = clone $this->model;
         $data->target = $this->get_target()->get_name();
+        $data->timesplitting = $this->get_time_splitting()->get_name();
         $data->indicators = array();
         foreach ($this->get_indicators() as $indicator) {
             $data->indicators[] = $indicator->get_name();

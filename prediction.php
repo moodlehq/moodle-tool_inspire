@@ -60,7 +60,6 @@ $insightinfo->insightname = $model->get_target()->get_name();
 $title = get_string('insightinfo', 'tool_inspire', $insightinfo);
 
 $PAGE->set_title($title);
-$PAGE->set_heading($title);
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading($title);

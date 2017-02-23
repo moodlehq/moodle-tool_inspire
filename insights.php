@@ -57,7 +57,6 @@ $PAGE->set_title($title);
 $PAGE->set_heading($title);
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading($title);
 
 $renderable = new \tool_inspire\output\predictions_list($model, $context);
 $renderer = $PAGE->get_renderer('tool_inspire');
