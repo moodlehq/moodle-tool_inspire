@@ -37,14 +37,15 @@ if ($context->contextlevel === CONTEXT_MODULE) {
     require_login($coursecontext->instanceid);
 } else {
     require_login();
+    $PAGE->set_context($context);
 }
 
 require_capability('tool/inspire:listinsights', $context);
 
-$model = new \tool_inspire\model($modelid);
-
 $params = array('modelid' => $modelid, 'contextid' => $contextid);
 $url = new \moodle_url('/admin/tool/inspire/insights.php', $params);
+
+$model = new \tool_inspire\model($modelid);
 
 $insightinfo = new stdClass();
 $insightinfo->contextname = $context->get_context_name();
@@ -53,6 +54,17 @@ $title = get_string('insightinfo', 'tool_inspire', $insightinfo);
 
 $PAGE->set_url($url);
 $PAGE->set_pagelayout('report');
+
+if (!$model->is_enabled()) {
+    // We don't want to disclose the name of the model if it has not been enabled.
+    $PAGE->set_title($insightinfo->contextname);
+    $PAGE->set_heading($insightinfo->contextname);
+    echo $OUTPUT->header();
+    echo $OUTPUT->notification(get_string('disabledmodel', 'tool_inspire'), \core\output\notification::NOTIFY_INFO);
+    echo $OUTPUT->footer();
+    exit(0);
+}
+
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
 

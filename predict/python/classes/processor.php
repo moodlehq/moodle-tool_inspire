@@ -105,7 +105,7 @@ class processor implements \tool_inspire\predictor {
         return $resultobj;
     }
 
-    public function evaluate($uniqueid, $minscore, $resultsdeviation, $niterations, \stored_file $dataset, $outputdir) {
+    public function evaluate($uniqueid, $resultsdeviation, $niterations, \stored_file $dataset, $outputdir) {
 
         $datasetpath = $this->get_file_path($dataset);
 
@@ -115,7 +115,7 @@ class processor implements \tool_inspire\predictor {
             escapeshellarg($uniqueid) . ' ' .
             escapeshellarg($outputdir) . ' ' .
             escapeshellarg($datasetpath) . ' ' .
-            escapeshellarg($minscore) . ' ' .
+            escapeshellarg(0.6) . ' ' .
             escapeshellarg($resultsdeviation) . ' ' .
             escapeshellarg($niterations);
 

@@ -93,23 +93,27 @@ foreach ($results as $timesplittingid => $result) {
     }
 }
 
-if ($options['non-interactive']) {
+if ($options['non-interactive'] === false) {
 
     // Select a dataset, train and enable the model.
-    $input = cli_input(get_string('trainandenablemodel', 'tool_inspire'));
-    while (!\tool_inspire\manager::is_valid($input, '\tool_inspire\local\time_splitting\base')) {
+    $input = cli_input(get_string('clienablemodel', 'tool_inspire'));
+    while (!\tool_inspire\manager::is_valid($input, '\tool_inspire\local\time_splitting\base') && $input !== 'none') {
         mtrace(get_string('errorunexistingtimesplitting', 'tool_inspire'));
-        $input = cli_input(get_string('trainandenablemodel', 'tool_inspire'));
+        $input = cli_input(get_string('clienablemodel', 'tool_inspire'));
+    }
+
+    if ($input === 'none') {
+        exit(0);
     }
 
     // Set the time splitting method file and enable it.
     $model->enable($input);
 
-    mtrace(get_string('trainingmodel', 'tool_inspire', $input));
+    mtrace(get_string('executingmodel', 'tool_inspire'));
 
-    // Train the model with the selected time splitting method.
+    // Train the model with the selected time splitting method and start predicting.
     $model->train();
+    $model->predict();
 }
 
-cli_heading(get_string('success'));
 exit(0);

@@ -90,7 +90,7 @@ class BinaryClassifier(Classifier):
         return result
 
 
-    def evaluate_dataset(self, filepath, min_score=0.7, accepted_deviation=0.02, n_test_runs=100):
+    def evaluate_dataset(self, filepath, min_score=0.6, accepted_deviation=0.02, n_test_runs=100):
         # TODO Move this to Classifier and make it multiple classes compatible.
 
         [self.X, self.y] = self.get_labelled_samples(filepath)

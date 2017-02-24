@@ -118,6 +118,8 @@ class model {
             $instance = \tool_inspire\manager::get_indicator($fullclassname);
             if ($instance) {
                 $this->indicators[$fullclassname] = $instance;
+            } else {
+                debugging('Can\'t load ' . $fullclassname . ' indicator', DEBUG_DEVELOPER);
             }
         }
 
@@ -175,9 +177,10 @@ class model {
         return \tool_inspire\manager::get_time_splitting($this->model->timesplitting);
     }
 
-    public static function create(\tool_inspire\local\target\base $target, array $indicators, $evaluationminscore) {
+    public static function create(\tool_inspire\local\target\base $target, array $indicators) {
         global $USER, $DB;
 
+        // What we want to check and store are the indicator classes not the keys.
         $indicatorclasses = array();
         foreach ($indicators as $indicator) {
             if (!\tool_inspire\manager::is_valid($indicator, '\tool_inspire\local\indicator\base')) {
@@ -191,17 +194,9 @@ class model {
             $indicatorclasses[] = '\\' . get_class($indicator);
         }
 
-        if (!is_float($evaluationminscore) && $evaluationminscore != 0 && $evaluationminscore != 1) {
-            throw new \moodle_exception('errorminscore', 'tool_inspire');
-        } else if ($evaluationminscore > 1 || $evaluationminscore <= 0) {
-            // = 0 is not documented
-            throw new \moodle_exception('errorminscore', 'tool_inspire');
-        }
-
         $modelobj = new \stdClass();
         $modelobj->target = '\\' . get_class($target);
-        $modelobj->indicators = json_encode($indicators);
-        $modelobj->evaluationminscore = $evaluationminscore;
+        $modelobj->indicators = json_encode($indicatorclasses);
         $modelobj->timecreated = time();
         $modelobj->timemodified = time();
         $modelobj->usermodified = $USER->id;
@@ -212,6 +207,26 @@ class model {
         $modelobj = $DB->get_record('tool_inspire_models', array('id' => $id), '*', MUST_EXIST);
 
         return new self($modelobj);
+    }
+
+    public function update($enabled, $indicators, $timesplitting) {
+        global $USER, $DB;
+
+        if ($enabled != $this->model->enabled) {
+            // TODO Purge.
+        }
+
+        if ($timesplitting != $this->model->timesplitting) {
+            // TODO Purge.
+        }
+
+        $this->model->enabled = $enabled;
+        $this->model->indicators = json_encode($indicators);
+        $this->model->timesplitting = $timesplitting;
+        $this->model->timemodified = time();
+        $this->model->usermodified = $USER->id;
+
+        $DB->update_record('tool_inspire_models', $this->model);
     }
 
     /**
@@ -261,12 +276,14 @@ class model {
             // Evaluate the dataset, the deviation we accept in the results depends on the amount of iterations.
             $resultsdeviation = 0.02;
             $niterations = 100;
-            $predictorresult = $predictor->evaluate($this->model->id, $this->model->evaluationminscore,
+            $predictorresult = $predictor->evaluate($this->model->id,
                 $resultsdeviation, $niterations, $dataset, $outputdir);
 
             $result->status = $predictorresult->status;
             $result->score = $predictorresult->score;
             $result->errors = $predictorresult->errors;
+
+            $result->logid = $this->log_result($timesplitting->get_id(), $result);
 
             $results[$timesplitting->get_id()] = $result;
         }
@@ -449,6 +466,10 @@ class model {
         $this->uniqueid = null;
     }
 
+    public function is_enabled() {
+        return (bool)$this->model->enabled;
+    }
+
     public function mark_as_trained() {
         global $DB;
 
@@ -571,7 +592,11 @@ class model {
     public function export() {
         $data = clone $this->model;
         $data->target = $this->get_target()->get_name();
-        $data->timesplitting = $this->get_time_splitting()->get_name();
+
+        if ($timesplitting = $this->get_time_splitting()) {
+            $data->timesplitting = $timesplitting->get_name();
+        }
+
         $data->indicators = array();
         foreach ($this->get_indicators() as $indicator) {
             $data->indicators[] = $indicator->get_name();
@@ -588,5 +613,21 @@ class model {
         $usedfile->action = $action;
         $usedfile->time = time();
         $DB->insert_record('tool_inspire_used_files', $usedfile);
+    }
+
+    protected function log_result($timesplittingid, $result) {
+        global $DB, $USER;
+
+        $log = new \stdClass();
+        $log->modelid = $this->get_id();
+        $log->target = $this->model->target;
+        $log->indicators = $this->model->indicators;
+        $log->timesplitting = $timesplittingid;
+        $log->score = $result->score;
+        $log->result = json_encode($result);
+        $log->timecreated = time();
+        $log->usermodified = $USER->id;
+
+        return $DB->insert_record('tool_inspire_models_log', $log);
     }
 }

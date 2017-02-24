@@ -137,7 +137,7 @@ class processor implements \tool_inspire\predictor {
         return $resultobj;
     }
 
-    public function evaluate($uniqueid, $minscore, $resultsdeviation, $niterations, \stored_file $dataset, $outputdir) {
+    public function evaluate($uniqueid, $resultsdeviation, $niterations, \stored_file $dataset, $outputdir) {
 
         $fh = $dataset->get_content_file_handle();
 
@@ -176,10 +176,10 @@ class processor implements \tool_inspire\predictor {
         }
 
         // Let's fill the results changing the returned status code depending on the phi-related calculated metrics.
-        return $this->get_evaluation_result_object($phis, $resultsdeviation, $minscore);
+        return $this->get_evaluation_result_object($phis, $resultsdeviation);
     }
 
-    protected function get_evaluation_result_object($phis, $resultsdeviation, $minscore) {
+    protected function get_evaluation_result_object($phis, $resultsdeviation) {
 
         // We convert phi (from -1 to 1) to a value between 0 and 1.
         $avgphi = \Phpml\Math\Statistic\Mean::arithmetic($phis);
@@ -204,10 +204,9 @@ class processor implements \tool_inspire\predictor {
                 'if this model is valid. Model deviation = ' . $stddev . ', accepted deviation = ' . $resultsdeviation;
         }
 
-        if ($resultobj->score < $minscore) {
+        if ($resultobj->score < 0.6) {
             $resultobj->status = $resultobj->status + \tool_inspire\model::EVALUATE_LOW_SCORE;
-            $resultobj->errors[] = 'The model is not good enough. Model score = ' . $resultobj->score .
-                ', minimum score = ' . $minscore;
+            $resultobj->errors[] = 'The model may not be good enough. Model score = ' . $resultobj->score;
         }
 
         return $resultobj;

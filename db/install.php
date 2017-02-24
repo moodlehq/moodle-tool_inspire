@@ -30,23 +30,10 @@ defined('MOODLE_INTERNAL') || die();
  * @return void
  */
 function xmldb_tool_inspire_install() {
-    global $DB, $USER;
 
     // TODO All of them for the moment, we will define a limited set once ready to release.
+    $target = \tool_inspire\manager::get_target('\tool_inspire\local\target\course_dropout');
     $indicators = \tool_inspire\manager::get_all_indicators();
 
-    $model = new stdClass();
-    $model->target = '\tool_inspire\local\target\course_dropout';
-    $model->indicators = json_encode(array_keys($indicators));
-
-    // Standard 0.7 score to validate the model.
-    $model->evaluationminscore = 0.7;
-
-    // We don't require high prediction scores, if there is a risk we consider it valid enough to perform further action.
-    $model->predictionminscore = 0.6;
-    $model->timecreated = time();
-    $model->timemodified = time();
-    $model->usermodified = $USER->id;
-
-    $DB->insert_record('tool_inspire_models', $model);
+    \tool_inspire\model::create($target, $indicators);
 }

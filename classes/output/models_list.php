@@ -54,8 +54,8 @@ class models_list implements \renderable, \templatable {
         $data->models = array();
         foreach ($this->models as $model) {
             $modeldata = $model->export();
-            $modeldata->timemodified = userdate($modeldata->timemodified);
 
+            // Model predictions list.
             $predictioncontexts = $model->get_predictions_contexts();
             if ($predictioncontexts) {
 
@@ -77,6 +77,37 @@ class models_list implements \renderable, \templatable {
                     $modeldata->predictions = $singleselect->export_for_template($output);
                 }
             }
+
+            // Actions.
+            $actionsmenu = new \action_menu();
+            $actionsmenu->set_menu_trigger(get_string('edit'));
+            $actionsmenu->set_owner_selector('model-actions-' . $model->get_id());
+            $actionsmenu->set_alignment(\action_menu::TL, \action_menu::BL);
+
+            // Edit model.
+            $url = new \moodle_url('model.php', array('action' => 'edit', 'id' => $model->get_id()));
+            $icon = new \action_menu_link_secondary($url, new \pix_icon('t/edit', get_string('edit')), get_string('edit'));
+            $actionsmenu->add($icon);
+
+            // Evaluate model.
+            $url = new \moodle_url('model.php', array('action' => 'evaluate', 'id' => $model->get_id()));
+            $icon = new \action_menu_link_secondary($url, new \pix_icon('i/calc', get_string('evaluate', 'tool_inspire')),
+                get_string('evaluate', 'tool_inspire'));
+            $actionsmenu->add($icon);
+
+            if ($modeldata->enabled && !empty($modeldata->timesplitting)) {
+                $url = new \moodle_url('model.php', array('action' => 'execute', 'id' => $model->get_id()));
+                $icon = new \action_menu_link_secondary($url, new \pix_icon('i/marker',
+                    get_string('executemodel', 'tool_inspire')), get_string('executemodel', 'tool_inspire'));
+                $actionsmenu->add($icon);
+            }
+
+            $url = new \moodle_url('model.php', array('action' => 'log', 'id' => $model->get_id()));
+            $icon = new \action_menu_link_secondary($url, new \pix_icon('i/report', get_string('viewlog', 'tool_inspire')),
+                get_string('viewlog', 'tool_inspire'));
+            $actionsmenu->add($icon);
+
+            $modeldata->actions = $actionsmenu->export_for_template($output);
 
             $data->models[] = $modeldata;
         }

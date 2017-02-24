@@ -40,15 +40,13 @@ if ($context->contextlevel === CONTEXT_MODULE) {
     require_login($coursecontext->instanceid);
 } else {
     require_login();
+    $PAGE->set_context($context);
 }
 
 require_capability('tool/inspire:listinsights', $context);
 
 $params = array('id' => $predictionobj->id);
 $url = new \moodle_url('/admin/tool/inspire/prediction.php', $params);
-
-$PAGE->set_url($url);
-$PAGE->set_pagelayout('report');
 
 $model = new \tool_inspire\model($predictionobj->modelid);
 $sampledata = $model->prediction_sample_data($predictionobj);
@@ -59,10 +57,23 @@ $insightinfo->contextname = $context->get_context_name();
 $insightinfo->insightname = $model->get_target()->get_name();
 $title = get_string('insightinfo', 'tool_inspire', $insightinfo);
 
+$PAGE->set_url($url);
+$PAGE->set_pagelayout('report');
+
+if (!$model->is_enabled()) {
+    // We don't want to disclose the name of the model if it has not been enabled.
+    $PAGE->set_title($insightinfo->contextname);
+    $PAGE->set_heading($insightinfo->contextname);
+    echo $OUTPUT->header();
+    echo $OUTPUT->notification(get_string('disabledmodel', 'tool_inspire'), \core\output\notification::NOTIFY_INFO);
+    echo $OUTPUT->footer();
+    exit(0);
+}
+
 $PAGE->set_title($title);
+$PAGE->set_heading($title);
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading($title);
 
 $renderable = new \tool_inspire\output\prediction($prediction, $model);
 $renderer = $PAGE->get_renderer('tool_inspire');

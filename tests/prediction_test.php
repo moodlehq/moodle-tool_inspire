@@ -246,7 +246,6 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
         $modelobj = new stdClass();
         $modelobj->target = 'test_target_shortname';
         $modelobj->indicators = json_encode($indicators);
-        $modelobj->evaluationminscore = 0.7;
         $modelobj->timecreated = time();
         $modelobj->timemodified = time();
         $modelobj->usermodified = $USER->id;
@@ -264,7 +263,6 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
         $modelobj = new stdClass();
         $modelobj->target = 'test_target_shortname';
         $modelobj->indicators = json_encode($indicators);
-        $modelobj->evaluationminscore = 0.7;
         $modelobj->timecreated = time();
         $modelobj->timemodified = time();
         $modelobj->usermodified = $USER->id;

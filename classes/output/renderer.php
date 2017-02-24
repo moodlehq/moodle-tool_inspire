@@ -50,14 +50,41 @@ class renderer extends plugin_renderer_base {
         return parent::render_from_template('tool_inspire/models_list', $data);
     }
 
+    /**
+     * Renders the list of predictions
+     *
+     * @param renderable $renderable
+     * @return string HTML
+     */
     protected function render_predictions_list(renderable $renderable) {
         $data = $renderable->export_for_template($this);
         return parent::render_from_template('tool_inspire/predictions_list', $data);
     }
 
+    /**
+     * Renders a prediction
+     *
+     * @param renderable $renderable
+     * @return string HTML
+     */
     protected function render_prediction(renderable $renderable) {
         $data = $renderable->export_for_template($this);
         return parent::render_from_template('tool_inspire/prediction_details', $data);
     }
 
+    /**
+     * Renders a table.
+     *
+     * @param \table_sql $table
+     * @return string HTML
+     */
+    public function render_table(\table_sql $table) {
+        $o = '';
+        ob_start();
+        $table->out(30, true);
+        $o = ob_get_contents();
+        ob_end_clean();
+
+        return $o;
+    }
 }

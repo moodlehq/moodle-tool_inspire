@@ -46,7 +46,6 @@ class tool_inspire_model_testcase extends advanced_testcase {
         $this->modelobj = new stdClass();
         $this->modelobj->target = 'test_target_shortname';
         $this->modelobj->indicators = json_encode($indicators);
-        $this->modelobj->evaluationminscore = 0.7;
         $this->modelobj->timecreated = time();
         $this->modelobj->timemodified = time();
         $this->modelobj->usermodified = $USER->id;
@@ -79,7 +78,7 @@ class tool_inspire_model_testcase extends advanced_testcase {
             \tool_inspire\manager::get_indicator('\tool_inspire\local\indicator\any_write_action'),
             \tool_inspire\manager::get_indicator('\tool_inspire\local\indicator\read_actions')
         );
-        $model = \tool_inspire\model::create($target, $indicators, 0.5);
+        $model = \tool_inspire\model::create($target, $indicators);
         $this->assertInstanceOf('\tool_inspire\model', $model);
     }
 
