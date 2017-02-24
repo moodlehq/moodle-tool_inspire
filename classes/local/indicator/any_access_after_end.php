@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Any access before the starts indicator.
+ * Any access after the official end of the course.
  *
  * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
@@ -27,16 +27,16 @@ namespace tool_inspire\local\indicator;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Any access before the start indicator.
+ * Any access after the official end of the course.
  *
  * @package   tool_inspire
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class any_access_before_start extends binary {
+class any_access_after_end extends binary {
 
     public static function get_name() {
-        return get_string('target:accessesbeforestart', 'tool_inspire');
+        return get_string('indicator:accessesafterend', 'tool_inspire');
     }
 
     public static function required_sample_data() {
@@ -52,9 +52,10 @@ class any_access_before_start extends binary {
         // Filter by context to use the db table index.
         $context = $this->retrieve('context', $sampleid);
         $select = "userid = :userid AND contextlevel = :contextlevel AND contextinstanceid = :contextinstanceid AND " .
-            "timecreated < :start";
+            "timecreated > :end";
         $params = array('userid' => $user->id, 'contextlevel' => $context->contextlevel,
-            'contextinstanceid' => $context->instanceid, 'start' => $course->get_start());
+            'contextinstanceid' => $context->instanceid, 'end' => $course->get_end());
         return $DB->record_exists_select('logstore_standard_log', $select, $params) ? self::get_max_value() : self::get_min_value();
+
     }
 }
