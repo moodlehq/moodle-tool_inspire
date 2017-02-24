@@ -146,11 +146,7 @@ abstract class calculable {
 
             // Calculate and return a linear calculated value for the provided value.
             if ($match) {
-                $calculatedvalue = round(static::get_min_value() + ($rangeweight * $key), 2);
-                if ($calculatedvalue === 0) {
-                    $calculatedvalue = $this->get_middle_value();
-                }
-                return $calculatedvalue;
+                return round(static::get_min_value() + ($rangeweight * $key), 2);
             }
         }
 

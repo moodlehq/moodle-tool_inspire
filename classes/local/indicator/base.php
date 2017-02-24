@@ -107,13 +107,7 @@ abstract class base extends \tool_inspire\calculable {
 
             $calculatedvalue = $this->calculate_sample($sampleid, $samplesorigin, $starttime, $endtime);
 
-            if (is_null($calculatedvalue)) {
-                // Converted to 0 = unknown.
-                $calculatedvalue = 0;
-            } else if ($calculatedvalue === 0) {
-                // We convert zeros to the minimal non-zero value.
-                $calculatedvalue = $this->get_middle_value();
-            } else if ($calculatedvalue > self::MAX_VALUE || $calculatedvalue < self::MIN_VALUE) {
+            if (!is_null($calculatedvalue) && ($calculatedvalue > self::MAX_VALUE || $calculatedvalue < self::MIN_VALUE)) {
                 throw new \coding_exception('Calculated values should be higher than ' . self::MIN_VALUE .
                     ' and lower than ' . self::MAX_VALUE . ' ' . $calculatedvalue . ' received');
             }
@@ -137,11 +131,6 @@ abstract class base extends \tool_inspire\calculable {
             return false;
         }
         return $this->sampledata[$sampleid][$tablename];
-    }
-
-    protected function get_middle_value() {
-        // In the middle of self::MIN_VALUE and self::MAX_VALUE but different than 0.
-        return 0.01;
     }
 
     protected static function add_samples_averages() {

@@ -71,7 +71,7 @@ class Classifier(object):
     def get_labelled_samples(self, filepath):
 
         # We skip 3 rows of metadata.
-        samples = np.loadtxt(filepath, delimiter=',', dtype='float', skiprows=3)
+        samples = np.genfromtxt(filepath, delimiter=',', dtype='float', skip_header=3, missing_values='', filling_values=False)
         samples = shuffle(samples)
 
         # All columns but the last one.
@@ -86,7 +86,7 @@ class Classifier(object):
     def get_unlabelled_samples(self, filepath):
 
         # We skip 3 rows of metadata and retrieve it as a string because of the sampleid.
-        samples = np.loadtxt(filepath, delimiter=',', dtype=np.str, skiprows=3)
+        samples = np.genfromtxt(filepath, delimiter=',', dtype=np.str, skip_header=3, missing_values='', filling_values=False)
 
         # Only the first column and as an integer
         sampleids = np.array(samples[:,0:1])
