@@ -1,5 +1,7 @@
 # moodle-tool_inspire
 
+This is a work in progress branch with a limited set of indicators. Once this is ready for testing we will make an announcement through the usual media channels. Use it at your own risk.
+
 # Installation
 
 https://docs.moodle.org/32/en/Installing_plugins#Installing_a_plugin
@@ -28,4 +30,4 @@ As a manager/admin you can access the model predictions by:
 - Going to **Site administration > Reports > Inspire models**
 - Selecting a context from the predictions list menu
 
-As a user with tool_inspire:listinsights you will receive notifications when new predictions are available to you.
+As a user with ''tool_inspire:listinsights'' capability you will receive notifications when new predictions are available to you.
