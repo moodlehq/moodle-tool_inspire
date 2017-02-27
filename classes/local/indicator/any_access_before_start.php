@@ -47,7 +47,7 @@ class any_access_before_start extends binary {
         global $DB;
 
         $user = $this->retrieve('user', $sampleid);
-        $course = new \tool_analysable\course($this->retrieve('course', $sampleid));
+        $course = new \tool_inspire\course($this->retrieve('course', $sampleid));
 
         // Filter by context to use the db table index.
         $context = $this->retrieve('context', $sampleid);
