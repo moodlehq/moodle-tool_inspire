@@ -54,15 +54,9 @@ class course_dropout extends binary {
         $sampledata = $prediction->get_sample_data();
         $studentid = $sampledata['user']->id;
 
-        $messagestudentaction = new \stdClass();
         $url = new \moodle_url('/message/index.php', array('user' => $USER->id, 'id' => $studentid));
-        $messagestudentaction->url = $url->out(false);
-        $messagestudentaction->text = get_string('sendmessage', 'message');
-        // TODO We need to do something with this m-t-1 thing, margins should not be specified here, not even classes
-        // maybe just make this method return a URL and a text.
-        $messagestudentaction->classes = 'btn btn-primary m-t-1';
-
-        $actions[] = $messagestudentaction;
+        $actions[] = new \action_menu_link_secondary($url, new \pix_icon('t/message', get_string('sendmessage', 'message')),
+            get_string('sendmessage', 'message'));
 
         return $actions;
     }

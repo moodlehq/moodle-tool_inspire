@@ -83,12 +83,9 @@ abstract class base extends \tool_inspire\calculable {
             return array();
         }
 
-        $viewpredictionaction = new \stdClass();
-        $viewpredictionaction->url = $predictionurl->out(false);
-        $viewpredictionaction->text = get_string('viewprediction', 'tool_inspire');
-        $viewpredictionaction->classes = 'btn btn-secondary';
-
-        return array($viewpredictionaction);
+        return array(new \action_menu_link_secondary($predictionurl,
+            new \pix_icon('t/preview', get_string('viewprediction', 'tool_inspire')),
+            get_string('viewprediction', 'tool_inspire')));
     }
 
     public function get_display_value($value) {

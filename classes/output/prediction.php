@@ -67,7 +67,21 @@ class prediction implements \renderable, \templatable {
         $data->predictiondisplayvalue = $this->model->get_target()->get_display_value($predictedvalue);
         $data->predictionstyle = $this->model->get_target()->get_value_style($predictedvalue);
 
-        $data->actions = $this->model->get_target()->prediction_actions($this->prediction);
+        $actions = $this->model->get_target()->prediction_actions($this->prediction);
+        if ($actions) {
+            $actionsmenu = new \action_menu();
+            $actionsmenu->set_menu_trigger(get_string('actions'));
+            $actionsmenu->set_owner_selector('prediction-actions-' . $predictionid);
+            $actionsmenu->set_alignment(\action_menu::TL, \action_menu::BL);
+
+            // Add all actions defined by the target.
+            foreach ($actions as $action) {
+                $actionsmenu->add($action);
+            }
+            $data->actions = $actionsmenu->export_for_template($output);
+        } else {
+            $data->actions = false;
+        }
 
         // Calculated indicators values.
         $data->calculations = array();
@@ -79,16 +93,16 @@ class prediction implements \renderable, \templatable {
                 continue;
             }
 
+            if ($calculation->value === null) {
+                // We don't show values that could not be calculated.
+                continue;
+            }
+
             $obj = new \stdClass();
             $obj->name = forward_static_call(array($calculation->indicator, 'get_name'), $calculation->subtype);
-            if ($calculation->value !== null) {
-                $obj->displayvalue = $calculation->indicator->get_display_value($calculation->value, $calculation->subtype);
-                $obj->style = $calculation->indicator->get_value_style($calculation->value, $calculation->subtype);
-            } else {
-                // Null case is special, it does not represent a central value but a "can't be calculated".
-                $obj->displayvalue = '';
-                $obj->style = '';
-            }
+            $obj->displayvalue = $calculation->indicator->get_display_value($calculation->value, $calculation->subtype);
+            $obj->style = $calculation->indicator->get_value_style($calculation->value, $calculation->subtype);
+
             $data->calculations[] = $obj;
         }
 
