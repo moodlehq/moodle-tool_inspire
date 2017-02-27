@@ -85,14 +85,12 @@ class Classifier(object):
 
     def get_unlabelled_samples(self, filepath):
 
-        # We skip 3 rows of metadata and retrieve it as a string because of the sampleid.
-        samples = np.genfromtxt(filepath, delimiter=',', dtype=np.str, skip_header=3, missing_values='', filling_values=False)
+        # The first column is the sample id with its time range index as a string. The file contains 3 rows of metadata.
+        sampleids = np.genfromtxt(filepath, delimiter=',', dtype=np.str, skip_header=3, missing_values='', filling_values=False, usecols=0)
 
-        # Only the first column and as an integer
-        sampleids = np.array(samples[:,0:1])
-
-        # All columns but the first one.
-        x = np.array(samples[:,1:]).astype(float)
+        # We don't know the number of columns, we can only get them all and discard the first one.
+        samples = np.genfromtxt(filepath, delimiter=',', dtype=float, skip_header=3, missing_values='', filling_values=False)
+        x = samples[:, 1:]
 
         return [sampleids, x]
 

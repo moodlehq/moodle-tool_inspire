@@ -85,7 +85,7 @@ class BinaryClassifier(Classifier):
         result['status'] = Classifier.OK
         result['errors'] = []
         # First column sampleids, second the prediction and third how reliable is the prediction (from 0 to 1).
-        result['predictions'] = np.vstack((sampleids[:,0], y_pred, probabilities)).T.tolist()
+        result['predictions'] = np.vstack((sampleids, y_pred, probabilities)).T.tolist()
 
         return result
 
