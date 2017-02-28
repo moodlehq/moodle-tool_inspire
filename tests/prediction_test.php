@@ -239,37 +239,33 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
     }
 
     protected function add_random_model() {
-        global $DB, $USER;
+        global $DB;
 
+        $target = \tool_inspire\manager::get_target('test_target_shortname');
         $indicators = array('test_indicator_max', 'test_indicator_min', 'test_indicator_random');
+        foreach ($indicators as $key => $indicator) {
+            $indicators[$key] = \tool_inspire\manager::get_indicator($indicator);
+        }
 
-        $modelobj = new stdClass();
-        $modelobj->target = 'test_target_shortname';
-        $modelobj->indicators = json_encode($indicators);
-        $modelobj->timecreated = time();
-        $modelobj->timemodified = time();
-        $modelobj->usermodified = $USER->id;
-        $id = $DB->insert_record('tool_inspire_models', $modelobj);
+        $model = testable_model::create($target, $indicators);
 
         // To load db defaults as well.
-        return $DB->get_record('tool_inspire_models', array('id' => $id));
+        return $DB->get_record('tool_inspire_models', array('id' => $model->get_id()));
     }
 
     protected function add_perfect_model() {
-        global $DB, $USER;
+        global $DB;
 
+        $target = \tool_inspire\manager::get_target('test_target_shortname');
         $indicators = array('test_indicator_max', 'test_indicator_min', 'test_indicator_fullname');
+        foreach ($indicators as $key => $indicator) {
+            $indicators[$key] = \tool_inspire\manager::get_indicator($indicator);
+        }
 
-        $modelobj = new stdClass();
-        $modelobj->target = 'test_target_shortname';
-        $modelobj->indicators = json_encode($indicators);
-        $modelobj->timecreated = time();
-        $modelobj->timemodified = time();
-        $modelobj->usermodified = $USER->id;
-        $id = $DB->insert_record('tool_inspire_models', $modelobj);
+        $model = testable_model::create($target, $indicators);
 
         // To load db defaults as well.
-        return $DB->get_record('tool_inspire_models', array('id' => $id));
+        return $DB->get_record('tool_inspire_models', array('id' => $model->get_id()));
     }
 
     protected function add_prediction_processors($cases) {

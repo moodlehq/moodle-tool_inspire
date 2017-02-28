@@ -105,7 +105,7 @@ class renderer extends plugin_renderer_base {
             echo $OUTPUT->heading(get_string('executionresults', 'tool_inspire', $langstrdata), 3);
 
             if ($result->status == 0) {
-                echo $OUTPUT->notification(get_string('goodmodel', 'tool_inspire', $result->status),
+                echo $OUTPUT->notification(get_string('goodmodel', 'tool_inspire'),
                     \core\output\notification::NOTIFY_SUCCESS);
             } else if ($result->status === \tool_inspire\model::GENERAL_ERROR ||
                     $result->status === \tool_inspire\model::NO_DATASET) {
@@ -124,7 +124,7 @@ class renderer extends plugin_renderer_base {
             }
 
             // Score.
-            echo $OUTPUT->heading(get_string('score', 'tool_inspire') . ': ' . round(floatval($result->score), 4) * 100  . '%', 4);
+            echo $OUTPUT->heading(get_string('accuracy', 'tool_inspire') . ': ' . round(floatval($result->score), 4) * 100  . '%', 4);
 
             if (!empty($result->errors)) {
                 foreach ($result->errors as $error) {
@@ -133,10 +133,9 @@ class renderer extends plugin_renderer_base {
             }
         }
 
-        echo $OUTPUT->heading(get_string('extrainfo', 'tool_inspire'), 4);
-
         // Info logged during execution.
         if (!empty($executionlog)) {
+            echo $OUTPUT->heading(get_string('extrainfo', 'tool_inspire'), 4);
             foreach ($executionlog as $log) {
                 echo $OUTPUT->notification($log, \core\output\notification::NOTIFY_WARNING);
             }

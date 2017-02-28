@@ -57,14 +57,14 @@ class model_logs extends \table_sql {
         $this->set_attribute('class', 'modellog generaltable generalbox');
         $this->set_attribute('aria-live', 'polite');
 
-        $this->define_columns(array('time', 'target', 'indicators', 'timesplitting', 'score', 'result', 'usermodified'));
+        $this->define_columns(array('time', 'version', 'indicators', 'timesplitting', 'accuracy', 'errors', 'usermodified'));
         $this->define_headers(array(
             get_string('time'),
-            get_string('target', 'tool_inspire'),
+            get_string('version'),
             get_string('indicators', 'tool_inspire'),
             get_string('timesplittingmethod', 'tool_inspire'),
-            get_string('score', 'tool_inspire'),
-            get_string('resultinfo', 'tool_inspire'),
+            get_string('accuracy', 'tool_inspire'),
+            get_string('errorsinfo', 'tool_inspire'),
             get_string('fullnameuser'),
         ));
         $this->pageable(true);
@@ -76,6 +76,17 @@ class model_logs extends \table_sql {
     }
 
     /**
+     * Generate the version column.
+     *
+     * @param stdClass $log log data.
+     * @return string HTML for the version column
+     */
+    public function col_version($log) {
+        $recenttimestr = get_string('strftimerecent', 'core_langconfig');
+        return userdate($log->version, $recenttimestr);
+    }
+
+    /**
      * Generate the time column.
      *
      * @param stdClass $log log data.
@@ -84,17 +95,6 @@ class model_logs extends \table_sql {
     public function col_time($log) {
         $recenttimestr = get_string('strftimerecent', 'core_langconfig');
         return userdate($log->timecreated, $recenttimestr);
-    }
-
-    /**
-     * Generate the target column.
-     *
-     * @param stdClass $log log data.
-     * @return string HTML for the target column
-     */
-    public function col_target($log) {
-        $target = \tool_inspire\manager::get_target($log->target);
-        return $target->get_name();
     }
 
     /**
@@ -129,23 +129,26 @@ class model_logs extends \table_sql {
     }
 
     /**
-     * Generate the score column.
+     * Generate the accuracy column.
      *
      * @param stdClass $log log data.
-     * @return string HTML for the score column
+     * @return string HTML for the accuracy column
      */
-    public function col_score($log) {
+    public function col_accuracy($log) {
         return strval(round($log->score * 100, 2)) . '%';
     }
 
     /**
-     * Generate the score column.
+     * Generate the errors column.
      *
      * @param stdClass $log log data.
      * @return string HTML for the score column
      */
-    public function col_result($log) {
-        return $log->result;
+    public function col_errors($log) {
+        if (empty($log->errors)) {
+            return '';
+        }
+        return implode('<br/>', json_decode($log->errors));
     }
 
     /**

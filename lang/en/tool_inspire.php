@@ -22,6 +22,7 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+$string['accuracy'] = 'Accuracy';
 $string['allindicators'] = 'All indicators';
 $string['analysingsitedata'] = 'Analysing the site';
 $string['bettercli'] = 'Models\' evaluation and execution are heavy processes, it is better to run them through command line interface';
@@ -49,6 +50,7 @@ $string['errorpredictionnotfound'] = 'Prediction not found';
 $string['errorpredictionsprocessor'] = 'Predictions processor error: {$a}';
 $string['errorpredictwrongformat'] = 'The predictions processor return can not be decoded: "{$a}"';
 $string['errorsamplenotavailable'] = 'The predicted sample is not available anymore';
+$string['errorsinfo'] = 'Result info';
 $string['errorunexistingtimesplitting'] = 'The selected time splitting method is not available';
 $string['errorunknownaction'] = 'Unknown action';
 $string['evaluate'] = 'Evaluate';
@@ -110,8 +112,6 @@ $string['predictmodels'] = 'Predict models';
 $string['predictiondetails'] = 'Prediction details';
 $string['predictionsprocessor'] = 'Predictions processor';
 $string['pluginname'] = 'Inspire';
-$string['resultinfo'] = 'Result info';
-$string['score'] = 'Score';
 $string['skippingcourse'] = 'Skipping course {$a}';
 $string['studentroles'] = 'Student roles';
 $string['subplugintype_predict'] = 'Predictions processor';

@@ -103,7 +103,7 @@ switch ($action) {
         $trainlogs = $model->get_analyser()->get_logs();
 
         // Looks dumb to get a new instance but better be conservative.
-        $model = new \tool_inspire\model($modelobj);
+        $model = new \tool_inspire\model($model->get_model_obj());
         $predictresults = $model->predict();
         $predictlogs = $model->get_analyser()->get_logs();
 

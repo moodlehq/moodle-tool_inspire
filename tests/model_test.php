@@ -39,22 +39,15 @@ require_once(__DIR__ . '/fixtures/test_target_shortname.php');
 class tool_inspire_model_testcase extends advanced_testcase {
 
     public function setUp() {
-        global $DB, $USER;
 
+        $target = \tool_inspire\manager::get_target('test_target_shortname');
         $indicators = array('test_indicator_max', 'test_indicator_min', 'test_indicator_fullname');
+        foreach ($indicators as $key => $indicator) {
+            $indicators[$key] = \tool_inspire\manager::get_indicator($indicator);
+        }
 
-        $this->modelobj = new stdClass();
-        $this->modelobj->target = 'test_target_shortname';
-        $this->modelobj->indicators = json_encode($indicators);
-        $this->modelobj->timecreated = time();
-        $this->modelobj->timemodified = time();
-        $this->modelobj->usermodified = $USER->id;
-        $id = $DB->insert_record('tool_inspire_models', $this->modelobj);
-
-        // To load db defaults as well.
-        $this->modelobj = $DB->get_record('tool_inspire_models', array('id' => $id));
-
-        $this->model = new testable_model($this->modelobj);
+        $this->model = testable_model::create($target, $indicators);
+        $this->modelobj = $this->model->get_model_obj();
     }
 
     public function test_enable() {
@@ -102,9 +95,9 @@ class tool_inspire_model_testcase extends advanced_testcase {
         $dir = make_request_directory();
         set_config('modeloutputdir', $dir, 'tool_inspire');
 
-        $modeldir = $dir . DIRECTORY_SEPARATOR . $this->model->get_unique_id();
+        $modeldir = $dir . DIRECTORY_SEPARATOR . $this->modelobj->id . DIRECTORY_SEPARATOR . $this->modelobj->version . DIRECTORY_SEPARATOR;
         $this->assertEquals($modeldir, $this->model->get_output_dir());
-        $this->assertEquals($modeldir . DIRECTORY_SEPARATOR . 'asd', $this->model->get_output_dir('asd'));
+        $this->assertEquals($modeldir . DIRECTORY_SEPARATOR . 'asd', $this->model->get_output_dir(array('asd')));
     }
 
     public function test_unique_id() {
@@ -146,8 +139,8 @@ class tool_inspire_model_testcase extends advanced_testcase {
 }
 
 class testable_model extends \tool_inspire\model {
-    public function get_output_dir($subdir = false) {
-        return parent::get_output_dir($subdir);
+    public function get_output_dir($subdirs = array()) {
+        return parent::get_output_dir($subdirs);
     }
 
     public function init_analyser($options = array()) {

@@ -47,6 +47,9 @@ class model {
     const ANALYSABLE_STATUS_INVALID_FOR_RANGEPROCESSORS = 8;
     const ANALYSABLE_STATUS_INVALID_FOR_TARGET = 16;
 
+    const ACCEPTED_DEVIATION = 0.02;
+    const EVALUATION_ITERATIONS = 100;
+
     /**
      * @var \stdClass
      */
@@ -251,11 +254,14 @@ class model {
             $indicatorclasses[] = '\\' . get_class($indicator);
         }
 
+        $now = time();
+
         $modelobj = new \stdClass();
         $modelobj->target = '\\' . get_class($target);
         $modelobj->indicators = json_encode($indicatorclasses);
-        $modelobj->timecreated = time();
-        $modelobj->timemodified = time();
+        $modelobj->version = $now;
+        $modelobj->timecreated = $now;
+        $modelobj->timemodified = $now;
         $modelobj->usermodified = $USER->id;
 
         $id = $DB->insert_record('tool_inspire_models', $modelobj);
@@ -263,24 +269,24 @@ class model {
         // Get db defaults.
         $modelobj = $DB->get_record('tool_inspire_models', array('id' => $id), '*', MUST_EXIST);
 
-        return new self($modelobj);
+        return new static($modelobj);
     }
 
     public function update($enabled, $indicators, $timesplitting) {
         global $USER, $DB;
 
-        if ($enabled != $this->model->enabled) {
-            // TODO Purge.
-        }
+        $now = time();
 
-        if ($timesplitting != $this->model->timesplitting) {
-            // TODO Purge.
+        $indicatorsstr = json_encode($indicators);
+        if ($this->model->timesplitting !== $timesplitting ||
+                $this->model->indicators !== $indicatorsstr) {
+            // We update the version of the model so different time splittings are not mixed up.
+            $this->model->version = $now;
         }
-
         $this->model->enabled = $enabled;
-        $this->model->indicators = json_encode($indicators);
+        $this->model->indicators = $indicatorsstr;
         $this->model->timesplitting = $timesplitting;
-        $this->model->timemodified = time();
+        $this->model->timemodified = $now;
         $this->model->usermodified = $USER->id;
 
         $DB->update_record('tool_inspire_models', $this->model);
@@ -310,12 +316,13 @@ class model {
 
             $result = new \stdClass();
 
-            $outputdir = $this->get_output_dir($timesplitting->get_id());
+            $dashestimesplittingid = str_replace('\\', '', $timesplittingid);
+            $outputdir = $this->get_output_dir(array('evaluation', $dashestimesplittingid));
             $predictor = \tool_inspire\manager::get_predictions_processor();
 
             // Evaluate the dataset, the deviation we accept in the results depends on the amount of iterations.
-            $resultsdeviation = 0.02;
-            $niterations = 100;
+            $resultsdeviation = self::ACCEPTED_DEVIATION;
+            $niterations = self::EVALUATION_ITERATIONS;
             $predictorresult = $predictor->evaluate($this->model->id,
                 $resultsdeviation, $niterations, $dataset, $outputdir);
 
@@ -323,7 +330,12 @@ class model {
             $result->score = $predictorresult->score;
             $result->errors = $predictorresult->errors;
 
-            $result->logid = $this->log_result($timesplitting->get_id(), $result);
+            $dir = false;
+            if (!empty($predictorresult->dir)) {
+                $dir = $predictorresult->dir;
+            }
+
+            $result->logid = $this->log_result($timesplitting->get_id(), $result->score, $dir, $result->errors);
 
             $results[$timesplitting->get_id()] = $result;
         }
@@ -343,16 +355,21 @@ class model {
             throw new \moodle_exception('invalidtimesplitting', 'tool_inspire', '', $this->model->id);
         }
 
-        $this->init_analyser();
+        // Before get_labelled_data call so we get an early exception if it is not writable.
+        $outputdir = $this->get_output_dir(array('execution'));
+
         $datasets = $this->get_analyser()->get_labelled_data();
 
         // No training if no files have been provided.
         if (empty($datasets) || empty($datasets[$this->model->timesplitting])) {
-            return self::NO_DATASET;
+
+            $result = new \stdClass();
+            $result->status = self::NO_DATASET;
+            $result->errors = $this->get_analyser()->get_logs();
+            return $result;
         }
         $samplesfile = $datasets[$this->model->timesplitting];
 
-        $outputdir = $this->get_output_dir($this->model->timesplitting);
         $predictor = \tool_inspire\manager::get_predictions_processor();
 
         // Train using the dataset.
@@ -384,12 +401,18 @@ class model {
             throw new \moodle_exception('invalidtimesplitting', 'tool_inspire', '', $this->model->id);
         }
 
-        $this->init_analyser();
+        // Before get_unlabelled_data call so we get an early exception if it is not writable.
+        $outputdir = $this->get_output_dir(array('execution'));
+
         $samplesdata = $this->get_analyser()->get_unlabelled_data();
 
         // Get the prediction samples file.
         if (empty($samplesdata) || empty($samplesdata[$this->model->timesplitting])) {
-            return \tool_inspire\model::NO_DATASET;
+
+            $result = new \stdClass();
+            $result->status = self::NO_DATASET;
+            $result->errors = $this->get_analyser()->get_logs();
+            return $result;
         }
         $samplesfile = $samplesdata[$this->model->timesplitting];
 
@@ -398,8 +421,6 @@ class model {
         if ($predicted = $DB->get_record('tool_inspire_used_files', $params)) {
             throw new \moodle_exception('erroralreadypredict', 'tool_inspire', '', $samplesfile->get_id());
         }
-
-        $outputdir = $this->get_output_dir($this->model->timesplitting);
 
         $predictor = \tool_inspire\manager::get_predictions_processor();
         $predictorresult = $predictor->predict($this->get_unique_id(), $samplesfile, $outputdir);
@@ -506,7 +527,9 @@ class model {
     public function enable($timesplittingid = false) {
         global $DB;
 
-        if ($timesplittingid) {
+        $now = time();
+
+        if ($timesplittingid && $timesplittingid !== $this->model->timesplitting) {
 
             if (!\tool_inspire\manager::is_valid($timesplittingid, '\tool_inspire\local\time_splitting\base')) {
                 throw new \moodle_exception('errorinvalidtimesplitting', 'tool_inspire');
@@ -517,9 +540,10 @@ class model {
             }
 
             $this->model->timesplitting = $timesplittingid;
-            $this->model->timemodified = time();
+            $this->model->version = $now;
         }
         $this->model->enabled = 1;
+        $this->model->timemodified = $now;
 
         // We don't always update timemodified intentionally as we reserve it for target, indicators or timesplitting updates.
         $DB->update_record('tool_inspire_models', $this->model);
@@ -641,8 +665,25 @@ class model {
             $prediction->get_prediction_data()->contextid, $prediction->get_sample_data());
     }
 
-    protected function get_output_dir($subdir = false) {
+    /**
+     * Returns the output directory for prediction processors.
+     *
+     * Directory structure as follows:
+     * - Evaluation runs:
+     *   models/$model->id/$model->version/evaluation/$model->timesplitting
+     * - Training  & prediction runs:
+     *   models/$model->id/$model->version/execution
+     *
+     * @param array $subdirs
+     * @return void
+     */
+    protected function get_output_dir($subdirs = array()) {
         global $CFG;
+
+        $subdirstr = '';
+        foreach ($subdirs as $subdir) {
+            $subdirstr .= DIRECTORY_SEPARATOR . $subdir;
+        }
 
         $outputdir = get_config('tool_inspire', 'modeloutputdir');
         if (empty($outputdir)) {
@@ -650,15 +691,11 @@ class model {
             $outputdir = rtrim($CFG->dataroot, '/') . DIRECTORY_SEPARATOR . 'models';
         }
 
-        $outputdir = $outputdir . DIRECTORY_SEPARATOR . $this->get_unique_id();
+        // Append model id and version + subdirs.
+        $outputdir .= DIRECTORY_SEPARATOR . $this->model->id . DIRECTORY_SEPARATOR . $this->model->version .
+            DIRECTORY_SEPARATOR . $subdirstr;
 
-        if ($subdir) {
-            $outputdir = $outputdir . DIRECTORY_SEPARATOR . $subdir;
-        }
-
-        if (!is_dir($outputdir)) {
-            mkdir($outputdir, $CFG->directorypermissions, true);
-        }
+        make_writable_directory($outputdir);
 
         return $outputdir;
     }
@@ -704,16 +741,21 @@ class model {
         $DB->insert_record('tool_inspire_used_files', $usedfile);
     }
 
-    protected function log_result($timesplittingid, $result) {
+    protected function log_result($timesplittingid, $score, $dir = false, $errors = false) {
         global $DB, $USER;
 
         $log = new \stdClass();
         $log->modelid = $this->get_id();
+        $log->version = $this->model->version;
         $log->target = $this->model->target;
         $log->indicators = $this->model->indicators;
         $log->timesplitting = $timesplittingid;
-        $log->score = $result->score;
-        $log->result = json_encode($result);
+        $log->dir = $dir;
+        if ($errors) {
+            // Ensure it is not an associative array.
+            $log->errors = json_encode(array_values($errors));
+        }
+        $log->score = $score;
         $log->timecreated = time();
         $log->usermodified = $USER->id;
 

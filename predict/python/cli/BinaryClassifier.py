@@ -251,6 +251,7 @@ class BinaryClassifier(Classifier):
         result['min_score'] = min_score
         result['accepted_deviation'] = accepted_deviation
 
+        result['dir'] = self.logsdir
         result['status'] = Classifier.OK
         result['errors'] = []
 

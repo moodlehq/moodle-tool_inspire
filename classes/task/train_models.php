@@ -53,8 +53,8 @@ class train_models extends \core\task\scheduled_task {
                 mtrace('Results:');
                 mtrace(' - Status code: ' . $result->status);
                 if (!empty($result->errors)) {
-                    foreach ($result->errors as $errorkey => $error) {
-                        mtrace('   - ' . $errorkey . ': ' . $error);
+                    foreach ($result->errors as $error) {
+                        mtrace('   - ' . $error);
                     }
                 }
             }
