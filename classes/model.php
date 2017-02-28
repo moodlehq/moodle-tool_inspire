@@ -160,10 +160,13 @@ class model {
      * @return \tool_inspire\local\analyser\base
      */
     public function get_analyser() {
-        if ($this->analyser === null) {
-            throw new \coding_exception('Analyser must be initialised through \tool_inspire\model::evaluate, ' .
-                '\tool_inspire\model::train or \tool_inspire\model::predict');
+        if ($this->analyser !== null) {
+            return $this->analyser;
         }
+
+        // Default initialisation with no options.
+        $this->init_analyser();
+
         return $this->analyser;
     }
 
@@ -178,8 +181,16 @@ class model {
         $target = $this->get_target();
         $indicators = $this->get_indicators();
 
+        if (empty($target)) {
+            throw new \moodle_exception('errornotarget', 'tool_inspire');
+        }
+
+        if (empty($indicators)) {
+            throw new \moodle_exception('errornoindicators', 'tool_inspire');
+        }
+
         if (!empty($options['evaluation'])) {
-            // We try all available time splitting methods.
+            // The evaluation process will run using all available time splitting methods.
             $timesplittings = \tool_inspire\manager::get_enabled_time_splitting_methods();
         } else {
 
@@ -189,14 +200,6 @@ class model {
 
             // Returned as an array as all actions (evaluation, training and prediction) go through the same process.
             $timesplittings = array($this->model->timesplitting => $this->get_time_splitting());
-        }
-
-        if (empty($target)) {
-            throw new \moodle_exception('errornotarget', 'tool_inspire');
-        }
-
-        if (empty($indicators)) {
-            throw new \moodle_exception('errornoindicators', 'tool_inspire');
         }
 
         if (empty($timesplittings)) {
