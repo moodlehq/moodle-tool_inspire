@@ -81,17 +81,8 @@ $analyseroptions = array(
 // Evaluate its suitability to predict accurately.
 $results = $model->evaluate($analyseroptions);
 
-foreach ($results as $timesplittingid => $result) {
-    mtrace($timesplittingid . ' results');
-    mtrace(' - status code: ' . $result->status);
-    mtrace(' - score: ' . $result->score);
-    if (!empty($result->errors)) {
-        mtrace(' - errors');
-        foreach ($result->errors as $error) {
-            mtrace('   - ' . $error);
-        }
-    }
-}
+$renderer = $PAGE->get_renderer('tool_inspire');
+$renderer->render_evaluate_results($results, $model->get_analyser()->get_logs());
 
 if ($options['non-interactive'] === false) {
 
@@ -105,6 +96,9 @@ if ($options['non-interactive'] === false) {
     if ($input === 'none') {
         exit(0);
     }
+
+    // Refresh the instance to prevent unexpected issues.
+    $model = new \tool_inspire\model($modelobj);
 
     // Set the time splitting method file and enable it.
     $model->enable($input);

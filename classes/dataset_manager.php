@@ -147,16 +147,16 @@ class dataset_manager {
         $lock->release();
     }
 
-    public static function get_evaluation_file($modelid, $timesplittingid) {
+    public static function get_previous_evaluation_file($modelid, $timesplittingid) {
         $fs = get_file_storage();
         // Evaluation data is always labelled.
         return $fs->get_file(\context_system::instance()->id, 'tool_inspire', self::LABELLED_FILEAREA,
             self::convert_to_int($timesplittingid), '/' . $modelid . '/timesplitting/', self::EVALUATION_FILENAME);
     }
 
-    public static function delete_evaluation_file($modelid, $timesplittingid) {
+    public static function delete_previous_evaluation_file($modelid, $timesplittingid) {
         $fs = get_file_storage();
-        if ($file = self::get_evaluation_file($modelid, $timesplittingid)) {
+        if ($file = self::get_previous_evaluation_file($modelid, $timesplittingid)) {
             $file->delete();
             return true;
         }

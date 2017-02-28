@@ -145,7 +145,7 @@ class manager {
     /**
      * Returns the enabled time splitting methods.
      *
-     * @return \tool_inspire\local\timesplitting\base[]
+     * @return \tool_inspire\local\time_splitting\base[]
      */
     public static function get_enabled_time_splitting_methods() {
 

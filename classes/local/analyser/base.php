@@ -41,6 +41,8 @@ abstract class base {
 
     protected $options;
 
+    protected $log;
+
     public function __construct($modelid, \tool_inspire\local\target\base $target, $indicators, $timesplittings, $options) {
         $this->modelid = $modelid;
         $this->target = $target;
@@ -54,6 +56,8 @@ abstract class base {
 
         // Checks if the analyser satisfies the indicators requirements.
         $this->check_indicators_requirements();
+
+        $this->log = array();
     }
 
     /**
@@ -90,7 +94,7 @@ abstract class base {
      * In most of the cases you should have enough extending from one of these classes so you don't need
      * to reimplement this method.
      *
-     * @return array Array containing a status codes for each analysable and a list of files, one for each time splitting method
+     * @return \stored_file[]
      */
     abstract public function get_analysable_data($includetarget);
 
@@ -134,7 +138,7 @@ abstract class base {
      *
      * @param \tool_inspire\analysable $analysable
      * @param bool $includetarget
-     * @return array Analysable general status code AND (files by time splitting method OR error code)
+     * @return \stored_file[] Files by time splitting method
      */
     public function process_analysable($analysable, $includetarget) {
 
@@ -149,11 +153,8 @@ abstract class base {
         // as we still need to discard invalid analysables for the target.
         $result = $target->is_valid_analysable($analysable, $includetarget);
         if ($result !== true) {
-            return [
-                \tool_inspire\model::ANALYSABLE_STATUS_INVALID_FOR_TARGET,
-                array(),
-                $result
-            ];
+            $this->log[] = 'Analysable ' . $analysable->get_id() . ' is not valid for this target: ' . $result;
+            return array();
         }
 
         // Process all provided time splitting methods.
@@ -172,25 +173,19 @@ abstract class base {
             $results[] = $result;
         }
 
-        // Set the status code.
-        if (!empty($files)) {
-            $status = \tool_inspire\model::OK;
-        } else {
-            if (count($this->timesplittings) === 1) {
-                // We can be more specific.
-                $status = $results[0]->status;
-                $message = $results[0]->message;
-            } else {
-                $status = \tool_inspire\model::ANALYSABLE_STATUS_INVALID_FOR_RANGEPROCESSORS;
-                $message = 'Analysable not valid for any of the time splitting methods';
+        if (empty($files)) {
+            $errors = array();
+            foreach ($results as $timesplittingid => $result) {
+                $errors[] = $timesplittingid . ': ' . $result->message;
             }
+            $this->log[] = 'Analysable ' . $analysable->get_id() . ' not used: ' . implode(', ', $errors);
         }
 
-        return [
-            $status,
-            $files,
-            $message
-        ];
+        return $files;
+    }
+
+    public function get_logs() {
+        return $this->log;
     }
 
     protected function process_range($timesplitting, $analysable, $target = false) {

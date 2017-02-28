@@ -87,6 +87,9 @@ class tool_inspire_model_testcase extends advanced_testcase {
 
         $this->assertCount(3, $this->model->get_indicators());
         $this->assertInstanceOf('\tool_inspire\local\target\binary', $this->model->get_target());
+
+        // We need to manually initiate it because we are not in evaluation, training nor prediction.
+        $this->model->init_analyser(array('evaluation' => true));
         $this->assertInstanceOf('\tool_inspire\local\analyser\base', $this->model->get_analyser(array('evaluation' => true)));
 
         $this->model->enable('\tool_inspire\local\time_splitting\quarters');
@@ -145,5 +148,9 @@ class tool_inspire_model_testcase extends advanced_testcase {
 class testable_model extends \tool_inspire\model {
     public function get_output_dir($subdir = false) {
         return parent::get_output_dir($subdir);
+    }
+
+    public function init_analyser($options = array()) {
+        return parent::init_analyser($options);
     }
 }

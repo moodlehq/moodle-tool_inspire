@@ -228,6 +228,12 @@ class course_dropout extends binary {
         // Pass if gets more than 50% of the course grade.
         $mingrade = $grade->get_grade_min();
         $maxgrade = $grade->get_grade_max();
+
+        // We can do nothing with this.
+        if ($maxgrade - $mingrade == 0) {
+            return null;
+        }
+
         $weightedgrade = ($grade->finalgrade - $mingrade) / ($maxgrade - $mingrade);
 
         if ($weightedgrade >= 0.5) {

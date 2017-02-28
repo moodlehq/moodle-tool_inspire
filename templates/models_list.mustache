@@ -32,57 +32,60 @@
     {
     }
 }}
-<div class="box">
 
-<table class="generaltable fullwidth">
-    <caption>{{#str}}modelslist, tool_inspire{{/str}}</caption>
-    <thead>
-        <tr>
-            <th scope="col">{{#str}}target, tool_inspire{{/str}}</th>
-            <th scope="col">{{#str}}enabled, tool_inspire{{/str}}</th>
-            <th scope="col">{{#str}}indicators, tool_inspire{{/str}}</th>
-            <th scope="col">{{#str}}modeltimesplitting, tool_inspire{{/str}}</th>
-            <th scope="col">{{#str}}viewpredictions, tool_inspire{{/str}}</th>
-            <th scope="col">{{#str}}actions{{/str}}</th>
-        </tr>
-    </thead>
-    <tbody>
-    {{#models}}
-        <tr>
-            <td>{{target}}</td>
-            <td>
-                {{#enabled}}
-                    {{#pix}}i/checked, core, {{#str}}yes{{/str}}{{/pix}}
-                {{/enabled}}
-                {{^enabled}}
-                    {{#str}}no{{/str}}
-                {{/enabled}}
-            </td>
-            <td>
-                <ul>
-                {{#indicators}}
-                    <li>{{.}}</li>
-                {{/indicators}}
-                </ul>
-            </td>
-            <td>
-                {{#timesplitting}}{{timesplitting}}{{/timesplitting}}{{^timesplitting}}{{#str}}notdefined, tool_inspire{{/str}}{{/timesplitting}}
-            </td>
-            <td>
-                {{#predictions}}
-                    {{> core/single_select }}
-                {{/predictions}}
-                {{^predictions}}
-                    {{#str}}nopredictionsyet, tool_inspire{{/str}}
-                {{/predictions}}
-            </td>
-            <td>
-                {{#actions}}
-                    {{> core/action_menu}}
-                {{/actions}}
-            </td>
-        </tr>
-    {{/models}}
-    </tbody>
+{{#warnings}}
+    {{> core/notification_warning}}
+{{/warnings}}
+<div class="box">
+    <table class="generaltable fullwidth">
+        <caption>{{#str}}modelslist, tool_inspire{{/str}}</caption>
+        <thead>
+            <tr>
+                <th scope="col">{{#str}}target, tool_inspire{{/str}}</th>
+                <th scope="col">{{#str}}enabled, tool_inspire{{/str}}</th>
+                <th scope="col">{{#str}}indicators, tool_inspire{{/str}}</th>
+                <th scope="col">{{#str}}modeltimesplitting, tool_inspire{{/str}}</th>
+                <th scope="col">{{#str}}viewpredictions, tool_inspire{{/str}}</th>
+                <th scope="col">{{#str}}actions{{/str}}</th>
+            </tr>
+        </thead>
+        <tbody>
+        {{#models}}
+            <tr>
+                <td>{{target}}</td>
+                <td>
+                    {{#enabled}}
+                        {{#pix}}i/checked, core, {{#str}}yes{{/str}}{{/pix}}
+                    {{/enabled}}
+                    {{^enabled}}
+                        {{#str}}no{{/str}}
+                    {{/enabled}}
+                </td>
+                <td>
+                    <ul>
+                    {{#indicators}}
+                        <li>{{.}}</li>
+                    {{/indicators}}
+                    </ul>
+                </td>
+                <td>
+                    {{#timesplitting}}{{timesplitting}}{{/timesplitting}}{{^timesplitting}}{{#str}}notdefined, tool_inspire{{/str}}{{/timesplitting}}
+                </td>
+                <td>
+                    {{#predictions}}
+                        {{> core/single_select }}
+                    {{/predictions}}
+                    {{^predictions}}
+                        {{#str}}nopredictionsyet, tool_inspire{{/str}}
+                    {{/predictions}}
+                </td>
+                <td>
+                    {{#actions}}
+                        {{> core/action_menu}}
+                    {{/actions}}
+                </td>
+            </tr>
+        {{/models}}
+        </tbody>
     </table>
 </div>

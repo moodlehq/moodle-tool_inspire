@@ -44,14 +44,7 @@ abstract class sitewide extends base {
 
         $return = array();
 
-        list($status, $files, $message) = $this->process_analysable($analysable, $includetarget);
-
-        // Needs to be an array of arrays to match the same interface we have when we deal with multiple analysables per site.
-        $return = array(
-            'status' => array($analysable->get_id() => $status),
-            'files' => array(),
-            'messages' => array($analysable->get_id() => $message)
-        );
+        $files = $this->process_analysable($analysable, $includetarget);
 
         // Copy to range files as there is just one analysable.
         // TODO Not abstracted as we should ideally directly store it as range-scope file.
@@ -59,7 +52,7 @@ abstract class sitewide extends base {
 
             if ($this->options['evaluation'] === true) {
                 // Delete the previous copy. Only when evaluating.
-                \tool_inspire\dataset_manager::delete_evaluation_file($this->modelid, $timesplittingid);
+                \tool_inspire\dataset_manager::delete_previous_evaluation_file($this->modelid, $timesplittingid);
             }
 
             // We use merge but it is just a copy
@@ -68,10 +61,6 @@ abstract class sitewide extends base {
                 $timesplittingid, $this->options['evaluation'], $includetarget);
         }
 
-        if ($status === \tool_inspire\model::OK) {
-            $return['files'] = $files;
-        }
-
-        return $return;
+        return $files;
     }
 }

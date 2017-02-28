@@ -93,15 +93,22 @@ switch ($action) {
         echo $OUTPUT->header();
         $results = $model->evaluate();
         $renderer = $PAGE->get_renderer('tool_inspire');
-        echo $renderer->render_evaluate_results($results);
+        echo $renderer->render_evaluate_results($results, $model->get_analyser()->get_logs());
         break;
 
     case 'execute':
         echo $OUTPUT->header();
-        $model->train();
-        $results = $model->predict();
+
+        $trainresults = $model->train();
+        $trainlogs = $model->get_analyser()->get_logs();
+
+        // Looks dumb to get a new instance but better be conservative.
+        $model = new \tool_inspire\model($modelobj);
+        $predictresults = $model->predict();
+        $predictlogs = $model->get_analyser()->get_logs();
+
         $renderer = $PAGE->get_renderer('tool_inspire');
-        echo $renderer->render_predict_results($results);
+        echo $renderer->render_execute_results($trainresults, $trainlogs, $predictresults, $predictlogs);
         break;
 
     case 'log':

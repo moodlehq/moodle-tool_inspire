@@ -112,6 +112,10 @@ class models_list implements \renderable, \templatable {
             $data->models[] = $modeldata;
         }
 
+        $data->warnings = array(
+            (object)array('message' => get_string('bettercli', 'tool_inspire'), 'closebutton' => true)
+        );
+
         return $data;
     }
 }

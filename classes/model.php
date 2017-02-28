@@ -47,7 +47,15 @@ class model {
     const ANALYSABLE_STATUS_INVALID_FOR_RANGEPROCESSORS = 8;
     const ANALYSABLE_STATUS_INVALID_FOR_TARGET = 16;
 
+    /**
+     * @var \stdClass
+     */
     protected $model = null;
+
+    /**
+     * @var \tool_inspire\local\analyser\base
+     */
+    protected $analyser = null;
 
     /**
      * @var \tool_inspire\local\target\base
@@ -72,26 +80,41 @@ class model {
     /**
      * __construct
      *
-     * @param int|stdClass $modelobj
+     * @param int|stdClass $model
      * @return void
      */
-    public function __construct($modelobj) {
+    public function __construct($model) {
         global $DB;
 
-        if (is_scalar($modelobj)) {
-            $modelobj = $DB->get_record('tool_inspire_models', array('id' => $modelobj));
+        if (is_scalar($model)) {
+            $model = $DB->get_record('tool_inspire_models', array('id' => $model));
         }
-        $this->model = $modelobj;
+        $this->model = $model;
     }
 
+    /**
+     * get_id
+     *
+     * @return int
+     */
     public function get_id() {
         return $this->model->id;
     }
 
+    /**
+     * get_model_obj
+     *
+     * @return \stdClass
+     */
     public function get_model_obj() {
         return $this->model;
     }
 
+    /**
+     * get_target
+     *
+     * @return \tool_inspire\local\target\base
+     */
     public function get_target() {
         if ($this->target !== null) {
             return $this->target;
@@ -102,6 +125,11 @@ class model {
         return $this->target;
     }
 
+    /**
+     * get_indicators
+     *
+     * @return \tool_inspire\local\indicator\base[]
+     */
     public function get_indicators() {
         if ($this->indicators !== null) {
             return $this->indicators;
@@ -126,7 +154,26 @@ class model {
         return $this->indicators;
     }
 
-    public function get_analyser($options = array()) {
+    /**
+     * get_analyser
+     *
+     * @return \tool_inspire\local\analyser\base
+     */
+    public function get_analyser() {
+        if ($this->analyser === null) {
+            throw new \coding_exception('Analyser must be initialised through \tool_inspire\model::evaluate, ' .
+                '\tool_inspire\model::train or \tool_inspire\model::predict');
+        }
+        return $this->analyser;
+    }
+
+    /**
+     * init_analyser
+     *
+     * @param array $options
+     * @return void
+     */
+    protected function init_analyser($options = array()) {
 
         $target = $this->get_target();
         $indicators = $this->get_indicators();
@@ -162,13 +209,13 @@ class model {
         }
 
         // Returns a \tool_inspire\local\analyser\base class.
-        return new $classname($this->model->id, $target, $indicators, $timesplittings, $options);
+        $this->analyser = new $classname($this->model->id, $target, $indicators, $timesplittings, $options);
     }
 
     /**
      * get_time_splitting
      *
-     * @return \tool_inspire\local\timesplitting\base
+     * @return \tool_inspire\local\time_splitting\base
      */
     public function get_time_splitting() {
         if (empty($this->model->timesplitting)) {
@@ -177,6 +224,13 @@ class model {
         return \tool_inspire\manager::get_time_splitting($this->model->timesplitting);
     }
 
+    /**
+     * create
+     *
+     * @param \tool_inspire\local\target\base $target
+     * @param \tool_inspire\local\indicator\base $indicators
+     * @return \tool_inspire\model
+     */
     public static function create(\tool_inspire\local\target\base $target, array $indicators) {
         global $USER, $DB;
 
@@ -227,6 +281,9 @@ class model {
         $this->model->usermodified = $USER->id;
 
         $DB->update_record('tool_inspire_models', $this->model);
+
+        // It needs to be reset (just in case, we may already used it).
+        $this->uniqueid = null;
     }
 
     /**
@@ -234,41 +291,21 @@ class model {
      *
      * Model datasets should already be available in Moodle's filesystem.
      *
-     * @return stdClass[]
+     * @param array $options
+     * @return \stdClass[]
      */
     public function evaluate($options = array()) {
 
         $options['evaluation'] = true;
-        $analysisresults = $this->get_analyser($options)->get_labelled_data();
-
-        // Yeah, a bit hacky, but we are really interested in these messages when running evaluation in CLI so we know why
-        // a course is not suitable.
-        if (!PHPUNIT_TEST) {
-            foreach ($analysisresults['status'] as $analysableid => $statuscode) {
-                mtrace('Analysable ' . $analysableid . ': Status code ' . $statuscode . '. ');
-                if (!empty($analysisresults['messages'][$analysableid])) {
-                    mtrace(' - ' . $analysisresults['messages'][$analysableid]);
-                }
-            }
-        }
+        $this->init_analyser($options);
+        $datasets = $this->get_analyser()->get_labelled_data();
 
         $results = array();
+        foreach ($datasets as $timesplittingid => $dataset) {
 
-        foreach (\tool_inspire\manager::get_enabled_time_splitting_methods() as $timesplitting) {
+            $timesplitting = \tool_inspire\manager::get_time_splitting($timesplittingid);
 
             $result = new \stdClass();
-
-            $dataset = \tool_inspire\dataset_manager::get_evaluation_file($this->model->id, $timesplitting->get_id());
-
-            if (!$dataset) {
-
-                $result->status = self::NO_DATASET;
-                $result->score = 0;
-                $result->errors = array('Was not possible to create a dataset for this time splitting method');
-
-                $results[$timesplitting->get_id()] = $result;
-                continue;
-            }
 
             $outputdir = $this->get_output_dir($timesplitting->get_id());
             $predictor = \tool_inspire\manager::get_predictions_processor();
@@ -291,6 +328,11 @@ class model {
         return $results;
     }
 
+    /**
+     * train
+     *
+     * @return \stdClass[]
+     */
     public function train() {
         global $DB;
 
@@ -298,16 +340,14 @@ class model {
             throw new \moodle_exception('invalidtimesplitting', 'tool_inspire', '', $this->model->id);
         }
 
-        $analysed = $this->get_analyser()->get_labelled_data();
+        $this->init_analyser();
+        $datasets = $this->get_analyser()->get_labelled_data();
 
         // No training if no files have been provided.
-        if (empty($analysed['files']) || empty($analysed['files'][$this->model->timesplitting])) {
-            $result = new \stdClass();
-            $result->status = self::NO_DATASET;
-            $result->errors = array('general' => 'No files suitable for training') + $analysed['messages'];
-            return $result;
+        if (empty($datasets) || empty($datasets[$this->model->timesplitting])) {
+            return self::NO_DATASET;
         }
-        $samplesfile = $analysed['files'][$this->model->timesplitting];
+        $samplesfile = $datasets[$this->model->timesplitting];
 
         $outputdir = $this->get_output_dir($this->model->timesplitting);
         $predictor = \tool_inspire\manager::get_predictions_processor();
@@ -329,6 +369,11 @@ class model {
         return $result;
     }
 
+    /**
+     * predict
+     *
+     * @return \stdClass
+     */
     public function predict() {
         global $DB;
 
@@ -336,16 +381,14 @@ class model {
             throw new \moodle_exception('invalidtimesplitting', 'tool_inspire', '', $this->model->id);
         }
 
+        $this->init_analyser();
         $samplesdata = $this->get_analyser()->get_unlabelled_data();
 
         // Get the prediction samples file.
-        if (empty($samplesdata['files']) || empty($samplesdata['files'][$this->model->timesplitting])) {
-            $result = new \stdClass();
-            $result->status = \tool_inspire\model::NO_DATASET;
-            $result->errors = array('general' => 'No files suitable for prediction') + $samplesdata['messages'];
-            return $result;
+        if (empty($samplesdata) || empty($samplesdata[$this->model->timesplitting])) {
+            return \tool_inspire\model::NO_DATASET;
         }
-        $samplesfile = $samplesdata['files'][$this->model->timesplitting];
+        $samplesfile = $samplesdata[$this->model->timesplitting];
 
         // We need to throw an exception if we are trying to predict stuff that was already predicted.
         $params = array('fileid' => $samplesfile->get_id(), 'action' => 'predicted', 'modelid' => $this->model->id);
@@ -422,6 +465,16 @@ class model {
         return $result;
     }
 
+    /**
+     * save_prediction
+     *
+     * @param int $sampleid
+     * @param int $rangeindex
+     * @param int $prediction
+     * @param float $predictionscore
+     * @param string $calculations
+     * @return \context
+     */
     protected function save_prediction($sampleid, $rangeindex, $prediction, $predictionscore, $calculations) {
         global $DB;
 
@@ -441,6 +494,12 @@ class model {
         return $context;
     }
 
+    /**
+     * enable
+     *
+     * @param string $timesplittingid
+     * @return void
+     */
     public function enable($timesplittingid = false) {
         global $DB;
 
@@ -466,10 +525,20 @@ class model {
         $this->uniqueid = null;
     }
 
+    /**
+     * is_enabled
+     *
+     * @return bool
+     */
     public function is_enabled() {
         return (bool)$this->model->enabled;
     }
 
+    /**
+     * mark_as_trained
+     *
+     * @return void
+     */
     public function mark_as_trained() {
         global $DB;
 
@@ -477,6 +546,11 @@ class model {
         $DB->update_record('tool_inspire_models', $this->model);
     }
 
+    /**
+     * get_predictions_contexts
+     *
+     * @return \stdClass[]
+     */
     public function get_predictions_contexts() {
         global $DB;
 
@@ -536,6 +610,12 @@ class model {
         return $predictions;
     }
 
+    /**
+     * prediction_sample_data
+     *
+     * @param \stdClass $predictionobj
+     * @return array
+     */
     public function prediction_sample_data($predictionobj) {
 
         list($unused, $samplesdata) = $this->get_analyser()->get_samples(array($predictionobj->sampleid));
@@ -547,6 +627,12 @@ class model {
         return $samplesdata[$predictionobj->sampleid];
     }
 
+    /**
+     * prediction_sample_description
+     *
+     * @param \tool_inspire\prediction $prediction
+     * @return array 2 elements: list(string, \renderable)
+     */
     public function prediction_sample_description(\tool_inspire\prediction $prediction) {
         return $this->get_analyser()->sample_description($prediction->get_prediction_data()->sampleid,
             $prediction->get_prediction_data()->contextid, $prediction->get_sample_data());

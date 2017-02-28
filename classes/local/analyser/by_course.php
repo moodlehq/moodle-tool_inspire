@@ -67,24 +67,18 @@ abstract class by_course extends base {
         $analysables = $this->get_courses();
         foreach ($analysables as $analysableid => $analysable) {
 
-            list($status[$analysableid], $files, $messages[$analysableid]) = $this->process_analysable($analysable, $includetarget);
+            $files = $this->process_analysable($analysable, $includetarget);
 
-            if ($status[$analysableid] === \tool_inspire\model::OK) {
-                // Later we will need to aggregate data by time splitting method.
-                foreach ($files as $timesplittingid => $file) {
-                    $filesbytimesplitting[$timesplittingid][$analysableid] = $file;
-                }
+            // Later we will need to aggregate data by time splitting method.
+            foreach ($files as $timesplittingid => $file) {
+                $filesbytimesplitting[$timesplittingid][$analysableid] = $file;
             }
         }
 
         // We join the datasets by time splitting method.
         $timesplittingfiles = $this->merge_analysable_files($filesbytimesplitting, $includetarget);
 
-        return array(
-            'status' => $status,
-            'files' => $timesplittingfiles,
-            'messages' => $messages
-        );
+        return $timesplittingfiles;
     }
 
     protected function merge_analysable_files($filesbytimesplitting, $includetarget) {
@@ -94,7 +88,7 @@ abstract class by_course extends base {
 
             if ($this->options['evaluation'] === true) {
                 // Delete the previous copy. Only when evaluating.
-                \tool_inspire\dataset_manager::delete_evaluation_file($this->modelid, $timesplittingid);
+                \tool_inspire\dataset_manager::delete_previous_evaluation_file($this->modelid, $timesplittingid);
             }
 
             // Merge all course files into one.
