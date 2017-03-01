@@ -139,13 +139,8 @@ class processor implements \tool_inspire\predictor {
     }
 
     protected function get_file_path(\stored_file $file) {
-
         // From moodle filesystem to the local file system.
         // This is not ideal, but there is no read access to moodle filesystem files.
-        $dir = make_request_directory();
-        $filepath = $file->copy_content_to_temp($dir);
-
-        // Copy the evaluated dataset filepath to the result object.
-        return $filepath;
+        return $file->copy_content_to_temp();
     }
 }
