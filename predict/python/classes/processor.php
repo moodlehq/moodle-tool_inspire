@@ -141,6 +141,6 @@ class processor implements \tool_inspire\predictor {
     protected function get_file_path(\stored_file $file) {
         // From moodle filesystem to the local file system.
         // This is not ideal, but there is no read access to moodle filesystem files.
-        return $file->copy_content_to_temp();
+        return $file->copy_content_to_temp('tool_inspire');
     }
 }
