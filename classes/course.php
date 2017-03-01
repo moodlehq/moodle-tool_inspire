@@ -395,6 +395,9 @@ class course implements \tool_inspire\analysable {
             return false;
         }
 
+        // TODO Use course_modules_completion's timemodified + COMPLETION_COMPLETE* to discard
+        // activities that have already been completed.
+
         // We skip activities that were not yet visible or their 'until' was not in this $starttime - $endtime range.
         if ($activity->availability) {
             $info = new \core_availability\info_module($activity);

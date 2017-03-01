@@ -30,4 +30,4 @@ As a manager/admin you can access the model predictions by:
 - Going to **Site administration > Reports > Inspire models**
 - Selecting a context from the predictions list menu
 
-As a user with ''tool_inspire:listinsights'' capability you will receive notifications when new predictions are available to you.
+As a user with ''tool/inspire:listinsights'' capability you will receive notifications when new predictions are available to you.

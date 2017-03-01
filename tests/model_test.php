@@ -95,7 +95,7 @@ class tool_inspire_model_testcase extends advanced_testcase {
         $dir = make_request_directory();
         set_config('modeloutputdir', $dir, 'tool_inspire');
 
-        $modeldir = $dir . DIRECTORY_SEPARATOR . $this->modelobj->id . DIRECTORY_SEPARATOR . $this->modelobj->version . DIRECTORY_SEPARATOR;
+        $modeldir = $dir . DIRECTORY_SEPARATOR . $this->modelobj->id . DIRECTORY_SEPARATOR . $this->modelobj->version;
         $this->assertEquals($modeldir, $this->model->get_output_dir());
         $this->assertEquals($modeldir . DIRECTORY_SEPARATOR . 'asd', $this->model->get_output_dir(array('asd')));
     }
