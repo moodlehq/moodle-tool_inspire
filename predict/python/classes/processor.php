@@ -47,7 +47,7 @@ class processor implements \tool_inspire\predictor {
             escapeshellarg($outputdir) . ' ' .
             escapeshellarg($datasetpath);
 
-        if (debugging() && !PHPUNIT_TEST) {
+        if (debugging() && !PHPUNIT_TEST && CLI_SCRIPT) {
             mtrace($cmd);
         }
 
