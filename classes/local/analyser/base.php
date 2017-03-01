@@ -245,7 +245,7 @@ abstract class base {
 
             if (count($ranges) === 0) {
                 $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;
-                $result->message = 'No new ranges to process';
+                $result->message = 'No new time ranges, nothing to predict';
                 return $result;
             }
         }

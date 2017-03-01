@@ -38,7 +38,7 @@ class train_models extends \core\task\scheduled_task {
     }
 
     public function execute() {
-        global $DB;
+        global $DB, $OUTPUT;
 
         $models = $DB->get_records_select('tool_inspire_models', 'enabled = 1 AND timesplitting IS NOT NULL');
         if (!$models) {
@@ -50,8 +50,19 @@ class train_models extends \core\task\scheduled_task {
 
             $result = $model->train();
             if ($result) {
-                mtrace('Results:');
-                mtrace(' - Status code: ' . $result->status);
+                echo $OUTPUT->heading(get_string('modelresults', 'tool_inspire', $model->get_target()->get_name()));
+
+                if ($result->status == 0) {
+                    echo $OUTPUT->notification(get_string('goodmodel', 'tool_inspire'),
+                        \core\output\notification::NOTIFY_SUCCESS);
+                } else if ($result->status === \tool_inspire\model::NO_DATASET) {
+                    echo $OUTPUT->notification(get_string('nodatatotrain', 'tool_inspire'),
+                        \core\output\notification::NOTIFY_WARNING);
+                } else {
+                    echo $OUTPUT->notification(get_string('generalerror', 'tool_inspire', $result->status),
+                        \core\output\notification::NOTIFY_ERROR);
+                }
+
                 if (!empty($result->errors)) {
                     foreach ($result->errors as $error) {
                         mtrace('   - ' . $error);

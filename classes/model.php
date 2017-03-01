@@ -692,8 +692,7 @@ class model {
         }
 
         // Append model id and version + subdirs.
-        $outputdir .= DIRECTORY_SEPARATOR . $this->model->id . DIRECTORY_SEPARATOR . $this->model->version .
-            DIRECTORY_SEPARATOR . $subdirstr;
+        $outputdir .= DIRECTORY_SEPARATOR . $this->model->id . DIRECTORY_SEPARATOR . $this->model->version . $subdirstr;
 
         make_writable_directory($outputdir);
 
