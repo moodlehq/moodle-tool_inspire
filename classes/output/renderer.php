@@ -137,7 +137,7 @@ class renderer extends plugin_renderer_base {
 
         // Info logged during execution.
         if (!empty($executionlog)) {
-            echo $OUTPUT->heading(get_string('extrainfo', 'tool_inspire'), 4);
+            echo $OUTPUT->heading(get_string('extrainfo', 'tool_inspire'), 3);
             foreach ($executionlog as $log) {
                 echo $OUTPUT->notification($log, \core\output\notification::NOTIFY_WARNING);
             }
@@ -158,7 +158,7 @@ class renderer extends plugin_renderer_base {
     public function render_execute_results($trainresults, $trainlogs = array(), $predictresults, $predictlogs = array()) {
         global $OUTPUT;
 
-        echo $OUTPUT->heading(get_string('trainingresults', 'tool_inspire'));
+        echo $OUTPUT->heading(get_string('trainingresults', 'tool_inspire'), 3);
 
         if ($trainresults->status == 0) {
             echo $OUTPUT->notification(get_string('goodmodel', 'tool_inspire'),
@@ -172,12 +172,13 @@ class renderer extends plugin_renderer_base {
         }
 
         if (!empty($trainlogs)) {
+            echo $OUTPUT->heading(get_string('extrainfo', 'tool_inspire'), 4);
             foreach ($trainlogs as $log) {
                 echo $OUTPUT->notification($log, \core\output\notification::NOTIFY_WARNING);
             }
         }
 
-        echo $OUTPUT->heading(get_string('predictionresults', 'tool_inspire'));
+        echo $OUTPUT->heading(get_string('predictionresults', 'tool_inspire'), 3);
 
         if ($predictresults->status == 0) {
             echo $OUTPUT->notification(get_string('goodmodel', 'tool_inspire'),
@@ -191,6 +192,7 @@ class renderer extends plugin_renderer_base {
         }
 
         if (!empty($predictlogs)) {
+            echo $OUTPUT->heading(get_string('extrainfo', 'tool_inspire'), 4);
             foreach ($predictlogs as $log) {
                 echo $OUTPUT->notification($log, \core\output\notification::NOTIFY_WARNING);
             }
