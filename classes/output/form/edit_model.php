@@ -38,23 +38,26 @@ class edit_model extends \moodleform {
     /**
      * Form definition
      */
-    public function definition () {
+    public function definition() {
         $mform = $this->_form;
 
         $mform->addElement('advcheckbox', 'enabled', get_string('enabled', 'tool_inspire'));
 
         $indicators = array();
         foreach ($this->_customdata['indicators'] as $classname => $indicator) {
-            $indicators[$classname] = $indicator->get_name();
+            $optionname = \tool_inspire\output\helper::class_to_option($classname);
+            $indicators[$optionname] = $indicator->get_name();
         }
         $options = array(
             'multiple' => true
         );
         $mform->addElement('autocomplete', 'indicators', get_string('indicators', 'tool_inspire'), $indicators, $options);
+        $mform->setType('indicators', PARAM_ALPHANUMEXT);
 
         $timesplittings = array('' => '');
         foreach ($this->_customdata['timesplittings'] as $classname => $timesplitting) {
-            $timesplittings[$classname] = $timesplitting->get_name();
+            $optionname = \tool_inspire\output\helper::class_to_option($classname);
+            $timesplittings[$optionname] = $timesplitting->get_name();
         }
 
         $mform->addElement('select', 'timesplitting', get_string('timesplittingmethod', 'tool_inspire'), $timesplittings);
@@ -80,7 +83,8 @@ class edit_model extends \moodleform {
         $errors = parent::validation($data, $files);
 
         if (!empty($data['timesplitting'])) {
-            if (\tool_inspire\manager::is_valid($data['timesplitting'], '\tool_inspire\local\time_splitting\base') === false) {
+            $realtimesplitting = \tool_inspire\output\helper::option_to_class($data['timesplitting']);
+            if (\tool_inspire\manager::is_valid($realtimesplitting, '\tool_inspire\local\time_splitting\base') === false) {
                 $errors['timesplitting'] = get_string('errorinvalidtimesplitting', 'tool_inspire');
             }
         }
@@ -89,8 +93,9 @@ class edit_model extends \moodleform {
             $errors['indicators'] = get_string('errornoindicators', 'tool_inspire');
         } else {
             foreach ($data['indicators'] as $indicator) {
-                if (\tool_inspire\manager::is_valid($indicator, '\tool_inspire\local\indicator\base') === false) {
-                    $errors['indicators'] = get_string('errorinvalidindicator', 'tool_inspire', $indicator);
+                $realindicatorname = \tool_inspire\output\helper::option_to_class($indicator);
+                if (\tool_inspire\manager::is_valid($realindicatorname, '\tool_inspire\local\indicator\base') === false) {
+                    $errors['indicators'] = get_string('errorinvalidindicator', 'tool_inspire', $realindicatorname);
                 }
             }
         }

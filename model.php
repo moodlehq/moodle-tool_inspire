@@ -77,14 +77,25 @@ switch ($action) {
 
         } else if ($data = $mform->get_data()) {
             confirm_sesskey();
-            $model->update($data->enabled, $data->indicators, $data->timesplitting);
+
+            // Converting option names to class names.
+            $indicators = array();
+            foreach ($data->indicators as $indicator) {
+                $indicatorclass = \tool_inspire\output\helper::option_to_class($indicator);
+                $indicators[] = \tool_inspire\manager::get_indicator($indicatorclass);
+            }
+            $timesplitting = \tool_inspire\output\helper::option_to_class($data->timesplitting);
+            $model->update($data->enabled, $indicators, $timesplitting);
             redirect(new \moodle_url('/admin/tool/inspire/index.php'));
         }
 
         echo $OUTPUT->header();
 
         $modelobj = $model->get_model_obj();
-        $modelobj->indicators = json_decode($modelobj->indicators);
+
+        $callable = array('\tool_inspire\output\helper', 'class_to_option');
+        $modelobj->indicators = array_map($callable, json_decode($modelobj->indicators));
+        $modelobj->timesplitting = \tool_inspire\output\helper::class_to_option($modelobj->timesplitting);
         $mform->set_data($modelobj);
         $mform->display();
         break;

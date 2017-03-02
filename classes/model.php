@@ -240,19 +240,7 @@ class model {
     public static function create(\tool_inspire\local\target\base $target, array $indicators) {
         global $USER, $DB;
 
-        // What we want to check and store are the indicator classes not the keys.
-        $indicatorclasses = array();
-        foreach ($indicators as $indicator) {
-            if (!\tool_inspire\manager::is_valid($indicator, '\tool_inspire\local\indicator\base')) {
-                if (!is_object($indicator) && !is_scalar($indicator)) {
-                    $indicator = strval($indicator);
-                } else if (is_object($indicator)) {
-                    $indicator = get_class($indicator);
-                }
-                throw new \moodle_exception('errorinvalidindicator', 'tool_inspire', '', $indicator);
-            }
-            $indicatorclasses[] = '\\' . get_class($indicator);
-        }
+        $indicatorclasses = $this->indicator_classes($indicators);
 
         $now = time();
 
@@ -277,7 +265,9 @@ class model {
 
         $now = time();
 
-        $indicatorsstr = json_encode($indicators);
+        $indicatorclasses = $this->indicator_classes($indicators);
+
+        $indicatorsstr = json_encode($indicatorclasses);
         if ($this->model->timesplitting !== $timesplitting ||
                 $this->model->indicators !== $indicatorsstr) {
             // We update the version of the model so different time splittings are not mixed up.
@@ -759,5 +749,24 @@ class model {
         $log->usermodified = $USER->id;
 
         return $DB->insert_record('tool_inspire_models_log', $log);
+    }
+
+    private function indicator_classes($indicators) {
+
+        // What we want to check and store are the indicator classes not the keys.
+        $indicatorclasses = array();
+        foreach ($indicators as $indicator) {
+            if (!\tool_inspire\manager::is_valid($indicator, '\tool_inspire\local\indicator\base')) {
+                if (!is_object($indicator) && !is_scalar($indicator)) {
+                    $indicator = strval($indicator);
+                } else if (is_object($indicator)) {
+                    $indicator = get_class($indicator);
+                }
+                throw new \moodle_exception('errorinvalidindicator', 'tool_inspire', '', $indicator);
+            }
+            $indicatorclasses[] = '\\' . get_class($indicator);
+        }
+
+        return $indicatorclasses;
     }
 }
