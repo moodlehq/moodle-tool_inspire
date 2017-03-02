@@ -7,8 +7,8 @@ class BinaryClassifierTensorFlow(BinaryClassifier):
 
     def get_classifier(self, X, y):
 
-        n_epoch = 10
-        batch_size = 50
+        n_epoch = 5
+        batch_size = 1000
         starter_learning_rate = 0.01
         final_learning_rate = 0.000001
 
