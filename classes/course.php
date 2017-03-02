@@ -37,13 +37,16 @@ class course implements \tool_inspire\analysable {
 
     const MIN_STUDENT_LOGS_PERCENT = 90;
 
-    protected static $instance = null;
+    protected static $instances = array();
 
     protected $studentroles = [];
     protected $teacherroles = [];
 
     protected $course = null;
     protected $coursecontext = null;
+
+    protected $courseactivities = null;
+
     protected $starttime = null;
     protected $started = null;
     protected $endtime = null;
@@ -57,7 +60,8 @@ class course implements \tool_inspire\analysable {
     /**
      * Course manager constructor.
      *
-     * Use self::instance() instead to get a course_manager instance as it returns cached copies.
+     * Use self::instance() instead to get cached copies of the course. Instances obtained
+     * through this constructor will not be cached either.
      *
      * Loads course students and teachers.
      *
@@ -94,6 +98,28 @@ class course implements \tool_inspire\analysable {
         // Get the course users, including users assigned to student and teacher roles at an higher context.
         $this->studentids = $this->get_user_ids($this->studentroles);
         $this->teacherids = $this->get_user_ids($this->teacherroles);
+    }
+
+    /**
+     * instance
+     *
+     * @param int|stdClass $course Course id
+     * @return void
+     */
+    public static function instance($course) {
+
+        $courseid = $course;
+        if (!is_scalar($courseid)) {
+            $courseid = $course->id;
+        }
+
+        if (!empty(self::$instances[$courseid])) {
+            return self::$instances[$courseid];
+        }
+
+        $instance = new \tool_inspire\course($course);
+        self::$instances[$courseid] = $instance;
+        return self::$instances[$courseid];
     }
 
     public function get_id() {
@@ -352,14 +378,18 @@ class course implements \tool_inspire\analysable {
     }
 
     public function get_all_activities($activitytype) {
-        $modinfo = get_fast_modinfo($this->get_course_data(), -1);
-        $instances = $modinfo->get_instances_of($activitytype);
 
-        $instancesbycontext = array();
-        foreach ($instances as $instance) {
-            $instancesbycontext[$instance->context->id] = $instance;
+        if ($this->courseactivities === null) {
+            $modinfo = get_fast_modinfo($this->get_course_data(), -1);
+            $instances = $modinfo->get_instances_of($activitytype);
+
+            $this->courseactivities = array();
+            foreach ($instances as $instance) {
+                $this->courseactivities[$instance->context->id] = $instance;
+            }
         }
-        return $instancesbycontext;
+
+        return $this->courseactivities;
     }
 
     public function get_activities($activitytype, $starttime, $endtime, $student = false) {
