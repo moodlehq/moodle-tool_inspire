@@ -37,7 +37,7 @@ abstract class activity_cognitive_depth extends linear {
 
     protected $course = null;
     /**
-     * This should ideally be reused by cognitive depth and social breath.
+     * TODO This should ideally be reused by cognitive depth and social breath.
      *
      * @var \stdClass[]
      */
@@ -50,7 +50,7 @@ abstract class activity_cognitive_depth extends linear {
     abstract protected function get_activity_type();
 
     public static function required_sample_data() {
-        // Only course because the indicator is valid even without users.
+        // Only course because the indicator is valid even without students.
         return array('course');
     }
 
@@ -59,9 +59,116 @@ abstract class activity_cognitive_depth extends linear {
         // May not be available.
         $user = $this->retrieve('user', $sampleid);
 
+        if (!$useractivities = $this->get_student_activities($sampleid, $tablename, $starttime, $endtime)) {
+            // Null if no activities.
+            return null;
+        }
+
+        // We calculate the level 1 score by checking the percent of activities that the user accessed.
+        $level1score = self::get_min_value();
+        $scoreperactivity = (self::get_max_value() - self::get_min_value()) / count($useractivities);
+
+        // Iterate through the module activities/resources which due date is part of this time range.
+        foreach ($useractivities as $contextid => $unused) {
+            // Cognitive depth level 1 is just accessing the activity.
+
+            // Half of the score if only level 1 interaction.
+            if ($this->any_log($contextid, $user)) {
+                $level1score += $scoreperactivity;
+            }
+        }
+
+        return $level1score;
+    }
+
+    protected function activities_level_2($sampleid, $tablename, $starttime, $endtime) {
+
+        // May not be available.
+        $user = $this->retrieve('user', $sampleid);
+
+        $useractivities = $this->get_student_activities($sampleid, $tablename, $starttime, $endtime);
+
+        // Null if no activities.
+        if (empty($useractivities)) {
+            return null;
+        }
+
+        // We calculate the level 2 score by checking the percent of activities where the user performed
+        // create or update actions.
+        $level2score = self::get_min_value();
+        $scoreperactivity = (self::get_max_value() - self::get_min_value()) / count($useractivities);
+
+        // We divide the total score a user can get for this activity by the number of levels (= 2).
+        $scoreperlevel = $scoreperactivity / 2;
+
+        // Iterate through the module activities/resources which due date is part of this time range.
+        foreach ($useractivities as $contextid => $unused) {
+            // Cognitive depth level 2 is to submit content.
+
+            if ($this->any_write_log($contextid, $user)) {
+                $level2score += $scoreperactivity;
+                // Max score for this activity.
+                continue;
+            }
+
+            // Half of the score if only level 1 interaction.
+            if ($this->any_log($contextid, $user)) {
+                $level2score += $scoreperlevel;
+            }
+        }
+
+        return $level2score;
+    }
+
+    protected final function any_log($contextid, $user) {
+        if (empty($this->activitylogs[$contextid])) {
+            return false;
+        }
+
+        // Someone interacted with the activity if there is no user or the user interacted with the
+        // activity if there is a user.
+        if (empty($user) ||
+                (!empty($user) && !empty($this->activitylogs[$contextid][$user->id]))) {
+            return true;
+        }
+
+        return false;
+    }
+
+    protected final function any_write_log($contextid, $user) {
+        if (empty($this->activitylogs[$contextid])) {
+            return false;
+        }
+
+        // No specific user, we look at all activity logs.
+        if (!$user) {
+            foreach ($this->activitylogs[$contextid] as $userlogs => $logs) {
+                foreach ($logs as $log) {
+                    if ($log->crud === 'c' || $log->crud === 'u') {
+                        return true;
+                    }
+                }
+            }
+        } else if (!empty($this->activitylogs[$contextid][$user->id])) {
+            // TODO This else if looks crap, try to do it better without hurting performance.
+            foreach ($this->activitylogs[$contextid][$user->id] as $log) {
+                if ($log->crud === 'c' || $log->crud === 'u') {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    protected function get_student_activities($sampleid, $tablename, $starttime, $endtime) {
+
+        // May not be available.
+        $user = $this->retrieve('user', $sampleid);
+
         if ($this->course === null) {
             // The indicator scope is a range, so all activities belong to the same course.
-            $this->course = new \tool_inspire\course($this->retrieve('course', $sampleid));
+            $this->course = \tool_inspire\course::instance($this->retrieve('course', $sampleid));
         }
 
         if ($this->activitylogs === null) {
@@ -84,37 +191,11 @@ abstract class activity_cognitive_depth extends linear {
             $useractivities = $this->course->get_activities($this->get_activity_type(), $starttime, $endtime, $user);
         }
 
-        // Null if no activities.
-        if (empty($useractivities)) {
-            return null;
-        }
-
-        // We calculate the level 1 score by checking the percent of activities that the user accessed.
-        $level1score = self::get_min_value();
-        $scoreperactivity = (self::get_max_value() - self::get_min_value()) / count($useractivities);
-
-        // Iterate through the module activities/resources which due date is part of this time range.
-        foreach ($useractivities as $contextid => $cm) {
-            // Cognitive depth level 1 is just accessing the activity.
-
-            if (!empty($this->activitylogs[$contextid])) {
-                // Someone interacted with the activity if there is no user or the user interacted with the
-                // activity if there is a user.
-                if (empty($user) ||
-                        (!empty($user) && !empty($this->activitylogs[$contextid][$user->id]))) {
-                    $level1score += $scoreperactivity;
-                }
-            }
-        }
-
-        return $level1score;
+        return $useractivities;
     }
 
     protected function fetch_activity_logs($activities, $starttime = false, $endtime = false) {
         global $DB;
-
-        $select = '';
-        $params = array();
 
         // TODO Potential huge memory demanding, think about removing text fields and force activities that
         // needs them to fetch the extra info separately.
@@ -124,21 +205,29 @@ abstract class activity_cognitive_depth extends linear {
 
         // TODO This is an expensive query, we can set a massive distinct with all different contexts, users and actions we can find
         // in order to reduce the array size.
-        $select .= "contextid $contextsql AND timecreated > :starttime AND timecreated <= :endtime";
+
+        $fields = 'eventname, crud, contextid, contextlevel, contextinstanceid, userid, courseid, relateduserid';
+        $select = "contextid $contextsql AND timecreated > :starttime AND timecreated <= :endtime";
+        $sql = "SELECT $fields, max(timecreated) AS timecreated " .
+            "FROM {logstore_standard_log} " .
+            "WHERE $select " .
+            "GROUP BY $fields " .
+            "ORDER BY timecreated ASC";
         $params = $contextparams + array('starttime' => $starttime, 'endtime' => $endtime);
-        $logs = $DB->get_records_select('logstore_standard_log', $select, $params);
+        $logs = $DB->get_recordset_sql($sql, $params);
 
         // Returs the logs organised by contextid and user so it is easier to calculate activities data later.
         $logsbycontextuser = array();
         foreach ($logs as $log) {
-            if (empty($logsbycontextuser[$log->contextid])) {
+            if (!isset($logsbycontextuser[$log->contextid])) {
                 $logsbycontextuser[$log->contextid] = array();
             }
-            if (empty($logsbycontextuser[$log->contextid][$log->userid])) {
+            if (!isset($logsbycontextuser[$log->contextid][$log->userid])) {
                 $logsbycontextuser[$log->contextid][$log->userid] = array();
             }
-            $logsbycontextuser[$log->contextid][$log->userid] = $log;
+            $logsbycontextuser[$log->contextid][$log->userid][] = $log;
         }
+        $logs->close();
 
         return $logsbycontextuser;
     }
