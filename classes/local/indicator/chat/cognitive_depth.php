@@ -44,6 +44,6 @@ class cognitive_depth extends \tool_inspire\local\indicator\activity_cognitive_d
     }
 
     public function calculate_sample($sampleid, $tablename, $starttime = false, $endtime = false) {
-        return $this->activities_level_1($sampleid, $tablename, $starttime, $endtime);
+        return $this->activities_level_2($sampleid, $tablename, $starttime, $endtime);
     }
 }
