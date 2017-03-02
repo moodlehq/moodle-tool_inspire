@@ -45,7 +45,7 @@ class course implements \tool_inspire\analysable {
     protected $course = null;
     protected $coursecontext = null;
 
-    protected $courseactivities = null;
+    protected $courseactivities = array();
 
     protected $starttime = null;
     protected $started = null;
@@ -379,17 +379,23 @@ class course implements \tool_inspire\analysable {
 
     public function get_all_activities($activitytype) {
 
-        if ($this->courseactivities === null) {
+        // Using is set because we set it to false if there are no activities.
+        if (!isset($this->courseactivities[$activitytype])) {
             $modinfo = get_fast_modinfo($this->get_course_data(), -1);
             $instances = $modinfo->get_instances_of($activitytype);
 
-            $this->courseactivities = array();
-            foreach ($instances as $instance) {
-                $this->courseactivities[$instance->context->id] = $instance;
+            if ($instances) {
+                $this->courseactivities[$activitytype] = array();
+                foreach ($instances as $instance) {
+                    // By context.
+                    $this->courseactivities[$activitytype][$instance->context->id] = $instance;
+                }
+            } else {
+                $this->courseactivities[$activitytype] = false;
             }
         }
 
-        return $this->courseactivities;
+        return $this->courseactivities[$activitytype];
     }
 
     public function get_activities($activitytype, $starttime, $endtime, $student = false) {
