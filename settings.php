@@ -49,6 +49,7 @@ if ($hassiteconfig) {
         $timesplittingoptions[$key] = $timesplitting->get_name();
         $timesplittingdefaults[] = $key;
     }
+    // TODO A help button here to explain this, it is not trivial.
     $settings->add(new admin_setting_configmultiselect('tool_inspire/timesplittings',
         new lang_string('enabledtimesplittings', 'tool_inspire'), '', $timesplittingdefaults, $timesplittingoptions));
 
