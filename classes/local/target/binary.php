@@ -75,7 +75,7 @@ abstract class binary extends discrete {
         return 'alert alert-success';
     }
 
-    protected function classes_description() {
+    protected static function classes_description() {
         return array(
             get_string('yes'),
             get_string('no')

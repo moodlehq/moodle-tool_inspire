@@ -31,7 +31,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 function xmldb_tool_inspire_install() {
 
-    // TODO All of them for the moment, we will define a limited set once ready to release.
+    // TODO All of them for the moment, we will define a limited set of them once in core.
     $target = \tool_inspire\manager::get_target('\tool_inspire\local\target\course_dropout');
     $indicators = \tool_inspire\manager::get_all_indicators();
 

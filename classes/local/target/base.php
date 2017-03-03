@@ -123,8 +123,7 @@ abstract class base extends \tool_inspire\calculable {
                 // Course level notification.
                 $users = get_enrolled_users($context, 'tool/inspire:listinsights');
             } else {
-                // TODO Category level and their managers should also get notifications.
-                $users = get_admins();
+                $users = get_users_by_capability($context, 'tool/inspire:listinsights');
             }
 
             if (!$coursecontext = $context->get_course_context(false)) {

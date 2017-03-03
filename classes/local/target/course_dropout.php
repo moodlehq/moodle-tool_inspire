@@ -68,7 +68,7 @@ class course_dropout extends binary {
         return $actions;
     }
 
-    protected function classes_description() {
+    protected static function classes_description() {
         return array(
             get_string('labelstudentdropoutno', 'tool_inspire'),
             get_string('labelstudentdropoutyes', 'tool_inspire')
@@ -182,9 +182,10 @@ class course_dropout extends binary {
     public function calculate_sample($sampleid, \tool_inspire\analysable $course) {
         global $DB;
 
-        // TODO We can probably feed samples data here as well.
-        $userenrolment = $DB->get_record('user_enrolments', array('id' => $sampleid));
-        $user = $DB->get_record('user', array('id' => $userenrolment->userid));
+        // TODO Even if targets are aware of the data the analyser returns, we can probably still feed samples
+        // data with cached data.
+        $sql = "SELECT u.* FROM {user_enrolments} ue JOIN {user} u ON u.id = ue.userid WHERE ue.id = :ueid";
+        $user = $DB->get_record_sql($sql, array('ueid' => $sampleid));
 
         // We use completion as a success metric only when it is enabled.
         $completion = new \completion_info($course->get_course_data());

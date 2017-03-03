@@ -49,18 +49,20 @@ abstract class discrete extends base {
             throw new \moodle_exception('errorpredictionformat', 'tool_inspire');
         }
 
-        $classes = static::get_classes();
-        $descriptions = $this->classes_description();
+        // array_values to discard any possible weird keys devs used.
+        $classes = array_values(static::get_classes());
+        $descriptions = array_values(static::classes_description());
 
-        // TODO Confirm that get_classes array indexes are 100% ignored.
-        $desckeys = array_keys($descriptions);
-        sort($classes);
-        sort($desckeys);
-        if ($desckeys !== $classes) {
+        if (count($classes) !== count($descriptions)) {
             throw new \coding_exception('You need to describe all your classes (' . json_encode($classes) . ') in self::classes_description');
         }
 
-        return $descriptions[$value];
+        $key = array_search($value, $classes);
+        if ($key === false) {
+            throw new \coding_exception('You need to describe all your classes (' . json_encode($classes) . ') in self::classes_description');
+        }
+
+        return $descriptions[$key];
     }
 
     public function get_value_style($value) {
@@ -91,7 +93,7 @@ abstract class discrete extends base {
         throw new \coding_exception('Overwrite get_classes() and return an array with the different target classes');
     }
 
-    protected function classes_description() {
+    protected static function classes_description() {
         throw new \coding_exception('Overwrite classes_description() and return an array with the target classes description and ' .
             'indexes matching self::get_classes');
     }

@@ -240,7 +240,7 @@ class model {
     public static function create(\tool_inspire\local\target\base $target, array $indicators) {
         global $USER, $DB;
 
-        $indicatorclasses = $this->indicator_classes($indicators);
+        $indicatorclasses = self::indicator_classes($indicators);
 
         $now = time();
 
@@ -265,7 +265,7 @@ class model {
 
         $now = time();
 
-        $indicatorclasses = $this->indicator_classes($indicators);
+        $indicatorclasses = self::indicator_classes($indicators);
 
         $indicatorsstr = json_encode($indicatorclasses);
         if ($this->model->timesplitting !== $timesplitting ||
@@ -419,8 +419,6 @@ class model {
         $result->status = $predictorresult->status;
         $result->errors = $predictorresult->errors;
 
-        // TODO We already loaded this big array when creating the dataset file, but now we will also have predictions data
-        // we need to check that this is not getting crazy.
         $calculations = \tool_inspire\dataset_manager::get_structured_data($samplesfile);
 
         // Here we will store all predictions' contexts, this will be used to limit which users will see those predictions.
@@ -751,7 +749,7 @@ class model {
         return $DB->insert_record('tool_inspire_models_log', $log);
     }
 
-    private function indicator_classes($indicators) {
+    private static function indicator_classes($indicators) {
 
         // What we want to check and store are the indicator classes not the keys.
         $indicatorclasses = array();

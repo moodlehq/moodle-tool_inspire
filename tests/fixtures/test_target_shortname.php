@@ -8,7 +8,7 @@ class test_target_shortname extends \tool_inspire\local\target\binary {
         return '\tool_inspire\local\analyser\courses';
     }
 
-    public function classes_description() {
+    public static function classes_description() {
         return array(
             'Course fullname first char is A',
             'Course fullname first char is not A'
