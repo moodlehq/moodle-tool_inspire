@@ -54,9 +54,16 @@ class course_dropout extends binary {
         $sampledata = $prediction->get_sample_data();
         $studentid = $sampledata['user']->id;
 
+        // Send a message.
         $url = new \moodle_url('/message/index.php', array('user' => $USER->id, 'id' => $studentid));
         $actions[] = new \action_menu_link_secondary($url, new \pix_icon('t/message', get_string('sendmessage', 'message')),
             get_string('sendmessage', 'message'));
+
+        // View outline report.
+        $url = new \moodle_url('/report/outline/user.php', array('id' => $studentid, 'course' => $sampledata['course']->id,
+            'mode' => 'outline'));
+        $actions[] = new \action_menu_link_secondary($url, new \pix_icon('i/report', get_string('outlinereport')),
+            get_string('outlinereport'));
 
         return $actions;
     }

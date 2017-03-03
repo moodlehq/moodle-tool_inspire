@@ -97,7 +97,7 @@ class models_list implements \renderable, \templatable {
 
             if ($modeldata->enabled && !empty($modeldata->timesplitting)) {
                 $url = new \moodle_url('model.php', array('action' => 'execute', 'id' => $model->get_id()));
-                $icon = new \action_menu_link_secondary($url, new \pix_icon('i/marker',
+                $icon = new \action_menu_link_secondary($url, new \pix_icon('i/notifications',
                     get_string('executemodel', 'tool_inspire')), get_string('executemodel', 'tool_inspire'));
                 $actionsmenu->add($icon);
             }
