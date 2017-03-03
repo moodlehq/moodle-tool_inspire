@@ -82,6 +82,9 @@ abstract class linear extends base {
         $mean = round(array_sum($calculatedvalues) / count($calculatedvalues), 2);
 
         foreach ($calculatedvalues as $sampleid => $calculatedvalue) {
+
+            $calculatedvalue = round($calculatedvalue, 2);
+
             if (static::include_averages()) {
                 $calculatedvalues[$sampleid] = array($calculatedvalue, $mean);
             } else {
