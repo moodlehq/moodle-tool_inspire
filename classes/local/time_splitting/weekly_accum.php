@@ -26,7 +26,7 @@ namespace tool_inspire\local\time_splitting;
 
 defined('MOODLE_INTERNAL') || die();
 
-class weekly_accum extends base {
+abstract class weekly_accum extends base {
 
     public function get_name() {
         return get_string('timesplitting:weeklyaccum', 'tool_inspire');
