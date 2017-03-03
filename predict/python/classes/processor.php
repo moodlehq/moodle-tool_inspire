@@ -47,8 +47,8 @@ class processor implements \tool_inspire\predictor {
             escapeshellarg($outputdir) . ' ' .
             escapeshellarg($datasetpath);
 
-        if (debugging() && !PHPUNIT_TEST && CLI_SCRIPT) {
-            mtrace($cmd);
+        if (!PHPUNIT_TEST && CLI_SCRIPT) {
+            debugging($cmd, DEBUG_DEVELOPER);
         }
 
         $output = null;
@@ -82,8 +82,8 @@ class processor implements \tool_inspire\predictor {
             escapeshellarg($outputdir) . ' ' .
             escapeshellarg($datasetpath);
 
-        if (debugging() && !PHPUNIT_TEST) {
-            mtrace($cmd);
+        if (!PHPUNIT_TEST && CLI_SCRIPT) {
+            debugging($cmd, DEBUG_DEVELOPER);
         }
 
         $output = null;
@@ -119,8 +119,8 @@ class processor implements \tool_inspire\predictor {
             escapeshellarg($resultsdeviation) . ' ' .
             escapeshellarg($niterations);
 
-        if (debugging() && !PHPUNIT_TEST) {
-            mtrace($cmd);
+        if (!PHPUNIT_TEST && CLI_SCRIPT) {
+            debugging($cmd, DEBUG_DEVELOPER);
         }
 
         $output = null;
