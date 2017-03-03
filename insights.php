@@ -55,7 +55,7 @@ $title = get_string('insightinfo', 'tool_inspire', $insightinfo);
 $PAGE->set_url($url);
 $PAGE->set_pagelayout('report');
 
-if (!$model->is_enabled()) {
+if (!$model->is_enabled() && !has_capability('moodle/site:config', $context)) {
     // We don't want to disclose the name of the model if it has not been enabled.
     $PAGE->set_title($insightinfo->contextname);
     $PAGE->set_heading($insightinfo->contextname);

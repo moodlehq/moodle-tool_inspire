@@ -35,7 +35,14 @@ defined('MOODLE_INTERNAL') || die();
  */
 class prediction implements \renderable, \templatable {
 
+    /**
+     * @var \tool_inspire\model
+     */
     protected $model;
+
+    /**
+     * @var \tool_inspire\prediction
+     */
     protected $prediction;
 
     public function __construct(\tool_inspire\prediction $prediction, \tool_inspire\model $model) {
@@ -76,7 +83,7 @@ class prediction implements \renderable, \templatable {
 
             // Add all actions defined by the target.
             foreach ($actions as $action) {
-                $actionsmenu->add($action);
+                $actionsmenu->add($action->get_action_link());
             }
             $data->actions = $actionsmenu->export_for_template($output);
         } else {

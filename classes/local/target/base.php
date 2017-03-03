@@ -75,17 +75,18 @@ abstract class base extends \tool_inspire\calculable {
     public function prediction_actions(\tool_inspire\prediction $prediction) {
         global $PAGE;
 
-        $params = array('id' => $prediction->get_prediction_data()->id);
-        $predictionurl = new \moodle_url('/admin/tool/inspire/prediction.php', $params);
+        $predictionurl = new \moodle_url('/admin/tool/inspire/prediction.php',
+            array('id' => $prediction->get_prediction_data()->id));
         if ($predictionurl->compare($PAGE->url)) {
             // We don't show the link to prediction.php if we are already in prediction.php
             // prediction.php's $PAGE->set_url call is prior to any tool_inspire namespace method call.
             return array();
         }
 
-        return array(new \action_menu_link_secondary($predictionurl,
+        return array('predictiondetails' => new \tool_inspire\prediction_action('predictiondetails', $prediction, $predictionurl,
             new \pix_icon('t/preview', get_string('viewprediction', 'tool_inspire')),
-            get_string('viewprediction', 'tool_inspire')));
+            get_string('viewprediction', 'tool_inspire'))
+        );
     }
 
     public function get_display_value($value) {

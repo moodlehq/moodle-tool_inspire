@@ -55,6 +55,7 @@ $string['errorunexistingtimesplitting'] = 'The selected time splitting method is
 $string['errorunknownaction'] = 'Unknown action';
 $string['evaluate'] = 'Evaluate';
 $string['evaluatemodel'] = 'Evaluate model';
+$string['eventactionclicked'] = 'Prediction action clicked';
 $string['executemodel'] = 'Execute';
 $string['executingmodel'] = 'Training model and calculating predictions';
 $string['executionresults'] = 'Results using {$a->name} ({$a->id}) course duration splitting';

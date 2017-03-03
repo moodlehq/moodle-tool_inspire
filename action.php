@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * View a prediction.
+ * Forwards the user to the action they selected.
  *
  * @package    tool_inspire
  * @copyright  2017 David Monllao {@link http://www.davidmonllao.com}
@@ -24,7 +24,9 @@
 
 require_once(__DIR__ . '/../../../config.php');
 
-$predictionid = required_param('id', PARAM_INT);
+$predictionid = required_param('predictionid', PARAM_INT);
+$actionname = required_param('action', PARAM_ALPHANUMEXT);
+$forwardurl = required_param('forwardurl', PARAM_LOCALURL);
 
 if (!$predictionobj = $DB->get_record('tool_inspire_predictions', array('id' => $predictionid))) {
     throw new \moodle_exception('errorpredictionnotfound', 'tool_inspire');
@@ -45,38 +47,39 @@ if ($context->contextlevel === CONTEXT_MODULE) {
 
 require_capability('tool/inspire:listinsights', $context);
 
-$params = array('id' => $predictionobj->id);
-$url = new \moodle_url('/admin/tool/inspire/prediction.php', $params);
+$params = array('predictionid' => $predictionobj->id, 'action' => $actionname, 'forwardurl' => $forwardurl);
+$url = new \moodle_url('/admin/tool/inspire/action.php', $params);
 
 $model = new \tool_inspire\model($predictionobj->modelid);
 $sampledata = $model->prediction_sample_data($predictionobj);
 $prediction = new \tool_inspire\prediction($predictionobj, $sampledata);
 
-$insightinfo = new stdClass();
-$insightinfo->contextname = $context->get_context_name();
-$insightinfo->insightname = $model->get_target()->get_name();
-$title = get_string('insightinfo', 'tool_inspire', $insightinfo);
-
 $PAGE->set_url($url);
-$PAGE->set_pagelayout('report');
+
+// Check that the provided action exists.
+$actions = $model->get_target()->prediction_actions($prediction);
+if (!isset($actions[$actionname])) {
+    throw new \moodle_exception('errorunknownaction', 'tool_inspire');
+}
 
 if (!$model->is_enabled() && !has_capability('moodle/site:config', $context)) {
+
+    $PAGE->set_pagelayout('report');
+
     // We don't want to disclose the name of the model if it has not been enabled.
-    $PAGE->set_title($insightinfo->contextname);
-    $PAGE->set_heading($insightinfo->contextname);
+    $PAGE->set_title($context->get_context_name());
+    $PAGE->set_heading($context->get_context_name());
     echo $OUTPUT->header();
     echo $OUTPUT->notification(get_string('disabledmodel', 'tool_inspire'), \core\output\notification::NOTIFY_INFO);
     echo $OUTPUT->footer();
     exit(0);
 }
 
-$PAGE->set_title($title);
-$PAGE->set_heading($title);
+$eventdata = array (
+    'context' => $context,
+    'objectid' => $predictionid,
+    'other' => array('actionname' => $actionname)
+);
+\tool_inspire\event\action_clicked::create($eventdata)->trigger();
 
-echo $OUTPUT->header();
-
-$renderable = new \tool_inspire\output\prediction($prediction, $model);
-$renderer = $PAGE->get_renderer('tool_inspire');
-echo $renderer->render($renderable);
-
-echo $OUTPUT->footer();
+redirect($forwardurl);
