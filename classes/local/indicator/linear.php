@@ -79,7 +79,7 @@ abstract class linear extends base {
 
     protected function to_features($calculatedvalues) {
 
-        $mean = array_sum($calculatedvalues) / count($calculatedvalues);
+        $mean = round(array_sum($calculatedvalues) / count($calculatedvalues), 2);
 
         foreach ($calculatedvalues as $sampleid => $calculatedvalue) {
             if (static::include_averages()) {
