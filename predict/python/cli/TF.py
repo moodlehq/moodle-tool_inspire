@@ -27,7 +27,9 @@ class TF(object):
 
         n_examples, n_features = X.shape
 
-        iterations = int(n_examples / self.batch_size)
+        # floats division otherwise we get 0 if n_examples is lower than the
+        # batch size and minimum 1 iteration.
+        iterations = int(math.ceil(float(n_examples) / float(self.batch_size)))
 
         total_iterations = self.n_epoch * iterations
 
@@ -40,8 +42,8 @@ class TF(object):
         self.y_ = tf.placeholder(tf.float64, [None, n_classes], name='dataset-y')
 
         # Variables for computed stuff, we need to initialise them now.
-        W = tf.Variable(tf.zeros([n_features, n_classes], dtype=np.float64), name='weights')
-        b = tf.Variable(tf.zeros([n_classes], dtype=np.float64), name='bias')
+        W = tf.Variable(tf.zeros([n_features, n_classes], dtype=tf.float64), name='weights')
+        b = tf.Variable(tf.zeros([n_classes], dtype=tf.float64), name='bias')
 
         # Predicted y.
         self.z = tf.matmul(self.x, W) + b
@@ -55,7 +57,7 @@ class TF(object):
 
         train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss)
 
-        init = tf.initialize_all_variables()
+        init = tf.global_variables_initializer()
         self.sess.run(init)
 
         for e in range(self.n_epoch):
@@ -68,8 +70,7 @@ class TF(object):
 
                 batch_xs = X[offset:it_end]
                 batch_ys = y[offset:it_end]
-                feed = {self.x: batch_xs, self.y_: batch_ys}
-                self.sess.run(train_step, feed_dict=feed)
+                self.sess.run(train_step, {self.x: batch_xs, self.y_: batch_ys})
 
                 #correct_prediction = tf.equal(tf.argmax(self.y,1), tf.argmax(self.y_,1))
                 #accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
@@ -88,8 +89,8 @@ class TF(object):
         return learning_rate
 
     def predict(self, x):
-        return self.sess.run(tf.argmax(self.y, 1), feed_dict={self.x: x})
+        return self.sess.run(tf.argmax(self.y, 1), {self.x: x})
 
     def predict_proba(self, x):
-        return self.sess.run(self.z, feed_dict={self.x: x})
+        return self.sess.run(self.z, {self.x: x})
 
