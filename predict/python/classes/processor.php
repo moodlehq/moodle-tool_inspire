@@ -39,10 +39,7 @@ class processor implements \tool_inspire\predictor {
 
         $datasetpath = $this->get_file_path($dataset);
 
-        $absolutescriptpath = escapeshellarg(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'cli' . DIRECTORY_SEPARATOR .
-            'train-classification-singleclass.py');
-
-        $cmd = 'python ' . $absolutescriptpath . ' ' .
+        $cmd = 'python -m moodleinspire.training ' .
             escapeshellarg($uniqueid) . ' ' .
             escapeshellarg($outputdir) . ' ' .
             escapeshellarg($datasetpath);
@@ -74,10 +71,7 @@ class processor implements \tool_inspire\predictor {
 
         $datasetpath = $this->get_file_path($dataset);
 
-        $absolutescriptpath = escapeshellarg(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'cli' . DIRECTORY_SEPARATOR .
-            'predict-classification-singleclass.py');
-
-        $cmd = 'python ' . $absolutescriptpath . ' ' .
+        $cmd = 'python -m moodleinspire.prediction ' .
             escapeshellarg($uniqueid) . ' ' .
             escapeshellarg($outputdir) . ' ' .
             escapeshellarg($datasetpath);
@@ -109,9 +103,7 @@ class processor implements \tool_inspire\predictor {
 
         $datasetpath = $this->get_file_path($dataset);
 
-        $absolutescriptpath = escapeshellarg(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR .
-            'cli' . DIRECTORY_SEPARATOR . 'evaluate-classification-singleclass.py');
-        $cmd = 'python ' . $absolutescriptpath . ' ' .
+        $cmd = 'python -m moodleinspire.evaluation ' .
             escapeshellarg($uniqueid) . ' ' .
             escapeshellarg($outputdir) . ' ' .
             escapeshellarg($datasetpath) . ' ' .
