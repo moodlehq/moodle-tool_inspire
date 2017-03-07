@@ -130,9 +130,9 @@ class renderer extends plugin_renderer_base {
             // Score.
             $output .= $OUTPUT->heading(get_string('accuracy', 'tool_inspire') . ': ' . round(floatval($result->score), 4) * 100  . '%', 4);
 
-            if (!empty($result->errors)) {
-                foreach ($result->errors as $error) {
-                    $output .= $OUTPUT->notification($error, \core\output\notification::NOTIFY_WARNING);
+            if (!empty($result->info)) {
+                foreach ($result->info as $message) {
+                    $output .= $OUTPUT->notification($message, \core\output\notification::NOTIFY_WARNING);
                 }
             }
         }

@@ -57,14 +57,14 @@ class model_logs extends \table_sql {
         $this->set_attribute('class', 'modellog generaltable generalbox');
         $this->set_attribute('aria-live', 'polite');
 
-        $this->define_columns(array('time', 'version', 'indicators', 'timesplitting', 'accuracy', 'errors', 'usermodified'));
+        $this->define_columns(array('time', 'version', 'indicators', 'timesplitting', 'accuracy', 'info', 'usermodified'));
         $this->define_headers(array(
             get_string('time'),
             get_string('version'),
             get_string('indicators', 'tool_inspire'),
             get_string('timesplittingmethod', 'tool_inspire'),
             get_string('accuracy', 'tool_inspire'),
-            get_string('errorsinfo', 'tool_inspire'),
+            get_string('info', 'tool_inspire'),
             get_string('fullnameuser'),
         ));
         $this->pageable(true);
@@ -139,16 +139,21 @@ class model_logs extends \table_sql {
     }
 
     /**
-     * Generate the errors column.
+     * Generate the info column.
      *
      * @param stdClass $log log data.
      * @return string HTML for the score column
      */
-    public function col_errors($log) {
-        if (empty($log->errors)) {
+    public function col_info($log) {
+        global $PAGE;
+
+        if (empty($log->info)) {
             return '';
         }
-        return implode('<br/>', json_decode($log->errors));
+
+        $params = array($log->id, json_decode($log->info));
+        $PAGE->requires->js_call_amd('tool_inspire/log_info', 'loadInfo', $params);
+        return \html_writer::link('#', get_string('view'), array('data-model-log-id' => $log->id));
     }
 
     /**
@@ -169,7 +174,7 @@ class model_logs extends \table_sql {
      * @param bool $useinitialsbar do you want to use the initials bar.
      */
     public function query_db($pagesize, $useinitialsbar = true) {
-		global $DB;
+        global $DB;
 
         $total = $DB->count_records('tool_inspire_models_log', array('modelid' => $this->modelid));
         $this->pagesize($pagesize, $total);

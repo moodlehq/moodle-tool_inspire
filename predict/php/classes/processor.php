@@ -96,7 +96,7 @@ class processor implements \tool_inspire\predictor {
 
         $resultobj = new \stdClass();
         $resultobj->status = \tool_inspire\model::OK;
-        $resultobj->errors = array();
+        $resultobj->info = array();
 
         // Store the trained model.
         $modelmanager->saveToFile($classifier, $modelfilepath);
@@ -153,7 +153,7 @@ class processor implements \tool_inspire\predictor {
 
         $resultobj = new \stdClass();
         $resultobj->status = \tool_inspire\model::OK;
-        $resultobj->errors = array();
+        $resultobj->info = array();
 
         foreach ($predictions as $index => $prediction) {
             $resultobj->predictions[$index] = array($sampleids[$index], $prediction);
@@ -217,7 +217,7 @@ class processor implements \tool_inspire\predictor {
 
         // Zero is ok, now we add other bits if something is not right.
         $resultobj->status = \tool_inspire\model::OK;
-        $resultobj->errors = array();
+        $resultobj->info = array();
 
         // Convert phi (from -1 to 1 to a value between 0 and 1) to a standard score.
         $resultobj->score = ($avgphi + 1) / 2;
@@ -225,13 +225,13 @@ class processor implements \tool_inspire\predictor {
         // If each iteration results varied too much we need more data to confirm that this is a valid model.
         if ($stddev > $resultsdeviation) {
             $resultobj->status = $resultobj->status + \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA;
-            $resultobj->errors[] = 'The results obtained varied too much, we need more samples to check ' .
+            $resultobj->info[] = 'The results obtained varied too much, we need more samples to check ' .
                 'if this model is valid. Model deviation = ' . $stddev . ', accepted deviation = ' . $resultsdeviation;
         }
 
         if ($resultobj->score < 0.6) {
             $resultobj->status = $resultobj->status + \tool_inspire\model::EVALUATE_LOW_SCORE;
-            $resultobj->errors[] = 'The model may not be good enough. Model score = ' . $resultobj->score;
+            $resultobj->info[] = 'The model may not be good enough. Model score = ' . $resultobj->score;
         }
 
         return $resultobj;

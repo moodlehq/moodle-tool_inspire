@@ -318,14 +318,14 @@ class model {
 
             $result->status = $predictorresult->status;
             $result->score = $predictorresult->score;
-            $result->errors = $predictorresult->errors;
+            $result->info = $predictorresult->info;
 
             $dir = false;
             if (!empty($predictorresult->dir)) {
                 $dir = $predictorresult->dir;
             }
 
-            $result->logid = $this->log_result($timesplitting->get_id(), $result->score, $dir, $result->errors);
+            $result->logid = $this->log_result($timesplitting->get_id(), $result->score, $dir, $result->info);
 
             $results[$timesplitting->get_id()] = $result;
         }
@@ -355,7 +355,7 @@ class model {
 
             $result = new \stdClass();
             $result->status = self::NO_DATASET;
-            $result->errors = $this->get_analyser()->get_logs();
+            $result->info = $this->get_analyser()->get_logs();
             return $result;
         }
         $samplesfile = $datasets[$this->model->timesplitting];
@@ -367,7 +367,7 @@ class model {
 
         $result = new \stdClass();
         $result->status = $predictorresult->status;
-        $result->errors = $predictorresult->errors;
+        $result->info = $predictorresult->info;
 
         $this->flag_file_as_used($samplesfile, 'trained');
 
@@ -401,7 +401,7 @@ class model {
 
             $result = new \stdClass();
             $result->status = self::NO_DATASET;
-            $result->errors = $this->get_analyser()->get_logs();
+            $result->info = $this->get_analyser()->get_logs();
             return $result;
         }
         $samplesfile = $samplesdata[$this->model->timesplitting];
@@ -417,7 +417,7 @@ class model {
 
         $result = new \stdClass();
         $result->status = $predictorresult->status;
-        $result->errors = $predictorresult->errors;
+        $result->info = $predictorresult->info;
 
         $calculations = \tool_inspire\dataset_manager::get_structured_data($samplesfile);
 
@@ -728,7 +728,7 @@ class model {
         $DB->insert_record('tool_inspire_used_files', $usedfile);
     }
 
-    protected function log_result($timesplittingid, $score, $dir = false, $errors = false) {
+    protected function log_result($timesplittingid, $score, $dir = false, $info = false) {
         global $DB, $USER;
 
         $log = new \stdClass();
@@ -738,9 +738,9 @@ class model {
         $log->indicators = $this->model->indicators;
         $log->timesplitting = $timesplittingid;
         $log->dir = $dir;
-        if ($errors) {
+        if ($info) {
             // Ensure it is not an associative array.
-            $log->errors = json_encode(array_values($errors));
+            $log->info = json_encode(array_values($info));
         }
         $log->score = $score;
         $log->timecreated = time();
