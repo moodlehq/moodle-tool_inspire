@@ -48,7 +48,7 @@ class model {
     const ANALYSABLE_STATUS_INVALID_FOR_TARGET = 16;
 
     const ACCEPTED_DEVIATION = 0.02;
-    const EVALUATION_ITERATIONS = 100;
+    const EVALUATION_ITERATIONS = 20;
 
     /**
      * @var \stdClass
