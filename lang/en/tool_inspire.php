@@ -116,6 +116,7 @@ $string['prediction'] = 'Prediction';
 $string['predictionresults'] = 'Prediction results';
 $string['predictions'] = 'Predictions';
 $string['predictmodels'] = 'Predict models';
+$string['predictorresultsin'] = 'Predictor extra information in {$a} directory';
 $string['predictiondetails'] = 'Prediction details';
 $string['predictionprocessfinished'] = 'Prediction process finished';
 $string['predictionsprocessor'] = 'Predictions processor';

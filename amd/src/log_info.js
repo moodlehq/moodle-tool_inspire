@@ -30,6 +30,7 @@ define(['jquery', 'core/str', 'core/modal_factory'], function($, str, ModalFacto
                 ModalFactory.create({
                     title: langString,
                     body: bodyInfo.html(),
+                    large: true,
                 }, link);
             });
         }

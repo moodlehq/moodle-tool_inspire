@@ -147,12 +147,18 @@ class model_logs extends \table_sql {
     public function col_info($log) {
         global $PAGE;
 
-        if (empty($log->info)) {
+        if (empty($log->info) && empty($log->dir)) {
             return '';
         }
 
-        $params = array($log->id, json_decode($log->info));
-        $PAGE->requires->js_call_amd('tool_inspire/log_info', 'loadInfo', $params);
+        $info = array();
+        if (!empty($log->info)) {
+            $info = json_decode($log->info);
+        }
+        if (!empty($log->dir)) {
+            $info[] = get_string('predictorresultsin', 'tool_inspire', $log->dir);
+        }
+        $PAGE->requires->js_call_amd('tool_inspire/log_info', 'loadInfo', array($log->id, $info));
         return \html_writer::link('#', get_string('view'), array('data-model-log-id' => $log->id));
     }
 
