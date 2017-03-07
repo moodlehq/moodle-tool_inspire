@@ -48,27 +48,10 @@ defined('MOODLE_INTERNAL') || die();
  */
 class processor implements \tool_inspire\predictor {
 
+    const BATCH_SIZE = 1000;
     const MODEL_FILENAME = 'model.ser';
 
     public function train($uniqueid, \stored_file $dataset, $outputdir) {
-
-        $fh = $dataset->get_content_file_handle();
-
-        // The first lines are var names and the second one values.
-        $metadata = $this->extract_metadata($fh);
-
-        // Skip headers.
-        fgets($fh);
-
-        // TODO This should be processed in chunks if we expect it to scale.
-        $samples = array();
-        $targets = array();
-        while (($data = fgetcsv($fh)) !== false) {
-            $sampledata = array_map('floatval', $data);
-            $samples[] = array_slice($sampledata, 0, $metadata['nfeatures']);
-            $targets[] = intval($data[$metadata['nfeatures']]);
-        }
-        fclose($fh);
 
         // Output directory is already unique to the model.
         $modelfilepath = $outputdir . DIRECTORY_SEPARATOR . self::MODEL_FILENAME;
@@ -81,7 +64,35 @@ class processor implements \tool_inspire\predictor {
             $classifier = new \Phpml\Classification\NaiveBayes();
         }
 
-        $classifier->train($samples, $targets);
+        $fh = $dataset->get_content_file_handle();
+
+        // The first lines are var names and the second one values.
+        $metadata = $this->extract_metadata($fh);
+
+        // Skip headers.
+        fgets($fh);
+
+        $samples = array();
+        $targets = array();
+        while (($data = fgetcsv($fh)) !== false) {
+            $sampledata = array_map('floatval', $data);
+            $samples[] = array_slice($sampledata, 0, $metadata['nfeatures']);
+            $targets[] = intval($data[$metadata['nfeatures']]);
+
+            if (count($samples) === self::BATCH_SIZE) {
+                // Training it batches to avoid running out of memory.
+
+                $classifier->train($samples, $targets);
+                $samples = array();
+                $targets = array();
+            }
+        }
+        fclose($fh);
+
+        // Train the remaining samples.
+        if ($samples) {
+            $classifier->train($samples, $targets);
+        }
 
         $resultobj = new \stdClass();
         $resultobj->status = \tool_inspire\model::OK;
@@ -116,22 +127,36 @@ class processor implements \tool_inspire\predictor {
         // TODO This should be processed in chunks if we expect it to scale.
         $sampleids = array();
         $samples = array();
+        $predictions = array();
         while (($data = fgetcsv($fh)) !== false) {
             $sampledata = array_map('floatval', $data);
             $sampleids[] = $data[0];
             $samples[] = array_slice($sampledata, 1, $metadata['nfeatures']);
+
+            if (count($samples) === self::BATCH_SIZE) {
+                // Prediction it batches to avoid running out of memory.
+
+                // Append predictions incrementally, we want $sampleids keys in sync with $predictions keys.
+                $newpredictions = $classifier->predict($samples);
+                foreach ($newpredictions as $prediction) {
+                    array_push($predictions, $prediction);
+                }
+                $samples = array();
+            }
         }
         fclose($fh);
 
-        // Execute the predictions.
-        $predictions = $classifier->predict($samples);
+        // Finish the remaining predictions.
+        if ($samples) {
+            $predictions = $predictions + $classifier->predict($samples);
+        }
 
         $resultobj = new \stdClass();
         $resultobj->status = \tool_inspire\model::OK;
         $resultobj->errors = array();
 
-        foreach ($predictions as $key => $prediction) {
-            $resultobj->predictions[$key] = array($sampleids[$key], $prediction);
+        foreach ($predictions as $index => $prediction) {
+            $resultobj->predictions[$index] = array($sampleids[$index], $prediction);
         }
 
         return $resultobj;
@@ -147,7 +172,7 @@ class processor implements \tool_inspire\predictor {
         // Skip headers.
         fgets($fh);
 
-        // TODO This should be processed in chunks if we expect it to scale.
+        // TODO This should be processed in chunks if we expect it to scale although the random split makes it difficult.
         $samples = array();
         $targets = array();
         while (($data = fgetcsv($fh)) !== false) {

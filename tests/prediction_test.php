@@ -73,8 +73,7 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
 
         set_config('predictionsprocessor', $predictionsprocessorclass, 'tool_inspire');
 
-        $modelobj = $this->add_perfect_model();
-        $model = new \tool_inspire\model($modelobj);
+        $model = $this->add_perfect_model();
         $model->enable($timesplittingid);
 
         // No samples trained yet.
@@ -160,9 +159,9 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
         set_config('timesplittings', $sometimesplittings, 'tool_inspire');
 
         if ($modelquality === 'perfect') {
-            $modelobj = $this->add_perfect_model();
+            $model = $this->add_perfect_model();
         } else if ($modelquality === 'random') {
-            $modelobj = $this->add_random_model();
+            $model = $this->add_random_model();
         } else {
             throw new \coding_exception('Only perfect and random accepted as $modelquality values');
         }
@@ -189,7 +188,6 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
 
         set_config('predictionsprocessor', $predictionsprocessorclass, 'tool_inspire');
 
-        $model = new \tool_inspire\model($modelobj);
         $results = $model->evaluate();
 
         // We check that the returned status includes at least $expectedcode code.
@@ -239,7 +237,6 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
     }
 
     protected function add_random_model() {
-        global $DB;
 
         $target = \tool_inspire\manager::get_target('test_target_shortname');
         $indicators = array('test_indicator_max', 'test_indicator_min', 'test_indicator_random');
@@ -247,14 +244,13 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
             $indicators[$key] = \tool_inspire\manager::get_indicator($indicator);
         }
 
-        $model = testable_model::create($target, $indicators);
+        $model = \tool_inspire\model::create($target, $indicators);
 
         // To load db defaults as well.
-        return $DB->get_record('tool_inspire_models', array('id' => $model->get_id()));
+        return new \tool_inspire\model($model->get_id());
     }
 
     protected function add_perfect_model() {
-        global $DB;
 
         $target = \tool_inspire\manager::get_target('test_target_shortname');
         $indicators = array('test_indicator_max', 'test_indicator_min', 'test_indicator_fullname');
@@ -262,10 +258,10 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
             $indicators[$key] = \tool_inspire\manager::get_indicator($indicator);
         }
 
-        $model = testable_model::create($target, $indicators);
+        $model = \tool_inspire\model::create($target, $indicators);
 
         // To load db defaults as well.
-        return $DB->get_record('tool_inspire_models', array('id' => $model->get_id()));
+        return new \tool_inspire\model($model->get_id());
     }
 
     protected function add_prediction_processors($cases) {
