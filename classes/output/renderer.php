@@ -112,9 +112,6 @@ class renderer extends plugin_renderer_base {
             } else if ($result->status === \tool_inspire\model::NO_DATASET) {
                 $output .= $OUTPUT->notification(get_string('nodatatoevaluate', 'tool_inspire'),
                     \core\output\notification::NOTIFY_WARNING);
-            } else {
-                $output .= $OUTPUT->notification(get_string('generalerror', 'tool_inspire', $result->status),
-                    \core\output\notification::NOTIFY_ERROR);
             }
 
             // Not an else if because we can have them both.
