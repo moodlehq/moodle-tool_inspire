@@ -165,7 +165,7 @@ class renderer extends plugin_renderer_base {
     public function render_execute_results($trainresults, $trainlogs = array(), $predictresults, $predictlogs = array()) {
         global $OUTPUT;
 
-        $output .= $OUTPUT->heading(get_string('trainingresults', 'tool_inspire'), 3);
+        $output = $OUTPUT->heading(get_string('trainingresults', 'tool_inspire'), 3);
 
         if ($trainresults->status == 0) {
             $output .= $OUTPUT->notification(get_string('trainingprocessfinished', 'tool_inspire'),

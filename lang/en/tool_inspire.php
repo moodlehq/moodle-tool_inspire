@@ -49,6 +49,7 @@ $string['errorpredictionformat'] = 'Wrong prediction calculations format';
 $string['errorpredictionnotfound'] = 'Prediction not found';
 $string['errorpredictionsprocessor'] = 'Predictions processor error: {$a}';
 $string['errorpredictwrongformat'] = 'The predictions processor return can not be decoded: "{$a}"';
+$string['errorprocessornotready'] = 'The selected predictions processor is not ready: {$a}';
 $string['errorsamplenotavailable'] = 'The predicted sample is not available anymore';
 $string['info'] = 'Info';
 $string['errorunexistingtimesplitting'] = 'The selected time splitting method is not available';

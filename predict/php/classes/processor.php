@@ -51,6 +51,10 @@ class processor implements \tool_inspire\predictor {
     const BATCH_SIZE = 1000;
     const MODEL_FILENAME = 'model.ser';
 
+    public function is_ready() {
+        return true;
+    }
+
     public function train($uniqueid, \stored_file $dataset, $outputdir) {
 
         // Output directory is already unique to the model.

@@ -35,6 +35,33 @@ defined('MOODLE_INTERNAL') || die();
  */
 class processor implements \tool_inspire\predictor {
 
+    const REQUIRED_PIP_PACKAGE_VERSION = '0.0.2';
+
+    public function is_ready() {
+
+        # Check the installed pip package version.
+        $cmd = 'python -m moodleinspire.version';
+
+        $output = null;
+        $exitcode = null;
+        $result = exec($cmd, $output, $exitcode);
+
+        if ($result === self::REQUIRED_PIP_PACKAGE_VERSION) {
+            return true;
+        }
+
+        if ($exitcode != 0) {
+            return get_string('pythonpackagenotinstalled', 'predict_python', $cmd);
+        }
+
+        if ($result) {
+            $a = (object)array('installed' => $result, 'required' => self::REQUIRED_PIP_PACKAGE_VERSION);
+            return get_string('packageinstalledshouldbe', 'predict_python', $a);
+        }
+
+        return get_string('pythonpackagenotinstalled', 'predict_python', $cmd);
+    }
+
     public function train($uniqueid, \stored_file $dataset, $outputdir) {
 
         $datasetpath = $this->get_file_path($dataset);

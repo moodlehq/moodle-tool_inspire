@@ -72,9 +72,14 @@ class manager {
     /**
      * Returns the site selected predictions processor.
      *
+     * @param string $predictionclass
+     * @param bool $checkisready
      * @return \tool_inspire\predictor
      */
-    public static function get_predictions_processor($predictionclass = false) {
+    public static function get_predictions_processor($predictionclass = false, $checkisready = true) {
+
+        // We want 0 or 1 so we can use it as an array key for caching.
+        $checkisready = intval($checkisready);
 
         if ($predictionclass === false) {
             $predictionclass = get_config('tool_inspire', 'predictionsprocessor');
@@ -83,11 +88,6 @@ class manager {
         if (empty($predictionclass)) {
             // Use the default one if nothing set.
             $predictionclass = '\predict_php\processor';
-        }
-
-        // Return it from the cached list.
-        if (isset(self::$predictionprocessors[$predictionclass])) {
-            return self::$predictionprocessors[$predictionclass];
         }
 
         if (!class_exists($predictionclass)) {
@@ -99,9 +99,20 @@ class manager {
             throw new \coding_exception($predictionclass . ' should implement \tool_inspire\predictor.');
         }
 
-        self::$predictionprocessors[$predictionclass] = new $predictionclass();
+        // Return it from the cached list.
+        if (!isset(self::$predictionprocessors[$checkisready][$predictionclass])) {
 
-        return self::$predictionprocessors[$predictionclass];
+            $instance = new $predictionclass();
+            if ($checkisready) {
+                $isready = $instance->is_ready();
+                if ($isready !== true) {
+                    throw new \moodle_exception('errorprocessornotready', 'tool_inspire', '', $isready);
+                }
+            }
+            self::$predictionprocessors[$checkisready][$predictionclass] = $instance;
+        }
+
+        return self::$predictionprocessors[$checkisready][$predictionclass];
     }
 
     public static function get_all_prediction_processors() {
@@ -111,7 +122,7 @@ class manager {
         if (!empty($subplugins['predict'])) {
             foreach ($subplugins['predict'] as $subplugin) {
                 $classfullpath = '\\predict_' . $subplugin . '\\processor';
-                $predictionprocessors[$classfullpath] = self::get_predictions_processor($classfullpath);
+                $predictionprocessors[$classfullpath] = self::get_predictions_processor($classfullpath, false);
             }
         }
         return $predictionprocessors;

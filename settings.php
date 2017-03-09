@@ -37,7 +37,7 @@ if ($hassiteconfig) {
         $pluginname = substr($fullclassname, 1, strpos($fullclassname, '\\', 1) - 1);
         $predictors[$fullclassname] = new lang_string('pluginname', $pluginname);
     }
-    $settings->add(new admin_setting_configselect('tool_inspire/predictionsprocessor',
+    $settings->add(new \tool_inspire\admin_setting_predictor('tool_inspire/predictionsprocessor',
         new lang_string('predictionsprocessor', 'tool_inspire'), '', '\predict_php\processor', $predictors));
 
     // Enable/disable time splitting methods.

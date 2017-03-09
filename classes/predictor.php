@@ -35,6 +35,8 @@ defined('MOODLE_INTERNAL') || die();
  */
 interface predictor {
 
+    public function is_ready();
+
     public function train($modelid, \stored_file $dataset, $outputdir);
 
     public function predict($modelid, \stored_file $dataset, $outputdir);

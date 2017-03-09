@@ -297,6 +297,10 @@ class model {
 
         $options['evaluation'] = true;
         $this->init_analyser($options);
+
+        // Before get_labelled_data call so we get an early exception if it is not ready.
+        $predictor = \tool_inspire\manager::get_predictions_processor();
+
         $datasets = $this->get_analyser()->get_labelled_data();
 
         $results = array();
@@ -308,7 +312,6 @@ class model {
 
             $dashestimesplittingid = str_replace('\\', '', $timesplittingid);
             $outputdir = $this->get_output_dir(array('evaluation', $dashestimesplittingid));
-            $predictor = \tool_inspire\manager::get_predictions_processor();
 
             // Evaluate the dataset, the deviation we accept in the results depends on the amount of iterations.
             $resultsdeviation = self::ACCEPTED_DEVIATION;
@@ -348,6 +351,9 @@ class model {
         // Before get_labelled_data call so we get an early exception if it is not writable.
         $outputdir = $this->get_output_dir(array('execution'));
 
+        // Before get_labelled_data call so we get an early exception if it is not ready.
+        $predictor = \tool_inspire\manager::get_predictions_processor();
+
         $datasets = $this->get_analyser()->get_labelled_data();
 
         // No training if no files have been provided.
@@ -359,8 +365,6 @@ class model {
             return $result;
         }
         $samplesfile = $datasets[$this->model->timesplitting];
-
-        $predictor = \tool_inspire\manager::get_predictions_processor();
 
         // Train using the dataset.
         $predictorresult = $predictor->train($this->get_unique_id(), $samplesfile, $outputdir);
@@ -394,6 +398,9 @@ class model {
         // Before get_unlabelled_data call so we get an early exception if it is not writable.
         $outputdir = $this->get_output_dir(array('execution'));
 
+        // Before get_unlabelled_data call so we get an early exception if it is not ready.
+        $predictor = \tool_inspire\manager::get_predictions_processor();
+
         $samplesdata = $this->get_analyser()->get_unlabelled_data();
 
         // Get the prediction samples file.
@@ -412,7 +419,6 @@ class model {
             throw new \moodle_exception('erroralreadypredict', 'tool_inspire', '', $samplesfile->get_id());
         }
 
-        $predictor = \tool_inspire\manager::get_predictions_processor();
         $predictorresult = $predictor->predict($this->get_unique_id(), $samplesfile, $outputdir);
 
         $result = new \stdClass();
