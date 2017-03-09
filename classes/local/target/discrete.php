@@ -36,7 +36,8 @@ defined('MOODLE_INTERNAL') || die();
 abstract class discrete extends base {
 
     public function is_linear() {
-        return false;
+        // Not supported yet.
+        throw new \coding_exception('Sorry, this version\'s prediction processors only support targets with binary values.');
     }
 
     protected static function is_a_class($class) {

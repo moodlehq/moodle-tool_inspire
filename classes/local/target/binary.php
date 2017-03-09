@@ -35,6 +35,12 @@ defined('MOODLE_INTERNAL') || die();
  */
 abstract class binary extends discrete {
 
+    public function is_linear() {
+        // TODO Remove this discrete override once prediction processors support
+        // multiclass classifiers; this method will be moved to discrete.
+        return false;
+    }
+
     /**
      * Returns the target discrete values.
      *
