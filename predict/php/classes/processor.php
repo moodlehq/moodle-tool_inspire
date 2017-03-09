@@ -128,7 +128,6 @@ class processor implements \tool_inspire\predictor {
         // Skip headers.
         fgets($fh);
 
-        // TODO This should be processed in chunks if we expect it to scale.
         $sampleids = array();
         $samples = array();
         $predictions = array();

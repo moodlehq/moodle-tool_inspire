@@ -38,7 +38,9 @@ if ($hassiteconfig) {
         $predictors[$fullclassname] = new lang_string('pluginname', $pluginname);
     }
     $settings->add(new \tool_inspire\admin_setting_predictor('tool_inspire/predictionsprocessor',
-        new lang_string('predictionsprocessor', 'tool_inspire'), '', '\predict_php\processor', $predictors));
+        new lang_string('predictionsprocessor', 'tool_inspire'), new lang_string('predictionsprocessor_help', 'tool_inspire'),
+        '\predict_php\processor', $predictors)
+    );
 
     // Enable/disable time splitting methods.
     $alltimesplittings = \tool_inspire\manager::get_all_time_splittings();
@@ -49,9 +51,10 @@ if ($hassiteconfig) {
         $timesplittingoptions[$key] = $timesplitting->get_name();
         $timesplittingdefaults[] = $key;
     }
-    // TODO A help button here to explain this, it is not trivial.
     $settings->add(new admin_setting_configmultiselect('tool_inspire/timesplittings',
-        new lang_string('enabledtimesplittings', 'tool_inspire'), '', $timesplittingdefaults, $timesplittingoptions));
+        new lang_string('enabledtimesplittings', 'tool_inspire'), new lang_string('enabledtimesplittings_help', 'tool_inspire'),
+        $timesplittingdefaults, $timesplittingoptions)
+    );
 
     // Predictions processor output dir.
     $defaultmodeloutputdir = rtrim($CFG->dataroot, '/') . DIRECTORY_SEPARATOR . 'models';
