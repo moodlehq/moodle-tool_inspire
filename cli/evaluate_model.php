@@ -82,9 +82,9 @@ $analyseroptions = array(
 $results = $model->evaluate($analyseroptions);
 
 $renderer = $PAGE->get_renderer('tool_inspire');
-$renderer->render_evaluate_results($results, $model->get_analyser()->get_logs());
+echo $renderer->render_evaluate_results($results, $model->get_analyser()->get_logs());
 
-if (!$model->is_enabled() && $options['non-interactive'] === false) {
+if (!empty($results) && !$model->is_enabled() && $options['non-interactive'] === false) {
 
     // Select a dataset, train and enable the model.
     $input = cli_input(get_string('clienablemodel', 'tool_inspire'));

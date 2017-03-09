@@ -159,20 +159,22 @@ class renderer extends plugin_renderer_base {
      * @param string[] $predictlogs
      * @return string HTML
      */
-    public function render_execute_results($trainresults, $trainlogs = array(), $predictresults, $predictlogs = array()) {
+    public function render_execute_results($trainresults = false, $trainlogs = array(), $predictresults = false, $predictlogs = array()) {
         global $OUTPUT;
 
         $output = $OUTPUT->heading(get_string('trainingresults', 'tool_inspire'), 3);
 
-        if ($trainresults->status == 0) {
-            $output .= $OUTPUT->notification(get_string('trainingprocessfinished', 'tool_inspire'),
-                \core\output\notification::NOTIFY_SUCCESS);
-        } else if ($trainresults->status === \tool_inspire\model::NO_DATASET) {
-            $output .= $OUTPUT->notification(get_string('nodatatotrain', 'tool_inspire'),
-                \core\output\notification::NOTIFY_WARNING);
-        } else {
-            $output .= $OUTPUT->notification(get_string('generalerror', 'tool_inspire', $result->status),
-                \core\output\notification::NOTIFY_ERROR);
+        if ($trainresults) {
+            if ($trainresults->status == 0) {
+                $output .= $OUTPUT->notification(get_string('trainingprocessfinished', 'tool_inspire'),
+                    \core\output\notification::NOTIFY_SUCCESS);
+            } else if ($trainresults->status === \tool_inspire\model::NO_DATASET) {
+                $output .= $OUTPUT->notification(get_string('nodatatotrain', 'tool_inspire'),
+                    \core\output\notification::NOTIFY_WARNING);
+            } else {
+                $output .= $OUTPUT->notification(get_string('generalerror', 'tool_inspire', $result->status),
+                    \core\output\notification::NOTIFY_ERROR);
+            }
         }
 
         if (!empty($trainlogs) && debugging()) {
@@ -184,15 +186,17 @@ class renderer extends plugin_renderer_base {
 
         $output .= $OUTPUT->heading(get_string('predictionresults', 'tool_inspire'), 3);
 
-        if ($predictresults->status == 0) {
-            $output .= $OUTPUT->notification(get_string('predictionprocessfinished', 'tool_inspire'),
-                \core\output\notification::NOTIFY_SUCCESS);
-        } else if ($predictresults->status === \tool_inspire\model::NO_DATASET) {
-            $output .= $OUTPUT->notification(get_string('nodatatopredict', 'tool_inspire'),
-                \core\output\notification::NOTIFY_WARNING);
-        } else {
-            $output .= $OUTPUT->notification(get_string('generalerror', 'tool_inspire', $result->status),
-                \core\output\notification::NOTIFY_ERROR);
+        if ($predictresults) {
+            if ($predictresults->status == 0) {
+                $output .= $OUTPUT->notification(get_string('predictionprocessfinished', 'tool_inspire'),
+                    \core\output\notification::NOTIFY_SUCCESS);
+            } else if ($predictresults->status === \tool_inspire\model::NO_DATASET) {
+                $output .= $OUTPUT->notification(get_string('nodatatopredict', 'tool_inspire'),
+                    \core\output\notification::NOTIFY_WARNING);
+            } else {
+                $output .= $OUTPUT->notification(get_string('generalerror', 'tool_inspire', $result->status),
+                    \core\output\notification::NOTIFY_ERROR);
+            }
         }
 
         if (!empty($predictlogs) && debugging()) {
