@@ -58,35 +58,52 @@ class enrolments extends by_course {
         // All course enrolments.
         $instances = enrol_get_instances($course->get_id(), true);
         $enrolids = array_keys($instances);
-        list($sql, $params) = $DB->get_in_or_equal($enrolids, SQL_PARAMS_NAMED);
-        $enrolments = $DB->get_records_select('user_enrolments', "enrolid $sql", $params);
+        list($enrolsql, $params) = $DB->get_in_or_equal($enrolids, SQL_PARAMS_NAMED);
+
+        // Although we load all the course users data in memory anyway, using recordsets we will
+        // not use the double of the memory required by the end of the iteration.
+        $sql = "SELECT ue.id AS enrolmentid, u.* FROM {user_enrolments} ue
+                  JOIN {user} u on ue.userid = u.id
+                  WHERE ue.enrolid $enrolsql";
+        $enrolments = $DB->get_recordset_sql($sql, $params);
 
         $samplesdata = array();
-        foreach ($enrolments as $sampleid => $enrolment) {
-            // TODO Confirm that this is not a in-memory object copy but just a reference to the same object.
+        foreach ($enrolments as $user) {
+
+            $sampleid = $user->enrolmentid;
+            unset($user->enrolmentid);
+
             $samplesdata[$sampleid]['course'] = $course->get_course_data();
             $samplesdata[$sampleid]['context'] = $course->get_context();
-
-            // TODO Use $course for this.
-            $samplesdata[$sampleid]['user'] = $DB->get_record('user', array('id' => $enrolment->userid));
+            $samplesdata[$sampleid]['user'] = $user;
 
             // Fill the cache.
             $this->samplecourses[$sampleid] = $course->get_id();
         }
+        $enrolments->close();
 
-        $enrolids = array_keys($enrolments);
+        $enrolids = array_keys($samplesdata);
         return array(array_combine($enrolids, $enrolids), $samplesdata);
     }
 
     public function get_samples($sampleids) {
         global $DB;
 
-        // All course enrolments.
-        list($sql, $params) = $DB->get_in_or_equal($sampleids, SQL_PARAMS_NAMED);
-        $enrolments = $DB->get_records_select('user_enrolments', "id $sql", $params);
+        // Some course enrolments.
+        list($enrolsql, $params) = $DB->get_in_or_equal($sampleids, SQL_PARAMS_NAMED);
+
+        // Although we load all the course users data in memory anyway, using recordsets we will
+        // not use the double of the memory required by the end of the iteration.
+        $sql = "SELECT ue.id AS enrolmentid, u.* FROM {user_enrolments} ue
+                  JOIN {user} u on ue.userid = u.id
+                  WHERE ue.id $enrolsql";
+        $enrolments = $DB->get_recordset_sql($sql, $params);
 
         $samplesdata = array();
-        foreach ($enrolments as $sampleid => $enrolment) {
+        foreach ($enrolments as $user) {
+
+            $sampleid = $user->enrolmentid;
+            unset($user->enrolmentid);
 
             // Enrolment samples are grouped by the course they belong to, so all $sampleids belong to the same
             // course, $courseid and $coursemodinfo will only query the DB once and cache the course data in memory.
@@ -94,18 +111,16 @@ class enrolments extends by_course {
             $coursemodinfo = get_fast_modinfo($courseid);
             $coursecontext = \context_course::instance($courseid);
 
-            // TODO Confirm that this is not a in-memory object copy but just a reference to the same object.
             $samplesdata[$sampleid]['course'] = $coursemodinfo->get_course();
             $samplesdata[$sampleid]['context'] = $coursecontext;
-
-            // TODO Use $course for this.
-            $samplesdata[$sampleid]['user'] = $DB->get_record('user', array('id' => $enrolment->userid));
+            $samplesdata[$sampleid]['user'] = $user;
 
             // Fill the cache.
             $this->samplecourses[$sampleid] = $coursemodinfo->get_course()->id;
         }
+        $enrolments->close();
 
-        $enrolids = array_keys($enrolments);
+        $enrolids = array_keys($samplesdata);
         return array(array_combine($enrolids, $enrolids), $samplesdata);
     }
 
