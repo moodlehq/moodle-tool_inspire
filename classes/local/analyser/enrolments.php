@@ -128,7 +128,7 @@ class enrolments extends by_course {
         global $DB;
 
         if (empty($this->samplecourses[$sampleid])) {
-            // TODO New function in enrollib.php
+            // TODO New function in enrollib.php.
             $sql = "SELECT e.courseid
                       FROM {enrol} e
                       JOIN {user_enrolments} ue ON ue.enrolid = e.id

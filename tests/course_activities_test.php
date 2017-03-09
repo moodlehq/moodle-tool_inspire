@@ -33,79 +33,23 @@ defined('MOODLE_INTERNAL') || die();
  */
 class tool_inspire_course_activities_testcase extends advanced_testcase {
 
-    public function test_get_activities_with_activity_availability() {
-        global $CFG;
-
-        $this->resetAfterTest(true);
-
-        $this->setAdminUser();
-
-        $CFG->enableavailability = true;
-
-        $course = $this->getDataGenerator()->create_course();
-        $stu1 = $this->getDataGenerator()->create_user();
-        $this->getDataGenerator()->enrol_user($stu1->id, $course->id, 'student');
-
-        // forum1 is ignored as section 0 does not count.
-        $forum = $this->getDataGenerator()->create_module('forum', array('course' => $course->id));
-
-        $courseman = new \tool_inspire\course($course);
-
-        $modinfo = get_fast_modinfo($course, $stu1->id);
-        $cm = $modinfo->get_cm($forum->cmid);
-
-        $availabilityinfo = new \core_availability\info_module($cm);
-        $fromtime = strtotime('2015-10-22 00:00:00 GMT');
-        $untiltime = strtotime('2015-10-24 00:00:00 GMT');
-        $structure = (object)array('op' => '|', 'show' => true, 'c' => array(
-                (object)array('type' => 'date', 'd' => '<', 't' => $untiltime),
-                (object)array('type' => 'date', 'd' => '>=', 't' => $fromtime)
-        ));
-
-        $method = new ReflectionMethod($availabilityinfo, 'set_in_database');
-        $method->setAccessible(true);
-        $method->invoke($availabilityinfo, json_encode($structure));
-
-        $this->setUser($stu1);
-
-        // Reset modinfo we also want coursemodinfo cache definition to be cleared.
-        get_fast_modinfo($course, $stu1->id, true);
-        rebuild_course_cache($course->id, true);
-
-        $modinfo = get_fast_modinfo($course, $stu1->id);
-
-        $cm = $modinfo->get_cm($forum->cmid);
-
-        // Condition from after provided end time.
-        $this->assertCount(0, $courseman->get_activities('forum', strtotime('2015-10-20 00:00:00 GMT'), strtotime('2015-10-21 00:00:00 GMT'), $stu1));
-
-        // Condition until before provided start time
-        $this->assertCount(0, $courseman->get_activities('forum', strtotime('2015-10-25 00:00:00 GMT'), strtotime('2015-10-26 00:00:00 GMT'), $stu1));
-
-        // Condition until after provided end time.
-        $this->assertCount(0, $courseman->get_activities('forum', strtotime('2015-10-22 00:00:00 GMT'), strtotime('2015-10-23 00:00:00 GMT'), $stu1));
-
-        // Condition until after provided start time and before provided end time.
-        $this->assertCount(1, $courseman->get_activities('forum', strtotime('2015-10-22 00:00:00 GMT'), strtotime('2015-10-25 00:00:00 GMT'), $stu1));
+    public function availability_levels() {
+        return array(
+            'activity' => array('activity'),
+            'section' => array('section'),
+        );
     }
 
     /**
-     * Copied from test_get_activities_with_section_availability and adapted. dataProviders here may be ugly.
+     * test_get_activities_with_availability
      *
+     * @dataProvider availability_levels
+     * @param string $availabilitylevel
      * @return void
      */
-    public function test_get_activities_with_section_availability() {
-        global $CFG;
+    public function test_get_activities_with_availability($availabilitylevel) {
 
-        $this->resetAfterTest(true);
-
-        $this->setAdminUser();
-
-        $CFG->enableavailability = true;
-
-        $course = $this->getDataGenerator()->create_course();
-        $stu1 = $this->getDataGenerator()->create_user();
-        $this->getDataGenerator()->enrol_user($stu1->id, $course->id, 'student');
+        list($course, $stu1) = $this->setup_course();
 
         // forum1 is ignored as section 0 does not count.
         $forum = $this->getDataGenerator()->create_module('forum', array('course' => $course->id));
@@ -115,7 +59,14 @@ class tool_inspire_course_activities_testcase extends advanced_testcase {
         $modinfo = get_fast_modinfo($course, $stu1->id);
         $cm = $modinfo->get_cm($forum->cmid);
 
-        $availabilityinfo = new \core_availability\info_section($cm->get_modinfo()->get_section_info($cm->sectionnum));
+        if ($availabilitylevel === 'activity') {
+            $availabilityinfo = new \core_availability\info_module($cm);
+        } else if ($availabilitylevel === 'section') {
+            $availabilityinfo = new \core_availability\info_section($cm->get_modinfo()->get_section_info($cm->sectionnum));
+        } else {
+            $this->fail('Unsupported availability level');
+        }
+
         $fromtime = strtotime('2015-10-22 00:00:00 GMT');
         $untiltime = strtotime('2015-10-24 00:00:00 GMT');
         $structure = (object)array('op' => '|', 'show' => true, 'c' => array(
@@ -152,17 +103,14 @@ class tool_inspire_course_activities_testcase extends advanced_testcase {
 
     public function test_get_activities_with_weeks() {
 
-        $this->resetAfterTest(true);
-
         $startdate = gmmktime('0', '0', '0', 10, 24, 2015);
         $record = array(
             'format' => 'weeks',
             'numsections' => 4,
             'startdate' => $startdate,
         );
-        $course = $this->getDataGenerator()->create_course($record);
-        $stu1 = $this->getDataGenerator()->create_user();
-        $this->getDataGenerator()->enrol_user($stu1->id, $course->id, 'student');
+
+        list($course, $stu1) = $this->setup_course($record);
 
         // forum1 is ignored as section 0 does not count.
         $forum1 = $this->getDataGenerator()->create_module('forum', array('course' => $course->id),
@@ -192,8 +140,6 @@ class tool_inspire_course_activities_testcase extends advanced_testcase {
 
     public function test_get_activities_by_section() {
 
-        $this->resetAfterTest(true);
-
         // This makes debugging easier, sorry WA's +8 :)
         $this->setTimezone('UTC');
 
@@ -207,9 +153,8 @@ class tool_inspire_course_activities_testcase extends advanced_testcase {
             'startdate' => $startdate,
             'enddate' => $enddate
         );
-        $course = $this->getDataGenerator()->create_course($record);
-        $stu1 = $this->getDataGenerator()->create_user();
-        $this->getDataGenerator()->enrol_user($stu1->id, $course->id, 'student');
+
+        list($course, $stu1) = $this->setup_course($record);
 
         // forum1 is ignored as section 0 does not count.
         $forum1 = $this->getDataGenerator()->create_module('forum', array('course' => $course->id),
@@ -256,4 +201,21 @@ class tool_inspire_course_activities_testcase extends advanced_testcase {
         $this->assertCount(0, $courseman->get_activities('forum', $timeranges[2], $timeranges[2] + $duration, $stu1));
         $this->assertCount(0, $courseman->get_activities('forum', $timeranges[3], $timeranges[3] + $duration, $stu1));
     }
+
+    protected function setup_course($courserecord = null) {
+        global $CFG;
+
+        $this->resetAfterTest(true);
+
+        $this->setAdminUser();
+
+        $CFG->enableavailability = true;
+
+        $course = $this->getDataGenerator()->create_course($courserecord);
+        $stu1 = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($stu1->id, $course->id, 'student');
+
+        return array($course, $stu1);
+    }
+
 }

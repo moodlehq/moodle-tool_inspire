@@ -75,7 +75,8 @@ abstract class discrete extends base {
 
         $displayvalue = array_search($subtype, static::get_classes());
 
-        debugging('Please overwrite \tool_inspire\local\indicator\discrete::get_display_value to show something different than the default "' . $displayvalue . '"', DEBUG_DEVELOPER);
+        debugging('Please overwrite \tool_inspire\local\indicator\discrete::get_display_value to show something ' .
+            'different than the default "' . $displayvalue . '"', DEBUG_DEVELOPER);
 
         return $displayvalue;
     }

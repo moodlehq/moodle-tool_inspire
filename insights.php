@@ -55,13 +55,10 @@ $title = get_string('insightinfo', 'tool_inspire', $insightinfo);
 $PAGE->set_url($url);
 $PAGE->set_pagelayout('report');
 
+$renderer = $PAGE->get_renderer('tool_inspire');
+
 if (!$model->is_enabled() && !has_capability('moodle/site:config', $context)) {
-    // We don't want to disclose the name of the model if it has not been enabled.
-    $PAGE->set_title($insightinfo->contextname);
-    $PAGE->set_heading($insightinfo->contextname);
-    echo $OUTPUT->header();
-    echo $OUTPUT->notification(get_string('disabledmodel', 'tool_inspire'), \core\output\notification::NOTIFY_INFO);
-    echo $OUTPUT->footer();
+    echo $renderer->render_model_disabled($insightinfo);
     exit(0);
 }
 
@@ -71,7 +68,6 @@ $PAGE->set_heading($title);
 echo $OUTPUT->header();
 
 $renderable = new \tool_inspire\output\predictions_list($model, $context);
-$renderer = $PAGE->get_renderer('tool_inspire');
 echo $renderer->render($renderable);
 
 echo $OUTPUT->footer();
