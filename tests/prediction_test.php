@@ -68,8 +68,11 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
             $this->getDataGenerator()->create_course($courseparams);
         }
 
-        $predictionsprocessor = \tool_inspire\manager::get_predictions_processor($predictionsprocessorclass);
-        $predictionprocessors = \tool_inspire\manager::get_all_prediction_processors();
+        // We repeat the test for all prediction processors.
+        $predictionsprocessor = \tool_inspire\manager::get_predictions_processor($predictionsprocessorclass, false);
+        if ($predictionsprocessor->is_ready() !== true) {
+            $this->markTestSkipped('Skipping ' . $predictionsprocessorclass . ' as the predictor is not ready.');
+        }
 
         set_config('predictionsprocessor', $predictionsprocessorclass, 'tool_inspire');
 
@@ -184,7 +187,10 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
         }
 
         // We repeat the test for all prediction processors.
-        $predictionsprocessor = \tool_inspire\manager::get_predictions_processor($predictionsprocessorclass);
+        $predictionsprocessor = \tool_inspire\manager::get_predictions_processor($predictionsprocessorclass, false);
+        if ($predictionsprocessor->is_ready() !== true) {
+            $this->markTestSkipped('Skipping ' . $predictionsprocessorclass . ' as the predictor is not ready.');
+        }
 
         set_config('predictionsprocessor', $predictionsprocessorclass, 'tool_inspire');
 
