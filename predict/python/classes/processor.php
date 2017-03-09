@@ -44,7 +44,8 @@ class processor implements \tool_inspire\predictor {
 
         $output = null;
         $exitcode = null;
-        $result = exec($cmd, $output, $exitcode);
+        // Execute it sending the standard error to $output.
+        $result = exec($cmd . ' 2>&1', $output, $exitcode);
 
         if ($result === self::REQUIRED_PIP_PACKAGE_VERSION) {
             return true;
