@@ -59,6 +59,7 @@ $string['errorunknownaction'] = 'Unknown action';
 $string['evaluate'] = 'Evaluate';
 $string['evaluatemodel'] = 'Evaluate model';
 $string['eventactionclicked'] = 'Prediction action clicked';
+$string['evaluationinbatches'] = 'The site contents are calculated and stored in batches, during evaluation you can stop the process at any moment, the next time you run it it will continue from the point you stopped it.';
 $string['executemodel'] = 'Execute';
 $string['executingmodel'] = 'Training model and calculating predictions';
 $string['executionresults'] = 'Results using {$a->name} (id: {$a->id}) course duration splitting';

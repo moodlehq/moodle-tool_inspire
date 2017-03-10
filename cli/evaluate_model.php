@@ -76,6 +76,7 @@ $modelobj = $DB->get_record('tool_inspire_models', array('id' => $options['model
 $model = new \tool_inspire\model($modelobj);
 
 mtrace(get_string('analysingsitedata', 'tool_inspire'));
+mtrace(get_string('evaluationinbatches', 'tool_inspire'));
 
 $analyseroptions = array(
     'filter' => $options['filter'],
