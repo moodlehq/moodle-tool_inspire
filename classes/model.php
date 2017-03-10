@@ -279,8 +279,14 @@ class model {
             // We update the version of the model so different time splittings are not mixed up.
             $this->model->version = $now;
 
+            // Delete generated predictions.
+            $this->clear_model();
+
             // Purge all generated files.
             \tool_inspire\dataset_manager::clear_model_files($this->model->id);
+
+            // Reset trained flag.
+            $this->model->trained = 0;
         }
         $this->model->enabled = $enabled;
         $this->model->indicators = $indicatorsstr;
@@ -781,5 +787,14 @@ class model {
         }
 
         return $indicatorclasses;
+    }
+
+    private function clear_model() {
+        global $DB;
+
+        $DB->delete_records('tool_inspire_predict_ranges', array('modelid' => $this->model->id));
+        $DB->delete_records('tool_inspire_predictions', array('modelid' => $this->model->id));
+        $DB->delete_records('tool_inspire_train_samples', array('modelid' => $this->model->id));
+        $DB->delete_records('tool_inspire_used_files', array('modelid' => $this->model->id));
     }
 }
