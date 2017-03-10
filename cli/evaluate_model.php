@@ -32,11 +32,12 @@ $help = "Evaluates the provided model.
 Options:
 --modelid           Model id
 --non-interactive   Not interactive questions
+--timesplitting     Restrict the evaluation to 1 single time splitting method
 --filter            Analyser dependant (Optional)
 -h, --help          Print out this help
 
 Example:
-\$ php admin/tool/inspire/cli/evaluate_model.php --modelid=1 --filter=123,321
+\$ php admin/tool/inspire/cli/evaluate_model.php --modelid=1 --timesplitting='\tool_inspire\local\time_splitting\quarters' --filter=123,321
 ";
 
 // Now get cli options.
@@ -44,6 +45,7 @@ list($options, $unrecognized) = cli_get_params(
     array(
         'help'            => false,
         'modelid'         => false,
+        'timesplitting'   => false,
         'non-interactive' => false,
         'filter'          => false
     ),
@@ -77,6 +79,7 @@ mtrace(get_string('analysingsitedata', 'tool_inspire'));
 
 $analyseroptions = array(
     'filter' => $options['filter'],
+    'timesplitting' => $options['timesplitting']
 );
 // Evaluate its suitability to predict accurately.
 $results = $model->evaluate($analyseroptions);

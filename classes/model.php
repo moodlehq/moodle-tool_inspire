@@ -194,8 +194,13 @@ class model {
         }
 
         if (!empty($options['evaluation'])) {
-            // The evaluation process will run using all available time splitting methods.
-            $timesplittings = \tool_inspire\manager::get_enabled_time_splitting_methods();
+            // The evaluation process will run using all available time splitting methods unless one is specified.
+            if (!empty($options['timesplitting'])) {
+                $timesplitting = \tool_inspire\manager::get_time_splitting($options['timesplitting']);
+                $timesplittings = array($timesplitting->get_id() => $timesplitting);
+            } else {
+                $timesplittings = \tool_inspire\manager::get_enabled_time_splitting_methods();
+            }
         } else {
 
             if (empty($this->model->timesplitting)) {
@@ -273,6 +278,9 @@ class model {
                 $this->model->indicators !== $indicatorsstr) {
             // We update the version of the model so different time splittings are not mixed up.
             $this->model->version = $now;
+
+            // Purge all generated files.
+            \tool_inspire\dataset_manager::clear_model_files($this->model->id);
         }
         $this->model->enabled = $enabled;
         $this->model->indicators = $indicatorsstr;
