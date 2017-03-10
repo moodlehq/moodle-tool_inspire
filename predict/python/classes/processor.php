@@ -135,7 +135,7 @@ class processor implements \tool_inspire\predictor {
             escapeshellarg($uniqueid) . ' ' .
             escapeshellarg($outputdir) . ' ' .
             escapeshellarg($datasetpath) . ' ' .
-            escapeshellarg(0.6) . ' ' .
+            escapeshellarg(\tool_inspire\model::MIN_SCORE) . ' ' .
             escapeshellarg($resultsdeviation) . ' ' .
             escapeshellarg($niterations);
 

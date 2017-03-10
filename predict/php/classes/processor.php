@@ -232,7 +232,7 @@ class processor implements \tool_inspire\predictor {
                 'if this model is valid. Model deviation = ' . $stddev . ', accepted deviation = ' . $resultsdeviation;
         }
 
-        if ($resultobj->score < 0.6) {
+        if ($resultobj->score < \tool_inspire\model::MIN_SCORE) {
             $resultobj->status = $resultobj->status + \tool_inspire\model::EVALUATE_LOW_SCORE;
             $resultobj->info[] = 'The model may not be good enough. Model score = ' . $resultobj->score;
         }

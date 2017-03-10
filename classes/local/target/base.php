@@ -171,7 +171,7 @@ abstract class base extends \tool_inspire\calculable {
      */
     protected function min_prediction_score() {
         // The default minimum discards predictions with a low score.
-        return 0.6;
+        return \tool_inspire\model::MIN_SCORE;
     }
 
     /**
