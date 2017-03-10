@@ -58,8 +58,8 @@ if ($hassiteconfig) {
 
     // Predictions processor output dir.
     $defaultmodeloutputdir = rtrim($CFG->dataroot, '/') . DIRECTORY_SEPARATOR . 'models';
-    $settings->add(new admin_setting_configtext('tool_inspire/modeloutputdir', new lang_string('modeloutputdir', 'tool_inspire'),
-        new lang_string('modeloutputdirinfo', 'tool_inspire'), $defaultmodeloutputdir, PARAM_PATH));
+    $settings->add(new admin_setting_configfile('tool_inspire/modeloutputdir', new lang_string('modeloutputdir', 'tool_inspire'),
+        new lang_string('modeloutputdirinfo', 'tool_inspire'), $defaultmodeloutputdir));
     $studentdefaultroles = [];
     $teacherdefaultroles = [];
 
