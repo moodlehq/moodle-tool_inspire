@@ -40,7 +40,7 @@ $url = new \moodle_url('/admin/tool/inspire/model.php', $params);
 switch ($action) {
 
     case 'edit':
-        $title = get_string('editmodel', 'tool_inspire');
+        $title = get_string('editmodel', 'tool_inspire', $model->get_target()->get_name());
         break;
     case 'evaluate':
         $title = get_string('evaluatemodel', 'tool_inspire');
@@ -67,6 +67,7 @@ switch ($action) {
 
         $customdata = array(
             'id' => $model->get_id(),
+            'model' => $model,
             'indicators' => \tool_inspire\manager::get_all_indicators(),
             'timesplittings' => \tool_inspire\manager::get_enabled_time_splitting_methods()
         );

@@ -39,7 +39,14 @@ class edit_model extends \moodleform {
      * Form definition
      */
     public function definition() {
+        global $OUTPUT;
+
         $mform = $this->_form;
+
+        if ($this->_customdata['model']->get_model_obj()->trained == 1) {
+            $message = get_string('edittrainedwarning', 'tool_inspire');
+            $mform->addElement('html', $OUTPUT->notification($message, \core\output\notification::NOTIFY_WARNING));
+        }
 
         $mform->addElement('advcheckbox', 'enabled', get_string('enabled', 'tool_inspire'));
 
