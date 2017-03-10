@@ -39,9 +39,14 @@ abstract class activity_cognitive_depth extends linear {
     /**
      * TODO This should ideally be reused by cognitive depth and social breath.
      *
-     * @var \stdClass[]
+     * @var array Array of logs by [contextid][userid]
      */
     protected $activitylogs = null;
+
+    /**
+     * @var array Array of grades by [contextid][userid]
+     */
+    protected $grades = null;
 
     /**
      * TODO Automate this when merging into core.
@@ -120,6 +125,49 @@ abstract class activity_cognitive_depth extends linear {
         return $level2score;
     }
 
+    protected function activities_level_3($sampleid, $tablename, $starttime, $endtime) {
+
+        // May not be available.
+        $user = $this->retrieve('user', $sampleid);
+
+        $useractivities = $this->get_student_activities($sampleid, $tablename, $starttime, $endtime);
+
+        // Null if no activities.
+        if (empty($useractivities)) {
+            return null;
+        }
+
+        // We calculate the level 3 score by checking the percent of activities where the user performed
+        // create or update actions.
+        $level3score = self::get_min_value();
+        $scoreperactivity = (self::get_max_value() - self::get_min_value()) / count($useractivities);
+
+        // We divide the total score a user can get for this activity by the number of levels (= 3).
+        $scoreperlevel = $scoreperactivity / 3;
+
+        // Iterate through the module activities/resources which due date is part of this time range.
+        foreach ($useractivities as $contextid => $unused) {
+            // Cognitive depth level 3 is to view feedback.
+
+            if ($this->any_feedback_view($contextid, $user, $this->feedback_events())) {
+                $level3score += $scoreperactivity;
+                continue;
+            }
+
+            if ($this->any_write_log($contextid, $user)) {
+                $level3score += $scoreperlevel * 2;
+                continue;
+            }
+
+            // Half of the score if only level 1 interaction.
+            if ($this->any_log($contextid, $user)) {
+                $level3score += $scoreperlevel;
+            }
+        }
+
+        return $level3score;
+    }
+
     protected final function any_log($contextid, $user) {
         if (empty($this->activitylogs[$contextid])) {
             return false;
@@ -161,6 +209,40 @@ abstract class activity_cognitive_depth extends linear {
         return false;
     }
 
+    protected final function any_feedback_view($contextid, $user, $eventnames) {
+        if (empty($this->activitylogs[$contextid])) {
+            return false;
+        }
+
+        if (empty($this->grades[$contextid])) {
+            return false;
+        }
+
+        // No specific user, we look at all grades and activity logs.
+        if (!$user) {
+            foreach ($this->grades[$contextid] as $userid => $gradeitems) {
+                foreach ($gradeitems as $gradeitem) {
+                    if (!empty($gradeitem->feedback)) {
+                        if ($this->feedback_viewed_after($contextid, $userid, $gradeitem->dategraded)) {
+                            // A single user that viewed the feedback is enough if no user was specified.
+                            return true;
+                        }
+                    }
+                }
+            }
+        } else if (!empty($this->grades[$contextid][$user->id])) {
+            foreach ($this->grades[$contextid][$user->id] as $gradeitems) {
+                foreach ($gradeitems as $gradeitem) {
+                    if ($this->feedback_viewed_after($contextid, $user->id, $gradeitem->dategraded)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
     protected function get_student_activities($sampleid, $tablename, $starttime, $endtime) {
 
         // May not be available.
@@ -173,6 +255,7 @@ abstract class activity_cognitive_depth extends linear {
 
         if ($this->activitylogs === null) {
             // Fetch all activity logs in each activity in the course, not restricted to a specific sample so we can cache it.
+
             $courseactivities = $this->course->get_all_activities($this->get_activity_type());
 
             // Null if no activities of this type in this course.
@@ -181,6 +264,11 @@ abstract class activity_cognitive_depth extends linear {
                 return null;
             }
             $this->activitylogs = $this->fetch_activity_logs($courseactivities, $starttime, $endtime);
+        }
+
+        if ($this->grades === null) {
+            $courseactivities = $this->course->get_all_activities($this->get_activity_type());
+            $this->grades = $this->course->get_student_grades($courseactivities);
         }
 
         if ($cm = $this->retrieve('cm', $sampleid)) {

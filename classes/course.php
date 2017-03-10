@@ -26,6 +26,7 @@ namespace tool_inspire;
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/course/lib.php');
+require_once($CFG->dirroot . '/lib/gradelib.php');
 
 /**
  *
@@ -396,6 +397,33 @@ class course implements \tool_inspire\analysable {
         }
 
         return $this->courseactivities[$activitytype];
+    }
+
+    public function get_student_grades($courseactivities) {
+
+        if (empty($courseactivities)) {
+            return array();
+        }
+
+        $grades = array();
+        foreach ($courseactivities as $contextid => $instance) {
+            $gradesinfo = grade_get_grades($this->course->id, 'mod', $instance->modname, $instance->instance, $this->studentids);
+
+            // Sort them by activity context and user.
+            if ($gradesinfo && $gradesinfo->items) {
+                foreach ($gradesinfo->items as $gradeitem) {
+                    foreach ($gradeitem->grades as $userid => $grade) {
+                        if (empty($grades[$contextid][$userid])) {
+                            // Initialise it as array because a single activity can have multiple grade items (e.g. workshop).
+                            $grades[$contextid][$userid] = array();
+                        }
+                        $grades[$contextid][$userid][$gradeitem->id] = $grade;
+                    }
+                }
+            }
+        }
+
+        return $grades;
     }
 
     public function get_activities($activitytype, $starttime, $endtime, $student = false) {

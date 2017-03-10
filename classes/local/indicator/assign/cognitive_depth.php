@@ -43,7 +43,11 @@ class cognitive_depth extends \tool_inspire\local\indicator\activity_cognitive_d
         return 'assign';
     }
 
+    protected function feedback_viewed_events() {
+        return array('\mod_assign\event\feedback_viewed');
+    }
+
     public function calculate_sample($sampleid, $tablename, $starttime = false, $endtime = false) {
-        return $this->activities_level_2($sampleid, $tablename, $starttime, $endtime);
+        return $this->activities_level_3($sampleid, $tablename, $starttime, $endtime);
     }
 }
