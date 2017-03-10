@@ -79,11 +79,27 @@ abstract class linear extends base {
 
     protected function to_features($calculatedvalues) {
 
-        $mean = round(array_sum($calculatedvalues) / count($calculatedvalues), 2);
+        // Null mean if all calculated values are null.
+        $nullmean = true;
+        foreach ($calculatedvalues as $value) {
+            if (!is_null($value)) {
+                // Early break, we don't want to spend a lot of time here.
+                $nullmean = false;
+                break;
+            }
+        }
+
+        if ($nullmean) {
+            $mean = null;
+        } else {
+            $mean = round(array_sum($calculatedvalues) / count($calculatedvalues), 2);
+        }
 
         foreach ($calculatedvalues as $sampleid => $calculatedvalue) {
 
-            $calculatedvalue = round($calculatedvalue, 2);
+            if (!is_null($calculatedvalue)) {
+                $calculatedvalue = round($calculatedvalue, 2);
+            }
 
             if (static::include_averages()) {
                 $calculatedvalues[$sampleid] = array($calculatedvalue, $mean);
