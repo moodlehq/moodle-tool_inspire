@@ -161,6 +161,24 @@ abstract class base {
         $results = array();
         foreach ($this->timesplittings as $timesplitting) {
 
+            // For evaluation purposes we don't need to be that strict about how updated the data is,
+            // if this analyser was analysed less that 1 week ago we skip generating a new one. This
+            // helps scale the evaluation process as sites with tons of courses may a lot of time to
+            // complete an evaluation.
+            if (!empty($this->options['evaluation'])) {
+
+                $previousanalysis = \tool_inspire\dataset_manager::get_evaluation_analysable_file($this->modelid,
+                    $analysable->get_id(), $timesplitting->get_id());
+                $boundary = time() - WEEKSECS;
+                if ($previousanalysis && $previousanalysis->get_timecreated() > $boundary) {
+                    // Recover the previous analysed file and avoid generating a new one.
+
+                    // Don't bother filling a result object as it is only useful when there are no files generated.
+                    $files[$timesplitting->get_id()] = $previousanalysis;
+                    continue;
+                }
+            }
+
             if ($includetarget) {
                 $result = $this->process_range($timesplitting, $analysable, $target);
             } else {

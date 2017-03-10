@@ -49,7 +49,7 @@ class dataset_manager {
      *
      * @var string
      */
-    protected $timesplitting;
+    protected $timesplittingid;
 
     /**
      * @var int
@@ -78,7 +78,7 @@ class dataset_manager {
     public function __construct($modelid, $analysableid, $timesplittingid, $evaluation = false, $includetarget = false) {
         $this->modelid = $modelid;
         $this->analysableid = $analysableid;
-        $this->timesplitting = $timesplittingid;
+        $this->timesplittingid = $timesplittingid;
         $this->evaluation = $evaluation;
         $this->includetarget = $includetarget;
     }
@@ -90,7 +90,7 @@ class dataset_manager {
      */
     public function init_process() {
         $lockkey = 'modelid:' . $this->modelid . '-analysableid:' . $this->analysableid .
-            '-timesplitting:' . self::convert_to_int($this->timesplitting) . '-includetarget:' . (int)$this->includetarget;
+            '-timesplitting:' . self::convert_to_int($this->timesplittingid) . '-includetarget:' . (int)$this->includetarget;
 
         // Large timeout as processes may be quite long.
         $lockfactory = \core\lock\lock_config::get_lock_factory('tool_inspire');
@@ -115,10 +115,11 @@ class dataset_manager {
             'filearea' => self::get_filearea($this->includetarget),
             'itemid' => $this->analysableid,
             'contextid' => \context_system::instance()->id,
-            'filepath' => '/' . $this->modelid . '/analysable/' . self::convert_to_int($this->timesplitting) . '/',
+            'filepath' => '/' . $this->modelid . '/analysable/' . self::convert_to_int($this->timesplittingid) . '/',
             'filename' => self::get_filename($this->evaluation)
         ];
 
+        // Delete previous and old (we already checked that previous copies are not recent) evaluation files for this analysable.
         $select = " = {$filerecord['itemid']} AND filepath = :filepath";
         $fs->delete_area_files_select($filerecord['contextid'], $filerecord['component'], $filerecord['filearea'],
             $select, array('filepath' => $filerecord['filepath']));
@@ -147,6 +148,16 @@ class dataset_manager {
         $lock->release();
     }
 
+    /**
+     * Returns the previous evaluation file.
+     *
+     * Important to note that this is per modelid + timesplittingid, when dealing with multiple
+     * analysables this is the merged file. Do not confuse with self::get_evaluation_analysable_file
+     *
+     * @param int $modelid
+     * @param string $timesplittingid
+     * @return \stored_file
+     */
     public static function get_previous_evaluation_file($modelid, $timesplittingid) {
         $fs = get_file_storage();
         // Evaluation data is always labelled.
@@ -162,6 +173,18 @@ class dataset_manager {
         }
 
         return false;
+    }
+
+    public static function get_evaluation_analysable_file($modelid, $analysableid, $timesplittingid) {
+
+        // Delete previous file if it exists.
+        $fs = get_file_storage();
+
+        // Always evaluation.csv and labelled as it is an evaluation file.
+        $filearea = self::get_filearea(true);
+        $filename = self::get_filename(true);
+        $filepath = '/' . $modelid . '/analysable/' . self::convert_to_int($timesplittingid) . '/';
+        return $fs->get_file(\context_system::instance()->id, 'tool_inspire', $filearea, $analysableid, $filepath, $filename);
     }
 
     /**
@@ -292,7 +315,7 @@ class dataset_manager {
      * @param string $string
      * @return int
      */
-    protected static function convert_to_int($string) {
+    public static function convert_to_int($string) {
         $sum = 0;
         for ($i = 0; $i < strlen($string); $i++) {
             $sum += ord($string[$i]);
