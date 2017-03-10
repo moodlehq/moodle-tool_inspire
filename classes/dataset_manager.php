@@ -113,9 +113,9 @@ class dataset_manager {
         $filerecord = [
             'component' => 'tool_inspire',
             'filearea' => self::get_filearea($this->includetarget),
-            'itemid' => $this->analysableid,
+            'itemid' => $this->modelid,
             'contextid' => \context_system::instance()->id,
-            'filepath' => '/' . $this->modelid . '/analysable/' . self::convert_to_int($this->timesplittingid) . '/',
+            'filepath' => '/analysable/' . $this->analysableid . '/' . self::convert_to_int($this->timesplittingid) . '/',
             'filename' => self::get_filename($this->evaluation)
         ];
 
@@ -161,8 +161,8 @@ class dataset_manager {
     public static function get_previous_evaluation_file($modelid, $timesplittingid) {
         $fs = get_file_storage();
         // Evaluation data is always labelled.
-        return $fs->get_file(\context_system::instance()->id, 'tool_inspire', self::LABELLED_FILEAREA,
-            self::convert_to_int($timesplittingid), '/' . $modelid . '/timesplitting/', self::EVALUATION_FILENAME);
+        return $fs->get_file(\context_system::instance()->id, 'tool_inspire', self::LABELLED_FILEAREA, $modelid,
+            '/timesplitting/' . self::convert_to_int($timesplittingid) . '/', self::EVALUATION_FILENAME);
     }
 
     public static function delete_previous_evaluation_file($modelid, $timesplittingid) {
@@ -183,8 +183,8 @@ class dataset_manager {
         // Always evaluation.csv and labelled as it is an evaluation file.
         $filearea = self::get_filearea(true);
         $filename = self::get_filename(true);
-        $filepath = '/' . $modelid . '/analysable/' . self::convert_to_int($timesplittingid) . '/';
-        return $fs->get_file(\context_system::instance()->id, 'tool_inspire', $filearea, $analysableid, $filepath, $filename);
+        $filepath = '/analysable/' . $analysableid . '/' . self::convert_to_int($timesplittingid) . '/';
+        return $fs->get_file(\context_system::instance()->id, 'tool_inspire', $filearea, $modelid, $filepath, $filename);
     }
 
     /**
@@ -260,9 +260,9 @@ class dataset_manager {
         $filerecord = [
             'component' => 'tool_inspire',
             'filearea' => self::get_filearea($includetarget),
-            'itemid' => self::convert_to_int($timesplittingid),
+            'itemid' => $modelid,
             'contextid' => \context_system::instance()->id,
-            'filepath' => '/' . $modelid . '/timesplitting/',
+            'filepath' => '/timesplitting/' . self::convert_to_int($timesplittingid) . '/',
             'filename' => self::get_filename($evaluation)
         ];
 
@@ -309,13 +309,18 @@ class dataset_manager {
         return $calculations;
     }
 
+    public static function clear_model_files($modelid) {
+        $fs = get_file_storage();
+        return $fs->delete_area_files(\context_system::instance()->id, 'tool_inspire', false, $modelid);
+    }
+
     /**
      * I know it is not very orthodox...
      *
      * @param string $string
      * @return int
      */
-    public static function convert_to_int($string) {
+    protected static function convert_to_int($string) {
         $sum = 0;
         for ($i = 0; $i < strlen($string); $i++) {
             $sum += ord($string[$i]);
