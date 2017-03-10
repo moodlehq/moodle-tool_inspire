@@ -20,6 +20,9 @@
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
+      <INDEXES>
+        <INDEX NAME="enabledandtrained" UNIQUE="false" FIELDS="enabled, trained" COMMENT="Index on enabled and train"/>
+      </INDEXES>
     </TABLE>
     <TABLE NAME="tool_inspire_models_log" COMMENT="Prediction models changes during evaluation.">
       <FIELDS>
@@ -38,6 +41,9 @@
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
+      <INDEXES>
+        <INDEX NAME="modelid" UNIQUE="false" FIELDS="modelid" COMMENT="Index on modelid"/>
+      </INDEXES>
     </TABLE>
 
     <TABLE NAME="tool_inspire_predictions" COMMENT="Predictions">
@@ -55,6 +61,9 @@
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
+      <INDEXES>
+        <INDEX NAME="modelidandcontextid" UNIQUE="false" FIELDS="modelid, contextid" COMMENT="Index on modelid and contextid"/>
+      </INDEXES>
     </TABLE>
     <TABLE NAME="tool_inspire_train_samples" COMMENT="Samples used for training">
       <FIELDS>
@@ -69,6 +78,9 @@
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
+      <INDEXES>
+        <INDEX NAME="modelidandanalysableidandtimesplitting" UNIQUE="false" FIELDS="modelid, analysableid, timesplitting" COMMENT="Index on modelid and analysableid and timesplitting"/>
+      </INDEXES>
     </TABLE>
     <TABLE NAME="tool_inspire_predict_ranges" COMMENT="Time ranges already used for predictions.">
       <FIELDS>
@@ -82,6 +94,9 @@
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
+      <INDEXES>
+        <INDEX NAME="modelidandanalysableidandtimesplitting" UNIQUE="false" FIELDS="modelid, analysableid, timesplitting" COMMENT="Index on modelid and analysableid and timesplitting"/>
+      </INDEXES>
     </TABLE>
     <TABLE NAME="tool_inspire_used_files" COMMENT="Files that have already been used for training and prediction.">
       <FIELDS>
@@ -94,6 +109,9 @@
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
+      <INDEXES>
+        <INDEX NAME="modelidandfileidandaction" UNIQUE="false" FIELDS="modelid, fileid, action" COMMENT="Index on modelid and fileid and action"/>
+      </INDEXES>
     </TABLE>
   </TABLES>
 </XMLDB>

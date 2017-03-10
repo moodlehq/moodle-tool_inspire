@@ -429,7 +429,7 @@ class model {
         $samplesfile = $samplesdata[$this->model->timesplitting];
 
         // We need to throw an exception if we are trying to predict stuff that was already predicted.
-        $params = array('fileid' => $samplesfile->get_id(), 'action' => 'predicted', 'modelid' => $this->model->id);
+        $params = array('modelid' => $this->model->id, 'fileid' => $samplesfile->get_id(), 'action' => 'predicted');
         if ($predicted = $DB->get_record('tool_inspire_used_files', $params)) {
             throw new \moodle_exception('erroralreadypredict', 'tool_inspire', '', $samplesfile->get_id());
         }
