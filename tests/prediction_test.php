@@ -198,8 +198,7 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
 
         // We check that the returned status includes at least $expectedcode code.
         foreach ($results as $timesplitting => $result) {
-            $message = 'The returned status code should include ' . $expected[$timesplitting] . ', ' .
-                $result->status . ' returned';
+            $message = 'The returned status code ' . $result->status . ' should include ' . $expected[$timesplitting];
             $this->assertEquals($expected[$timesplitting], $result->status & $expected[$timesplitting], $message);
         }
     }
@@ -209,13 +208,13 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
         $cases = array(
             'bad-and-no-enough-data' => array(
                 'modelquality' => 'random',
-                'ncourses' => 10,
+                'ncourses' => 3,
                 'expectedresults' => array(
                     // The course duration is too much to be processed by in weekly basis.
                     '\tool_inspire\local\time_splitting\weekly' => \tool_inspire\model::NO_DATASET,
                     // 10 samples is not enough to process anything.
-                    '\tool_inspire\local\time_splitting\single_range' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA & \tool_inspire\model::EVALUATE_LOW_SCORE,
-                    '\tool_inspire\local\time_splitting\quarters' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA & \tool_inspire\model::EVALUATE_LOW_SCORE,
+                    '\tool_inspire\local\time_splitting\single_range' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA + \tool_inspire\model::EVALUATE_LOW_SCORE,
+                    '\tool_inspire\local\time_splitting\quarters' => \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA + \tool_inspire\model::EVALUATE_LOW_SCORE,
                 )
             ),
             'bad' => array(
