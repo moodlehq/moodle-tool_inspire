@@ -1,6 +1,12 @@
 language: php
 
+dist: trusty
 sudo: false
+
+notifications:
+  email:
+    on_success: change
+    on_failure: change
 
 cache:
   directories:
@@ -18,6 +24,10 @@ env:
   - DB=mysqli
 
 before_install:
+  - pip install --upgrade pip
+  # Force numpy to be compiled from sources as there are segmentation faults otherwise.
+  - pip install --no-binary=":all:" numpy==1.11.*
+  - pip install moodleinspire
   - phpenv config-rm xdebug.ini
   - cd ../..
   - composer selfupdate
