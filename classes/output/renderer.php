@@ -135,7 +135,7 @@ class renderer extends plugin_renderer_base {
         }
 
         // Info logged during execution.
-        if (!empty($executionlog)) {
+        if (!empty($executionlog) && debugging()) {
             $output .= $OUTPUT->heading(get_string('extrainfo', 'tool_inspire'), 3);
             foreach ($executionlog as $log) {
                 $output .= $OUTPUT->notification($log, \core\output\notification::NOTIFY_WARNING);
