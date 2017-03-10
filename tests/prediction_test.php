@@ -208,7 +208,7 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
         $cases = array(
             'bad-and-no-enough-data' => array(
                 'modelquality' => 'random',
-                'ncourses' => 3,
+                'ncourses' => 5,
                 'expectedresults' => array(
                     // The course duration is too much to be processed by in weekly basis.
                     '\tool_inspire\local\time_splitting\weekly' => \tool_inspire\model::NO_DATASET,
