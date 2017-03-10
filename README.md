@@ -1,5 +1,7 @@
 # Moodle inspire
 
+[![Build Status](https://travis-ci.org/dmonllao/moodle-tool_inspire.svg?branch=master)](https://travis-ci.org/dmonllao/moodle-tool_inspire)
+
 This is a work in progress branch with a limited set of indicators. Once this is ready for testing we will make an announcement through the usual media channels. Use it at your own risk.
 
 # Installation
