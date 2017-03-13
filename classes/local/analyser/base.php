@@ -274,18 +274,15 @@ abstract class base {
         // Flag the model + analysable + timesplitting as being analysed (prevent concurrent executions).
         $dataset->init_process();
 
-        // Indicators' instances scope is per-range.
-        $indicators = array();
         foreach ($this->indicators as $key => $indicator) {
-            $indicators[$key] = $indicator->instance();
             // The analyser attaches the main entities the sample depends on and are provided to the
             // indicator to calculate the sample.
-            $indicators[$key]->set_sample_data($samplesdata);
+            $this->indicators[$key]->set_sample_data($samplesdata);
         }
 
         // Here we start the memory intensive process that will last until $data var is
         // unset (until the method is finished basically).
-        $data = $timesplitting->calculate($sampleids, $this->get_samples_origin(), $indicators, $ranges, $target);
+        $data = $timesplitting->calculate($sampleids, $this->get_samples_origin(), $this->indicators, $ranges, $target);
 
         if (!$data) {
             $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;

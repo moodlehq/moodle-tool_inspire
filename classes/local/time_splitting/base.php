@@ -149,8 +149,11 @@ abstract class base {
             // Per-range calculations.
             foreach ($ranges as $rangeindex => $range) {
 
+                // Indicator instances are per-range.
+                $rangeindicator = clone $indicator;
+
                 // Calculate the indicator for each sample in this time range.
-                $calculated = $indicator->calculate($sampleids, $samplesorigin, $range['start'], $range['end']);
+                $calculated = $rangeindicator->calculate($sampleids, $samplesorigin, $range['start'], $range['end']);
 
                 // Copy the calculated data to the dataset.
                 foreach ($calculated as $analysersampleid => $calculatedvalues) {
