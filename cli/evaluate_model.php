@@ -30,24 +30,27 @@ require_once($CFG->libdir.'/clilib.php');
 $help = "Evaluates the provided model.
 
 Options:
---modelid           Model id
---non-interactive   Not interactive questions
---timesplitting     Restrict the evaluation to 1 single time splitting method
---filter            Analyser dependant (Optional)
--h, --help          Print out this help
+--modelid              Model id
+--non-interactive      Not interactive questions
+--timesplitting        Restrict the evaluation to 1 single time splitting method (Optional)
+--filter               Analyser dependant. e.g. A courseid would evaluate the model using a single course (Optional)
+--reuse-prev-analysed  Reuse recently analysed courses instead of analysing the whole site. Set it to false while" .
+    " coding indicators. Defaults to true (Optional)" . "
+-h, --help             Print out this help
 
 Example:
-\$ php admin/tool/inspire/cli/evaluate_model.php --modelid=1 --timesplitting='\tool_inspire\local\time_splitting\quarters' --filter=123,321
+\$ php admin/tool/inspire/cli/evaluate_model.php --modelid=1 --timesplitting='\\tool_inspire\\local\\time_splitting\\quarters' --filter=123,321
 ";
 
 // Now get cli options.
 list($options, $unrecognized) = cli_get_params(
     array(
-        'help'            => false,
-        'modelid'         => false,
-        'timesplitting'   => false,
-        'non-interactive' => false,
-        'filter'          => false
+        'help'                  => false,
+        'modelid'               => false,
+        'timesplitting'         => false,
+        'reuse-prev-analysed'   => true,
+        'non-interactive'       => false,
+        'filter'                => false
     ),
     array(
         'h' => 'help',
@@ -80,7 +83,8 @@ mtrace(get_string('evaluationinbatches', 'tool_inspire'));
 
 $analyseroptions = array(
     'filter' => $options['filter'],
-    'timesplitting' => $options['timesplitting']
+    'timesplitting' => $options['timesplitting'],
+    'reuseprevanalysed' => $options['reuse-prev-analysed'],
 );
 // Evaluate its suitability to predict accurately.
 $results = $model->evaluate($analyseroptions);

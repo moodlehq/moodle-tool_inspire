@@ -165,7 +165,7 @@ abstract class base {
             // if this analyser was analysed less that 1 week ago we skip generating a new one. This
             // helps scale the evaluation process as sites with tons of courses may a lot of time to
             // complete an evaluation.
-            if (!empty($this->options['evaluation'])) {
+            if (!empty($this->options['evaluation']) && !empty($this->options['reuseprevanalysed'])) {
 
                 $previousanalysis = \tool_inspire\dataset_manager::get_evaluation_analysable_file($this->modelid,
                     $analysable->get_id(), $timesplitting->get_id());
