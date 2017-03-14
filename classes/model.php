@@ -335,8 +335,14 @@ class model {
                 $resultsdeviation, $niterations, $dataset, $outputdir);
 
             $result->status = $predictorresult->status;
-            $result->score = $predictorresult->score;
             $result->info = $predictorresult->info;
+
+            if (isset($predictorresult->score)) {
+                $result->score = $predictorresult->score;
+            } else {
+                // Prediction processors may return an error, default to 0 score in that case.
+                $result->score = 0;
+            }
 
             $dir = false;
             if (!empty($predictorresult->dir)) {
