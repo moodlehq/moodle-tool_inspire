@@ -103,7 +103,10 @@ switch ($action) {
 
     case 'evaluate':
         echo $OUTPUT->header();
-        $results = $model->evaluate();
+        // Web interface is used by people who can not use CLI nor code stuff, always use
+        // cached stuff as they will change the model through the web interface as well
+        // which invalidates the previously analysed stuff.
+        $results = $model->evaluate(array('reuseprevanalysed' => true));
         $renderer = $PAGE->get_renderer('tool_inspire');
         echo $renderer->render_evaluate_results($results, $model->get_analyser()->get_logs());
         break;
