@@ -52,20 +52,24 @@ class enrolments extends by_course {
         return array('user_enrolments', 'context', 'course', 'user');
     }
 
+    /**
+     * All course enrolments.
+     *
+     * @param \tool_inspire\analysable $course
+     * @return void
+     */
     protected function get_all_samples(\tool_inspire\analysable $course) {
         global $DB;
 
-        // All course enrolments.
-        $instances = enrol_get_instances($course->get_id(), true);
-        $enrolids = array_keys($instances);
-        list($enrolsql, $params) = $DB->get_in_or_equal($enrolids, SQL_PARAMS_NAMED);
-
+        // Using a custom SQL query because we want to include all course enrolments.
+        // TODO Review this is future as does not look ideal
         // Although we load all the course users data in memory anyway, using recordsets we will
         // not use the double of the memory required by the end of the iteration.
         $sql = "SELECT ue.id AS enrolmentid, u.* FROM {user_enrolments} ue
-                  JOIN {user} u on ue.userid = u.id
-                  WHERE ue.enrolid $enrolsql";
-        $enrolments = $DB->get_recordset_sql($sql, $params);
+                  JOIN {enrol} e ON e.id = ue.enrolid
+                  JOIN {user} u ON ue.userid = u.id
+                  WHERE e.courseid = :courseid";
+        $enrolments = $DB->get_recordset_sql($sql, array('courseid' => $course->get_id()));
 
         $samplesdata = array();
         foreach ($enrolments as $user) {
