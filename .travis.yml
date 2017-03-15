@@ -21,7 +21,6 @@ env:
   - MOODLE_BRANCH=master
  matrix:
   - DB=pgsql
-  - DB=mysqli
 
 before_install:
   - pip install --upgrade pip
