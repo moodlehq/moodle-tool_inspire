@@ -35,7 +35,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 class processor implements \tool_inspire\predictor {
 
-    const REQUIRED_PIP_PACKAGE_VERSION = '0.0.6';
+    const REQUIRED_PIP_PACKAGE_VERSION = '0.0.9';
 
     public function is_ready() {
 
