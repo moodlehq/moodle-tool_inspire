@@ -43,7 +43,12 @@ class cognitive_depth extends \tool_inspire\local\indicator\activity_cognitive_d
         return 'scorm';
     }
 
-    public function calculate_sample($sampleid, $tablename, $starttime = false, $endtime = false) {
-        return $this->activities_level_2($sampleid, $tablename, $starttime, $endtime);
+    public function get_cognitive_depth_level(\cm_info $cm) {
+        return 3;
+    }
+
+    protected function feedback_viewed_events() {
+        // Any view after the data graded counts as feedback viewed.
+        return array('\mod_scorm\event\course_module_viewed');
     }
 }

@@ -43,7 +43,25 @@ class cognitive_depth extends \tool_inspire\local\indicator\activity_cognitive_d
         return 'quiz';
     }
 
-    public function calculate_sample($sampleid, $tablename, $starttime = false, $endtime = false) {
-        return $this->activities_level_2($sampleid, $tablename, $starttime, $endtime);
+    public function get_cognitive_depth_level(\cm_info $cm) {
+        return 5;
+    }
+
+    protected function feedback_check_grades() {
+        // We need the grade to be released to the student to consider that feedback has been provided.
+        return true;
+    }
+
+    protected function feedback_viewed_events() {
+        return array('\mod_quiz\event\course_module_viewed');
+    }
+
+    protected function feedback_submitted_events() {
+        return array('\mod_quiz\event\attempt_submitted');
+    }
+
+    protected function feedback_replied(\cm_info $cm, $contextid, $userid, $after = false) {
+        // No level 4.
+        return false;
     }
 }

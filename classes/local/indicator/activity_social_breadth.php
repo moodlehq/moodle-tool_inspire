@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Cognitive depth abstract indicator.
+ * Social breadth abstract indicator.
  *
  * @package   tool_inspire
  * @copyright 2017 David Monllao {@link http://www.davidmonllao.com}
@@ -27,13 +27,13 @@ namespace tool_inspire\local\indicator;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Cognitive depth abstract indicator.
+ * Social breadth abstract indicator.
  *
  * @package   tool_inspire
  * @copyright 2017 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-abstract class activity_cognitive_depth extends community_of_inquiry_activity {
+abstract class activity_social_breadth extends community_of_inquiry_activity {
 
     public function calculate_sample($sampleid, $tablename, $starttime = false, $endtime = false) {
 

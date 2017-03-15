@@ -43,8 +43,7 @@ class cognitive_depth extends \tool_inspire\local\indicator\activity_cognitive_d
         return 'page';
     }
 
-    public function calculate_sample($sampleid, $tablename, $starttime = false, $endtime = false) {
-        // Page activity has cognitive depth level 1.
-        return $this->activities_level_1($sampleid, $tablename, $starttime, $endtime);
+    protected function get_cognitive_depth_level(\cm_info $cm) {
+        return 1;
     }
 }

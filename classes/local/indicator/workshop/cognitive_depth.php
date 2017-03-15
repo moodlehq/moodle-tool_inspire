@@ -43,7 +43,25 @@ class cognitive_depth extends \tool_inspire\local\indicator\activity_cognitive_d
         return 'workshop';
     }
 
-    public function calculate_sample($sampleid, $tablename, $starttime = false, $endtime = false) {
-        return $this->activities_level_2($sampleid, $tablename, $starttime, $endtime);
+    public function get_cognitive_depth_level(\cm_info $cm) {
+        return 5;
+    }
+
+    protected function feedback_check_grades() {
+        return true;
+    }
+
+    protected function feedback_viewed_events() {
+        return array('\mod_workshop\event\course_module_viewed', '\mod_workshop\event\submission_viewed');
+    }
+
+    protected function feedback_replied_events() {
+        return array('\mod_workshop\event\submission_assessed', '\mod_workshop\event\submission_reassessed');
+    }
+
+    protected function feedback_submitted_events() {
+        // Can't use assessable_uploaded instead of submission_* as mod_workshop only triggers it during submission_updated
+        return array('\mod_workshop\event\submission_updated', '\mod_workshop\event\submission_created',
+            '\mod_workshop\event\submission_reassessed');
     }
 }

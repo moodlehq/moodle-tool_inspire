@@ -42,9 +42,7 @@ class cognitive_depth extends \tool_inspire\local\indicator\activity_cognitive_d
     protected function get_activity_type() {
         return 'folder';
     }
-
-    public function calculate_sample($sampleid, $tablename, $starttime = false, $endtime = false) {
-        // Folder activity has cognitive depth level 1.
-        return $this->activities_level_1($sampleid, $tablename, $starttime, $endtime);
+    protected function get_cognitive_depth_level(\cm_info $cm) {
+        return 1;
     }
 }

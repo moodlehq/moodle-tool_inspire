@@ -43,7 +43,32 @@ class cognitive_depth extends \tool_inspire\local\indicator\activity_cognitive_d
         return 'lesson';
     }
 
-    public function calculate_sample($sampleid, $tablename, $starttime = false, $endtime = false) {
-        return $this->activities_level_2($sampleid, $tablename, $starttime, $endtime);
+    protected function get_cognitive_depth_level(\cm_info $cm) {
+        return 5;
     }
+
+    protected function feedback_viewed_events() {
+        return array('\mod_lesson\event\lesson_ended');
+    }
+
+    protected function feedback_submitted(\cm_info $cm, $contextid, $userid, $after = false) {
+        if (empty($this->activitylogs[$contextid][$userid]) ||
+                empty($this->activitylogs[$contextid][$userid]['\mod_lesson\event\lesson_ended'])) {
+            return false;
+        }
+
+        // Multiple lesson attempts completed counts as submitted after feedback.
+        return (2 >= count($this->activitylogs[$contextid][$userid]['\mod_lesson\event\lesson_ended']));
+    }
+
+    protected function feedback_check_grades() {
+        // We don't need to check grades as we get the feedback while completing the activity.
+        return false;
+    }
+
+    protected function feedback_replied(\cm_info $cm, $contextid, $userid, $after = false) {
+        // No level 4.
+        return false;
+    }
+
 }
