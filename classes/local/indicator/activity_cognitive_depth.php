@@ -97,7 +97,6 @@ abstract class activity_cognitive_depth extends community_of_inquiry_activity {
                 case 1:
                     // Cognitive depth level 1 is just accessing the activity.
 
-                    // Half of the score if only level 1 interaction.
                     if ($this->any_log($contextid, $user)) {
                         $score += $scoreperlevel;
                     }

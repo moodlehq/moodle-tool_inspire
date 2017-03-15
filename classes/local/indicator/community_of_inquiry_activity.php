@@ -37,7 +37,7 @@ abstract class community_of_inquiry_activity extends linear {
 
     protected $course = null;
     /**
-     * TODO This should ideally be reused by cognitive depth and social breath.
+     * TODO This should ideally be reused by cognitive depth and social breadth.
      *
      * @var array Array of logs by [contextid][userid]
      */

@@ -49,61 +49,9 @@ abstract class activity_social_breadth extends community_of_inquiry_activity {
 
         $score = self::get_min_value();
 
-        // Iterate through the module activities/resources which due date is part of this time range.
-        foreach ($useractivities as $contextid => $cm) {
-
-            $potentiallevel = $this->get_cognitive_depth_level($cm);
-            if (!is_int($potentiallevel) || $potentiallevel > 5 || $potentiallevel < 1) {
-                throw new \coding_exception('Activities\' potential level of engagement possible values go from 1 to 5.');
-            }
-            $scoreperlevel = $scoreperactivity / $potentiallevel;
-
-            switch ($potentiallevel) {
-                case 5:
-                    // Cognitive level 4 is to comment on feedback.
-                    if ($this->any_feedback('submitted', $cm, $contextid, $user)) {
-                        $score += $scoreperlevel * 5;
-                        break;
-                    }
-                    // The user didn't reach the activity max cognitive depth, continue with level 2.
-
-                case 4:
-                    // Cognitive level 4 is to comment on feedback.
-                    if ($this->any_feedback('replied', $cm, $contextid, $user)) {
-                        $score += $scoreperlevel * 4;
-                        break;
-                    }
-                    // The user didn't reach the activity max cognitive depth, continue with level 2.
-
-                case 3:
-                    // Cognitive level 3 is to view feedback.
-
-                    if ($this->any_feedback('viewed', $cm, $contextid, $user)) {
-                        // Max score for level 3.
-                        $score += $scoreperlevel * 3;
-                        break;
-                    }
-                    // The user didn't reach the activity max cognitive depth, continue with level 2.
-
-                case 2:
-                    // Cognitive depth level 2 is to submit content.
-
-                    if ($this->any_write_log($contextid, $user)) {
-                        $score += $scoreperlevel * 2;
-                        break;
-                    }
-                    // The user didn't reach the activity max cognitive depth, continue with level 1.
-
-                case 1:
-                    // Cognitive depth level 1 is just accessing the activity.
-
-                    // Half of the score if only level 1 interaction.
-                    if ($this->any_log($contextid, $user)) {
-                        $score += $scoreperlevel;
-                    }
-
-                default:
-            }
+        // TODO Add support for other levels than 1.
+        if ($this->any_log($contextid, $user)) {
+            $score += $scoreperactivity;
         }
 
         return $score;
