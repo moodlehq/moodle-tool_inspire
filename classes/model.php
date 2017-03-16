@@ -72,10 +72,7 @@ class model {
     protected $indicators = null;
 
     /**
-     * Unique Model id created from site info and last model modification time.
-     *
-     * It is the id that is passed to prediction processors so the same prediction
-     * processor can be used for multiple moodle sites.
+     * Unique Model id created from site info and last model modification.
      *
      * @var string
      */
@@ -240,7 +237,7 @@ class model {
      * create
      *
      * @param \tool_inspire\local\target\base $target
-     * @param \tool_inspire\local\indicator\base $indicators
+     * @param \tool_inspire\local\indicator\base[] $indicators
      * @return \tool_inspire\model
      */
     public static function create(\tool_inspire\local\target\base $target, array $indicators) {
@@ -360,7 +357,7 @@ class model {
     /**
      * train
      *
-     * @return \stdClass[]
+     * @return \stdClass
      */
     public function train() {
         global $DB;
@@ -690,7 +687,7 @@ class model {
      *   models/$model->id/$model->version/execution
      *
      * @param array $subdirs
-     * @return void
+     * @return string
      */
     protected function get_output_dir($subdirs = array()) {
         global $CFG;
@@ -714,6 +711,11 @@ class model {
         return $outputdir;
     }
 
+    /**
+     * get_unique_id
+     *
+     * @return string
+     */
     public function get_unique_id() {
         global $CFG;
 
@@ -729,6 +731,11 @@ class model {
         return $this->uniqueid;
     }
 
+    /**
+     * Exports the model data.
+     *
+     * @return \stdClass
+     */
     public function export() {
         $data = clone $this->model;
         $data->target = $this->get_target()->get_name();
@@ -744,6 +751,13 @@ class model {
         return $data;
     }
 
+    /**
+     * flag_file_as_used
+     *
+     * @param \stored_file $file
+     * @param string $action
+     * @return void
+     */
     protected function flag_file_as_used(\stored_file $file, $action) {
         global $DB;
 
@@ -755,6 +769,15 @@ class model {
         $DB->insert_record('tool_inspire_used_files', $usedfile);
     }
 
+    /**
+     * log_result
+     *
+     * @param string $timesplittingid
+     * @param float $score
+     * @param string $dir
+     * @param array $info
+     * @return int The inserted log id
+     */
     protected function log_result($timesplittingid, $score, $dir = false, $info = false) {
         global $DB, $USER;
 
@@ -776,6 +799,12 @@ class model {
         return $DB->insert_record('tool_inspire_models_log', $log);
     }
 
+    /**
+     * Utility method to return indicator class names from a list of indicator objects
+     *
+     * @param \tool_inspire\local\indicator\base[] $indicators
+     * @return string[]
+     */
     private static function indicator_classes($indicators) {
 
         // What we want to check and store are the indicator classes not the keys.
@@ -795,6 +824,14 @@ class model {
         return $indicatorclasses;
     }
 
+    /**
+     * Clears the model training and prediction data.
+     *
+     * Executed after updating model critical elements like the time splitting method
+     * or the indicators.
+     *
+     * @return void
+     */
     private function clear_model() {
         global $DB;
 
