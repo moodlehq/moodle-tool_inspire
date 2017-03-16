@@ -112,16 +112,16 @@ class tool_inspire_model_testcase extends advanced_testcase {
         $this->assertEquals($originaluniqueid, $this->model->get_unique_id());
 
         // We will restore it later.
-        $originaltimemodified = $this->modelobj->timemodified;
+        $originalversion = $this->modelobj->version;
 
         // Generates a different id if timemodified changes.
-        $this->modelobj->timemodified = time() + 1;
+        $this->modelobj->version = $this->modelobj->version + 10;
         $DB->update_record('tool_inspire_models', $this->modelobj);
         $this->model = new testable_model($this->modelobj);
         $this->assertNotEquals($originaluniqueid, $this->model->get_unique_id());
 
         // Restore original timemodified to continue testing.
-        $this->modelobj->timemodified = $originaltimemodified;
+        $this->modelobj->version = $originalversion;
         $DB->update_record('tool_inspire_models', $this->modelobj);
         // Same when updating through an action that changes the model.
         $this->model = new testable_model($this->modelobj);
