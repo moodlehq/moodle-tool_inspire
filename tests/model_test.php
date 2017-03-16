@@ -132,8 +132,10 @@ class tool_inspire_model_testcase extends advanced_testcase {
         $this->model->enable();
         $this->assertEquals($originaluniqueid, $this->model->get_unique_id());
 
+        // Wait 1 sec so the timestamp changes.
+        sleep(1);
         $this->model->enable('\tool_inspire\local\time_splitting\quarters');
-        $this->assertEquals($originaluniqueid, $this->model->get_unique_id());
+        $this->assertNotEquals($originaluniqueid, $this->model->get_unique_id());
 
     }
 }
