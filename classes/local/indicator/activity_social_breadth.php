@@ -49,9 +49,11 @@ abstract class activity_social_breadth extends community_of_inquiry_activity {
 
         $score = self::get_min_value();
 
-        // TODO Add support for other levels than 1.
-        if ($this->any_log($contextid, $user)) {
-            $score += $scoreperactivity;
+        foreach ($useractivities as $contextid => $cm) {
+            // TODO Add support for other levels than 1.
+            if ($this->any_log($contextid, $user)) {
+                $score += $scoreperactivity;
+            }
         }
 
         return $score;
