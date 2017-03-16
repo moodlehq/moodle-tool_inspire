@@ -39,7 +39,7 @@ class train_models extends \core\task\scheduled_task {
     }
 
     public function execute() {
-        global $DB, $OUTPUT;
+        global $DB, $OUTPUT, $PAGE;
 
         $models = $DB->get_records_select('tool_inspire_models', 'enabled = 1 AND timesplitting IS NOT NULL');
         if (!$models) {
@@ -53,6 +53,7 @@ class train_models extends \core\task\scheduled_task {
             if ($result) {
                 echo $OUTPUT->heading(get_string('modelresults', 'tool_inspire', $model->get_target()->get_name()));
 
+                $renderer = $PAGE->get_renderer('tool_inspire');
                 echo $renderer->render_execute_results($result, $model->get_analyser()->get_logs());
             }
         }
