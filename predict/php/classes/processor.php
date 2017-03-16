@@ -165,7 +165,7 @@ class processor implements \tool_inspire\predictor {
         return $resultobj;
     }
 
-    public function evaluate($uniqueid, $resultsdeviation, $niterations, \stored_file $dataset, $outputdir) {
+    public function evaluate($uniqueid, $maxdeviation, $niterations, \stored_file $dataset, $outputdir) {
 
         $fh = $dataset->get_content_file_handle();
 
@@ -204,16 +204,16 @@ class processor implements \tool_inspire\predictor {
         }
 
         // Let's fill the results changing the returned status code depending on the phi-related calculated metrics.
-        return $this->get_evaluation_result_object($phis, $resultsdeviation);
+        return $this->get_evaluation_result_object($phis, $maxdeviation);
     }
 
-    protected function get_evaluation_result_object($phis, $resultsdeviation) {
+    protected function get_evaluation_result_object($phis, $maxdeviation) {
 
         // We convert phi (from -1 to 1) to a value between 0 and 1.
         $avgphi = \Phpml\Math\Statistic\Mean::arithmetic($phis);
 
         // Standard deviation should ideally be calculated against the area under the curve.
-        $stddev = \Phpml\Math\Statistic\StandardDeviation::population($phis);
+        $modeldev = \Phpml\Math\Statistic\StandardDeviation::population($phis);
 
         // Let's fill the results object.
         $resultobj = new \stdClass();
@@ -226,15 +226,20 @@ class processor implements \tool_inspire\predictor {
         $resultobj->score = ($avgphi + 1) / 2;
 
         // If each iteration results varied too much we need more data to confirm that this is a valid model.
-        if ($stddev > $resultsdeviation) {
+        if ($modeldev > $maxdeviation) {
             $resultobj->status = $resultobj->status + \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA;
-            $resultobj->info[] = 'The results obtained varied too much, we need more samples to check ' .
-                'if this model is valid. Model deviation = ' . $stddev . ', accepted deviation = ' . $resultsdeviation;
+            $a = new \stdClass();
+            $a->deviation = $modeldev;
+            $a->accepteddeviation = $maxdeviation;
+            $resultobj->info[] = get_string('errornotenoughdata', 'predict_php', $a);
         }
 
         if ($resultobj->score < \tool_inspire\model::MIN_SCORE) {
             $resultobj->status = $resultobj->status + \tool_inspire\model::EVALUATE_LOW_SCORE;
-            $resultobj->info[] = 'The model may not be good enough. Model score = ' . $resultobj->score;
+            $a = new \stdClass();
+            $a->score = $resultobj->score;
+            $a->minscore = \tool_inspire\model::MIN_SCORE;
+            $resultobj->info[] = get_string('errorlowscore', 'predict_php', $a);
         }
 
         return $resultobj;

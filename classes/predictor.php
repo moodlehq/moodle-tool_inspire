@@ -41,5 +41,5 @@ interface predictor {
 
     public function predict($modelid, \stored_file $dataset, $outputdir);
 
-    public function evaluate($modelid, $resultsdeviation, $niterations, \stored_file $dataset, $outputdir);
+    public function evaluate($modelid, $maxdeviation, $niterations, \stored_file $dataset, $outputdir);
 }

@@ -94,26 +94,26 @@ class course_dropout extends binary {
         global $DB;
 
         if (!$course->was_started()) {
-            return 'Course is not yet started';
+            return get_string('coursenotyetstarted', 'tool_inspire');
         }
 
-        // Courses that last more than 1 year may not have a regular usage.
-        if ($course->get_end() - $course->get_start() > YEARSECS) {
-            return 'Duration is more than 1 year';
+        // Courses that last more than 1 year (a bit more than that just in case) may not have a regular usage.
+        if ($course->get_end() - $course->get_start() > YEARSECS * 1.3) {
+            return get_string('coursetoolong', 'tool_inspire');
         }
 
         if (!$students = $course->get_students()) {
-            return 'No students';
+            return get_string('nocoursestudents', 'tool_inspire');
         }
 
         if (!course_format_uses_sections($course->get_course_data()->format)) {
             // We can not split activities in time ranges.
-            return 'No course sections';
+            return get_string('nocoursesections', 'tool_inspire');
         }
 
         // Ongoing courses data can not be used to train.
         if ($fortraining && !$course->is_finished()) {
-            return 'Course is not yet finished';
+            return get_string('coursenotyetfinished', 'tool_inspire');
         }
 
         // Not a valid target for training if there are not enough course accesses.
@@ -130,7 +130,7 @@ class course_dropout extends binary {
             $nweeks = $this->get_time_range_weeks_number($course->get_start(), $course->get_end());
             $nstudents = count($course->get_students());
             if ($nlogs < ($nweeks * ($nstudents / 2) * 5)) {
-                return 'Not enough logs';
+                return get_string('nocourseactivity', 'tool_inspire');
             }
         }
 
@@ -156,11 +156,11 @@ class course_dropout extends binary {
         }
 
         if ($nocompletion && $nocompetencies && $nogradeitem) {
-            return 'No course pass method available (no completion nor competencies nor course grades)';
+            return get_string('nocompletiondetection', 'tool_inspire');
         }
 
         if ($this->coursegradeitem->gradetype != GRADE_TYPE_VALUE) {
-            return 'No course pass method available (no completion nor competencies nor course grades with numeric values)';
+            return get_string('nocompletiondetection', 'tool_inspire');
         }
 
         return true;

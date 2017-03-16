@@ -334,10 +334,8 @@ class model {
             $outputdir = $this->get_output_dir(array('evaluation', $dashestimesplittingid));
 
             // Evaluate the dataset, the deviation we accept in the results depends on the amount of iterations.
-            $resultsdeviation = self::ACCEPTED_DEVIATION;
-            $niterations = self::EVALUATION_ITERATIONS;
-            $predictorresult = $predictor->evaluate($this->model->id,
-                $resultsdeviation, $niterations, $dataset, $outputdir);
+            $predictorresult = $predictor->evaluate($this->model->id, self::ACCEPTED_DEVIATION,
+                self::EVALUATION_ITERATIONS, $dataset, $outputdir);
 
             $result->status = $predictorresult->status;
             $result->info = $predictorresult->info;

@@ -153,7 +153,10 @@ abstract class base {
         // as we still need to discard invalid analysables for the target.
         $result = $target->is_valid_analysable($analysable, $includetarget);
         if ($result !== true) {
-            $this->log[] = 'Analysable ' . $analysable->get_id() . ' is not valid for this target: ' . $result;
+            $a = new \stdClass();
+            $a->analysableid = $analysable->get_id();
+            $a->result = $result;
+            $this->log[] = get_string('analysablenotvalidfortarget', 'tool_inspire', $a);
             return array();
         }
 
@@ -196,7 +199,11 @@ abstract class base {
             foreach ($results as $timesplittingid => $result) {
                 $errors[] = $timesplittingid . ': ' . $result->message;
             }
-            $this->log[] = 'Analysable ' . $analysable->get_id() . ' not used: ' . implode(', ', $errors);
+
+            $a = new \stdClass();
+            $a->analysableid = $analysable->get_id();
+            $a->errors =  implode(', ', $errors);
+            $this->log[] = get_string('analysablenotused', 'tool_inspire', $a);
         }
 
         return $files;
@@ -212,7 +219,8 @@ abstract class base {
 
         if (!$timesplitting->is_valid_analysable($analysable)) {
             $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;
-            $result->message = 'Invalid analysable for this processor';
+            $result->message = get_string('invalidanalysablefortimesplitting', 'tool_inspire',
+                $timesplitting->get_name());
             return $result;
         }
         $timesplitting->set_analysable($analysable);
@@ -223,7 +231,7 @@ abstract class base {
 
         if (count($sampleids) === 0) {
             $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;
-            $result->message = 'No data available';
+            $result->message = get_string('nodata', 'tool_inspire');
             return $result;
         }
 
@@ -240,7 +248,7 @@ abstract class base {
 
             if (empty($ranges)) {
                 $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;
-                $result->message = 'No new data available';
+                $result->message = get_string('nonewdata', 'tool_inspire');
                 return $result;
             }
 
@@ -249,7 +257,7 @@ abstract class base {
 
             if (count($sampleids) === 0) {
                 $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;
-                $result->message = 'No new data available';
+                $result->message = get_string('nonewdata', 'tool_inspire');
                 return $result;
             }
 
@@ -263,7 +271,7 @@ abstract class base {
 
             if (count($ranges) === 0) {
                 $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;
-                $result->message = 'No new time ranges, nothing to predict';
+                $result->message = get_string('nonewtimeranges', 'tool_inspire');
                 return $result;
             }
         }
@@ -286,7 +294,7 @@ abstract class base {
 
         if (!$data) {
             $result->status = \tool_inspire\model::ANALYSE_REJECTED_RANGE_PROCESSOR;
-            $result->message = 'No valid data available';
+            $result->message = get_string('novaliddata', 'tool_inspire');
             return $result;
         }
 
@@ -308,7 +316,7 @@ abstract class base {
         }
 
         $result->status = \tool_inspire\model::OK;
-        $result->message = 'Successfully analysed';
+        $result->message = get_string('successfullyanalysed', 'tool_inspire');
         $result->file = $file;
         return $result;
     }

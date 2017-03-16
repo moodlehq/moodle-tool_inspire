@@ -127,7 +127,7 @@ class processor implements \tool_inspire\predictor {
         return $resultobj;
     }
 
-    public function evaluate($uniqueid, $resultsdeviation, $niterations, \stored_file $dataset, $outputdir) {
+    public function evaluate($uniqueid, $maxdeviation, $niterations, \stored_file $dataset, $outputdir) {
 
         $datasetpath = $this->get_file_path($dataset);
 
@@ -136,7 +136,7 @@ class processor implements \tool_inspire\predictor {
             escapeshellarg($outputdir) . ' ' .
             escapeshellarg($datasetpath) . ' ' .
             escapeshellarg(\tool_inspire\model::MIN_SCORE) . ' ' .
-            escapeshellarg($resultsdeviation) . ' ' .
+            escapeshellarg($maxdeviation) . ' ' .
             escapeshellarg($niterations);
 
         if (!PHPUNIT_TEST && CLI_SCRIPT) {
