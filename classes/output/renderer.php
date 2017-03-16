@@ -102,9 +102,12 @@ class renderer extends plugin_renderer_base {
 
         foreach ($results as $timesplittingid => $result) {
 
-            $timesplitting = \tool_inspire\manager::get_time_splitting($timesplittingid);
-            $langstrdata = (object)array('name' => $timesplitting->get_name(), 'id' => $timesplittingid);
-            $output .= $OUTPUT->heading(get_string('executionresults', 'tool_inspire', $langstrdata), 3);
+            // Check that the array key is a string, not all results depend on time splitting methods (e.g. general errors).
+            if (!is_numeric($timesplittingid)) {
+                $timesplitting = \tool_inspire\manager::get_time_splitting($timesplittingid);
+                $langstrdata = (object)array('name' => $timesplitting->get_name(), 'id' => $timesplittingid);
+                $output .= $OUTPUT->heading(get_string('executionresults', 'tool_inspire', $langstrdata), 3);
+            }
 
             if ($result->status == 0) {
                 $output .= $OUTPUT->notification(get_string('goodmodel', 'tool_inspire'),
@@ -124,8 +127,10 @@ class renderer extends plugin_renderer_base {
                     \core\output\notification::NOTIFY_ERROR);
             }
 
-            // Score.
-            $output .= $OUTPUT->heading(get_string('accuracy', 'tool_inspire') . ': ' . round(floatval($result->score), 4) * 100  . '%', 4);
+            if (isset($result->score)) {
+                // Score.
+                $output .= $OUTPUT->heading(get_string('accuracy', 'tool_inspire') . ': ' . round(floatval($result->score), 4) * 100  . '%', 4);
+            }
 
             if (!empty($result->info)) {
                 foreach ($result->info as $message) {

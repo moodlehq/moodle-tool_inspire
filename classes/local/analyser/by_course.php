@@ -44,14 +44,14 @@ abstract class by_course extends base {
             $courseids = $DB->get_fieldset_select('course', 'id', 'id != :frontpage', array('frontpage' => SITEID), 'sortorder ASC');
         }
 
-        if (!$courseids) {
-            return [];
-        }
-
-        $analysables = [];
+        $analysables = array();
         foreach ($courseids as $courseid) {
             $analysable = new \tool_inspire\course($courseid);
             $analysables[$analysable->get_id()] = $analysable;
+        }
+
+        if (empty($analysables)) {
+            $this->logs[] = get_string('nocourses', 'tool_inspire');
         }
 
         return $analysables;

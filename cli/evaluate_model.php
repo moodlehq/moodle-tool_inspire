@@ -95,7 +95,15 @@ $results = $model->evaluate($analyseroptions);
 $renderer = $PAGE->get_renderer('tool_inspire');
 echo $renderer->render_evaluate_results($results, $model->get_analyser()->get_logs());
 
-if (!empty($results) && !$model->is_enabled() && $options['non-interactive'] === false) {
+// Check that we have, at leasa,t 1 valid dataset (not necessarily good) to use.
+foreach ($results as $result) {
+    if ($result->status !== \tool_inspire\model::NO_DATASET &&
+            $result->status !== \tool_inspire\model::GENERAL_ERROR) {
+        $validdatasets = true;
+    }
+}
+
+if (!empty($validdatasets) && !$model->is_enabled() && $options['non-interactive'] === false) {
 
     // Select a dataset, train and enable the model.
     $input = cli_input(get_string('clienablemodel', 'tool_inspire'));

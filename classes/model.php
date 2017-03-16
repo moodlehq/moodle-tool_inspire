@@ -315,6 +315,14 @@ class model {
 
         $datasets = $this->get_analyser()->get_labelled_data();
 
+        // No datasets generated.
+        if (empty($datasets)) {
+            $result = new \stdClass();
+            $result->status = self::NO_DATASET;
+            $result->info = $this->get_analyser()->get_logs();
+            return array($result);
+        }
+
         $results = array();
         foreach ($datasets as $timesplittingid => $dataset) {
 
