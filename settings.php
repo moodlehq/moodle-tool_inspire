@@ -24,7 +24,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$ADMIN->add('reports', new admin_externalpage('inspiremodels', get_string('inspiremodels', 'tool_inspire'), "$CFG->wwwroot/$CFG->admin/tool/inspire/index.php"));
+$ADMIN->add('reports', new admin_externalpage('inspiremodels', get_string('inspiremodels', 'tool_inspire'),
+    "$CFG->wwwroot/$CFG->admin/tool/inspire/index.php", 'tool/inspire:managemodels'));
 
 if ($hassiteconfig) {
     $settings = new admin_settingpage('inspiremanagement', new lang_string('pluginname', 'tool_inspire'));

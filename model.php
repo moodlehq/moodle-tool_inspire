@@ -30,7 +30,7 @@ $action = required_param('action', PARAM_ALPHANUMEXT);
 $context = context_system::instance();
 
 require_login();
-require_capability('moodle/site:config', $context);
+require_capability('tool/inspire:managemodels', $context);
 
 $model = new \tool_inspire\model($id);
 

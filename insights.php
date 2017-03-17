@@ -57,7 +57,7 @@ $PAGE->set_pagelayout('report');
 
 $renderer = $PAGE->get_renderer('tool_inspire');
 
-if (!$model->is_enabled() && !has_capability('moodle/site:config', $context)) {
+if (!$model->is_enabled() && !has_capability('tool/inspire:managemodels', $context)) {
     echo $renderer->render_model_disabled($insightinfo);
     exit(0);
 }

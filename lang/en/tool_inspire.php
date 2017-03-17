@@ -125,6 +125,7 @@ $string['insightinfo'] = '{$a->insightname} - {$a->contextname}';
 $string['insightinfomessage'] = 'There are some insights you may find useful. Check out {$a}';
 $string['inspiremodels'] = 'Inspire models';
 $string['inspire:listinsights'] = 'List insights';
+$string['inspire:managemodels'] = 'Manage models';
 $string['invalidtimesplitting'] = 'Model with id {$a} needs a time splitting method before it can be used to train';
 $string['invalidanalysablefortimesplitting'] = 'It can not be analysed using {$a} time splitting method';
 $string['labelstudentdropoutyes'] = 'Student at risk of dropping out';
