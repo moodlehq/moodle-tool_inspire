@@ -45,13 +45,14 @@ class user_profile_set extends linear {
     }
 
     public function calculate_sample($sampleid, $sampleorigin, $starttime = false, $endtime = false) {
+        global $CFG;
 
         $user = $this->retrieve('user', $sampleid);
 
         // Nothing set results in -1.
         $calculatedvalue = self::MIN_VALUE;
 
-        if (!$user->policyagreed) {
+        if (!empty($CFG->sitepolicy) && !$user->policyagreed) {
             return self::MIN_VALUE;
         }
 

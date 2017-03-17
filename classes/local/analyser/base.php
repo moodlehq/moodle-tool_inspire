@@ -146,7 +146,8 @@ abstract class base {
         $files = array();
         $message = null;
 
-        // Target instances scope is per-analysable (it can't be lower as calculations run once per analysable, not range).
+        // Target instances scope is per-analysable (it can't be lower as calculations run once per
+        // analysable, not time splitting method nor time range).
         $target = forward_static_call(array($this->target, 'instance'));
 
         // We need to check that the analysable is valid for the target even if we don't include targets
