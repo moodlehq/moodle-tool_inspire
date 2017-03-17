@@ -74,8 +74,16 @@ abstract class base {
         return '\\' . get_class($this);
     }
 
+    /**
+     * Assigns the analysable and updates the time ranges according to the analysable start and end dates.
+     *
+     * @param \tool_inspire\analysable $analysable
+     * @return void
+     */
     public function set_analysable(\tool_inspire\analysable $analysable) {
         $this->analysable = $analysable;
+        $this->ranges = $this->define_ranges();
+        $this->validate_ranges();
     }
 
     public function get_analysable() {
@@ -260,10 +268,6 @@ abstract class base {
      * @return array
      */
     public function get_all_ranges() {
-        if (empty($this->ranges)) {
-            $this->ranges = $this->define_ranges();
-            $this->validate_ranges();
-        }
         return $this->ranges;
     }
 

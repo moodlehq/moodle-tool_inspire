@@ -184,9 +184,9 @@ abstract class base {
             }
 
             if ($includetarget) {
-                $result = $this->process_range($timesplitting, $analysable, $target);
+                $result = $this->process_time_splitting($timesplitting, $analysable, $target);
             } else {
-                $result = $this->process_range($timesplitting, $analysable);
+                $result = $this->process_time_splitting($timesplitting, $analysable);
             }
 
             if (!empty($result->file)) {
@@ -214,7 +214,7 @@ abstract class base {
         return $this->log;
     }
 
-    protected function process_range($timesplitting, $analysable, $target = false) {
+    protected function process_time_splitting($timesplitting, $analysable, $target = false) {
 
         $result = new \stdClass();
 
