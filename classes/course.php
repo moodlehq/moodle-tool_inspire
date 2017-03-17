@@ -146,11 +146,6 @@ class course implements \tool_inspire\analysable {
             return $this->starttime;
         }
 
-        if (empty($this->studentids)) {
-            $this->starttime = 0;
-            return $this->starttime;
-        }
-
         // The field always exist but may have no valid if the course is created through a sync process.
         if (!empty($this->course->startdate)) {
             $this->starttime = (int)$this->course->startdate;
@@ -194,11 +189,6 @@ class course implements \tool_inspire\analysable {
         // course start date.
         $starttime = $this->get_start();
         if (!$starttime) {
-            $this->endtime = 0;
-            return $this->endtime;
-        }
-
-        if (empty($this->studentids)) {
             $this->endtime = 0;
             return $this->endtime;
         }
