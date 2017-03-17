@@ -33,7 +33,7 @@ require_once($CFG->dirroot . '/lib/enrollib.php');
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class enrolments extends by_course {
+class student_enrolments extends by_course {
 
     /**
      * @var array Cache for user_enrolment id - course id relation.
@@ -71,8 +71,16 @@ class enrolments extends by_course {
                   WHERE e.courseid = :courseid";
         $enrolments = $DB->get_recordset_sql($sql, array('courseid' => $course->get_id()));
 
+        // We fetch all enrolments, but we are only interested in students.
+        $studentids = $course->get_students();
+
         $samplesdata = array();
         foreach ($enrolments as $user) {
+
+            if (empty($studentids[$user->id])) {
+                // Not a student.
+                continue;
+            }
 
             $sampleid = $user->enrolmentid;
             unset($user->enrolmentid);

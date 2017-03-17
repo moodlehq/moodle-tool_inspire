@@ -87,7 +87,7 @@ class course_dropout extends binary {
     }
 
     public function get_analyser_class() {
-        return '\\tool_inspire\\local\\analyser\\enrolments';
+        return '\\tool_inspire\\local\\analyser\\student_enrolments';
     }
 
     public function is_valid_analysable(\tool_inspire\analysable $course, $fortraining = true) {
