@@ -614,10 +614,10 @@ class model {
 
         // Filters out previous predictions keeping only the last time range one.
         $sql = "SELECT tip.*
-                  FROM mdl_tool_inspire_predictions tip
+                  FROM {tool_inspire_predictions} tip
                   JOIN (
                     SELECT sampleid, max(rangeindex) AS rangeindex
-                      FROM mdl_tool_inspire_predictions
+                      FROM {tool_inspire_predictions}
                      WHERE modelid = ? and contextid = ?
                     GROUP BY sampleid
                   ) tipsub
