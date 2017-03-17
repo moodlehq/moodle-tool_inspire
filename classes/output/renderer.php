@@ -167,8 +167,10 @@ class renderer extends plugin_renderer_base {
     public function render_execute_results($trainresults = false, $trainlogs = array(), $predictresults = false, $predictlogs = array()) {
         global $OUTPUT;
 
+        $output = '';
+
         if ($trainresults || (!empty($trainlogs) && debugging())) {
-            $output = $OUTPUT->heading(get_string('trainingresults', 'tool_inspire'), 3);
+            $output .= $OUTPUT->heading(get_string('trainingresults', 'tool_inspire'), 3);
         }
 
         if ($trainresults) {
