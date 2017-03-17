@@ -167,7 +167,9 @@ class renderer extends plugin_renderer_base {
     public function render_execute_results($trainresults = false, $trainlogs = array(), $predictresults = false, $predictlogs = array()) {
         global $OUTPUT;
 
-        $output = $OUTPUT->heading(get_string('trainingresults', 'tool_inspire'), 3);
+        if ($trainresults || (!empty($trainlogs) && debugging())) {
+            $output = $OUTPUT->heading(get_string('trainingresults', 'tool_inspire'), 3);
+        }
 
         if ($trainresults) {
             if ($trainresults->status == 0) {
@@ -189,7 +191,9 @@ class renderer extends plugin_renderer_base {
             }
         }
 
-        $output .= $OUTPUT->heading(get_string('predictionresults', 'tool_inspire'), 3);
+        if ($predictresults || (!empty($predictlogs) && debugging())) {
+            $output .= $OUTPUT->heading(get_string('predictionresults', 'tool_inspire'), 3);
+        }
 
         if ($predictresults) {
             if ($predictresults->status == 0) {
