@@ -43,12 +43,12 @@ class quarters extends base {
         $duration = floor(($this->analysable->get_end() - $this->analysable->get_start()) / 4);
         return [
             [
-                //'start' => $this->analysable->get_start(),
-                //'end' => $this->analysable->get_start() + $duration
-            //], [
-                //'start' => $this->analysable->get_start() + $duration,
-                //'end' => $this->analysable->get_start() + ($duration * 2)
-            //], [
+                'start' => $this->analysable->get_start(),
+                'end' => $this->analysable->get_start() + $duration
+            ], [
+                'start' => $this->analysable->get_start() + $duration,
+                'end' => $this->analysable->get_start() + ($duration * 2)
+            ], [
                 'start' => $this->analysable->get_start() + ($duration * 2),
                 'end' => $this->analysable->get_start() + ($duration * 3)
             ], [
