@@ -140,7 +140,7 @@ class tool_inspire_prediction_testcase extends advanced_testcase {
     public function provider_training_and_prediction() {
         $cases = array(
             'no_splitting' => array('\tool_inspire\local\time_splitting\no_splitting', 1),
-            'quarters' => array('\tool_inspire\local\time_splitting\quarters', 2)
+            'quarters' => array('\tool_inspire\local\time_splitting\quarters', 4)
         );
 
         // We need to test all system prediction processors.
