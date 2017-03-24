@@ -51,6 +51,8 @@ class processor implements \tool_inspire\predictor {
     const BATCH_SIZE = 1000;
     const MODEL_FILENAME = 'model.ser';
 
+    protected $limitedsize = false;
+
     public function is_ready() {
         return true;
     }
@@ -165,8 +167,25 @@ class processor implements \tool_inspire\predictor {
         return $resultobj;
     }
 
+    /**
+     * Evaluates the provided dataset.
+     *
+     * During evaluation we need to shuffle the evaluation dataset samples to detect deviated results,
+     * if the dataset is massive we can not load everything into memory. We know that 2GB is the
+     * minimum memory limit we should have (\tool_inspire\model::increase_memory), if we substract the memory
+     * that we already consumed and the memory that Phpml algorithms will need we should still have at
+     * least 500MB of memory, which should be enough to evaluate a model. In any case this is a robust
+     * solution that will work for all sites but it should minimize memory limit problems. Site admins
+     * can still set $CFG->tool_inspire_no_evaluation_limits to true to skip this 500MB limit.
+     *
+     * @param string $uniqueid
+     * @param float $maxdeviation
+     * @param int $niterations
+     * @param \stored_file $dataset
+     * @param string $outputdir
+     * @return \stdClass
+     */
     public function evaluate($uniqueid, $maxdeviation, $niterations, \stored_file $dataset, $outputdir) {
-
         $fh = $dataset->get_content_file_handle();
 
         // The first lines are var names and the second one values.
@@ -175,13 +194,36 @@ class processor implements \tool_inspire\predictor {
         // Skip headers.
         fgets($fh);
 
-        // TODO This should be processed in chunks if we expect it to scale although the random split makes it difficult.
+        if (empty($CFG->tool_inspire_no_evaluation_limits)) {
+            $samplessize = 0;
+            $limit = get_real_size('500MB');
+
+            // Just an approximation, will depend on PHP version, compile options...
+            // Double size + zval struct (6 bytes + 8 bytes + 16 bytes) + array bucket (96 bytes)
+            // https://nikic.github.io/2011/12/12/How-big-are-PHP-arrays-really-Hint-BIG.html
+            $floatsize = (PHP_INT_SIZE * 2) + 6 + 8 + 16 + 96;
+        }
+
         $samples = array();
         $targets = array();
         while (($data = fgetcsv($fh)) !== false) {
             $sampledata = array_map('floatval', $data);
+
             $samples[] = array_slice($sampledata, 0, $metadata['nfeatures']);
             $targets[] = intval($data[$metadata['nfeatures']]);
+
+            if (empty($CFG->tool_inspire_no_evaluation_limits)) {
+                // We allow admins to disable evaluation memory usage limits by modifying config.php.
+
+                // We will have plenty of missing values in the dataset so it should be a conservative approximation:
+                $samplessize = $samplessize + (count($sampledata) * $floatsize);
+
+                // Stop fetching more samples.
+                if ($samplessize >= $limit) {
+                    $this->limitedsize = true;
+                    break;
+                }
+            }
         }
         fclose($fh);
 
@@ -204,10 +246,10 @@ class processor implements \tool_inspire\predictor {
         }
 
         // Let's fill the results changing the returned status code depending on the phi-related calculated metrics.
-        return $this->get_evaluation_result_object($phis, $maxdeviation);
+        return $this->get_evaluation_result_object($dataset, $phis, $maxdeviation);
     }
 
-    protected function get_evaluation_result_object($phis, $maxdeviation) {
+    protected function get_evaluation_result_object(\stored_file $dataset, $phis, $maxdeviation) {
 
         // We convert phi (from -1 to 1) to a value between 0 and 1.
         $avgphi = \Phpml\Math\Statistic\Mean::arithmetic($phis);
@@ -240,6 +282,10 @@ class processor implements \tool_inspire\predictor {
             $a->score = $resultobj->score;
             $a->minscore = \tool_inspire\model::MIN_SCORE;
             $resultobj->info[] = get_string('errorlowscore', 'predict_php', $a);
+        }
+
+        if ($this->limitedsize === true) {
+            $resultobj->info[] = get_string('datasetsizelimited', 'tool_inspire', display_size($dataset->get_filesize()));
         }
 
         return $resultobj;

@@ -307,6 +307,9 @@ class model {
      */
     public function evaluate($options = array()) {
 
+        // Increase memory limit.
+        $this->increase_memory();
+
         $options['evaluation'] = true;
         $this->init_analyser($options);
 
@@ -368,6 +371,9 @@ class model {
     public function train() {
         global $DB;
 
+        // Increase memory limit.
+        $this->increase_memory();
+
         if ($this->model->enabled == false || empty($this->model->timesplitting)) {
             throw new \moodle_exception('invalidtimesplitting', 'tool_inspire', '', $this->model->id);
         }
@@ -414,6 +420,9 @@ class model {
      */
     public function predict() {
         global $DB;
+
+        // Increase memory limit.
+        $this->increase_memory();
 
         if ($this->model->enabled == false || empty($this->model->timesplitting)) {
             throw new \moodle_exception('invalidtimesplitting', 'tool_inspire', '', $this->model->id);
@@ -846,4 +855,11 @@ class model {
         $DB->delete_records('tool_inspire_train_samples', array('modelid' => $this->model->id));
         $DB->delete_records('tool_inspire_used_files', array('modelid' => $this->model->id));
     }
+
+    private function increase_memory() {
+        if (ini_get('memory_limit') != -1) {
+            raise_memory_limit(MEMORY_HUGE);
+        }
+    }
+
 }
