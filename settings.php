@@ -47,10 +47,10 @@ if ($hassiteconfig) {
     $alltimesplittings = \tool_inspire\manager::get_all_time_splittings();
 
     $timesplittingoptions = array();
-    $timesplittingdefaults = array();
+    $timesplittingdefaults = array('\\tool_inspire\\local\\time_splitting\\quarters_accum',
+        '\\tool_inspire\\local\\time_splitting\\quarters');
     foreach ($alltimesplittings as $key => $timesplitting) {
         $timesplittingoptions[$key] = $timesplitting->get_name();
-        $timesplittingdefaults[] = $key;
     }
     $settings->add(new admin_setting_configmultiselect('tool_inspire/timesplittings',
         new lang_string('enabledtimesplittings', 'tool_inspire'), new lang_string('enabledtimesplittings_help', 'tool_inspire'),
