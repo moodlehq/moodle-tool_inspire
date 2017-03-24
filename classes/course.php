@@ -199,7 +199,7 @@ class course implements \tool_inspire\analysable {
             return $this->endtime;
         }
 
-        list($filterselect, $filterparams) = $this->get_query_filters();
+        list($filterselect, $filterparams) = $this->course_students_query_filter();
 
         $sql = "SELECT COUNT(DISTINCT userid) FROM {logstore_standard_log} " .
             "WHERE $filterselect AND timecreated > :timecreated";
@@ -360,8 +360,13 @@ class course implements \tool_inspire\analysable {
     public function get_total_logs() {
         global $DB;
 
+        // No logs if no students.
+        if (empty($this->studentids)) {
+            return 0;
+        }
+
         if ($this->ntotallogs === null) {
-            list($filterselect, $filterparams) = $this->get_query_filters();
+            list($filterselect, $filterparams) = $this->course_students_query_filter();
             $this->ntotallogs = $DB->count_records_select('logstore_standard_log', $filterselect, $filterparams);
         }
 
@@ -590,7 +595,7 @@ class course implements \tool_inspire\analysable {
      *
      * @return array
      */
-    protected function get_query_filters() {
+    protected function course_students_query_filter() {
         global $DB;
 
         // Check the amount of student logs in the 4 previous weeks.

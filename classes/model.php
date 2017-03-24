@@ -138,7 +138,7 @@ class model {
 
         $fullclassnames = json_decode($this->model->indicators);
 
-        if (!$fullclassnames || !is_array($fullclassnames)) {
+        if (!is_array($fullclassnames)) {
             throw new \coding_exception('Model ' . $this->model->id . ' indicators can not be read');
         }
 
@@ -153,6 +153,29 @@ class model {
         }
 
         return $this->indicators;
+    }
+
+    /**
+     * Returns the list of indicators that could potentially be used by the model target.
+     *
+     * It includes the indicators that are part of the model.
+     *
+     * @return \tool_inspire\local\indicator\base
+     */
+    public function get_potential_indicators() {
+
+        $indicators = \tool_inspire\manager::get_all_indicators();
+
+        if (empty($this->analyser)) {
+            $this->init_analyser(array('evaluation' => true));
+        }
+
+        foreach ($indicators as $classname => $indicator) {
+            if ($this->analyser->check_indicator_requirements($indicator) !== true) {
+                unset($indicators[$classname]);
+            }
+        }
+        return $indicators;
     }
 
     /**
@@ -184,10 +207,6 @@ class model {
 
         if (empty($target)) {
             throw new \moodle_exception('errornotarget', 'tool_inspire');
-        }
-
-        if (empty($indicators)) {
-            throw new \moodle_exception('errornoindicators', 'tool_inspire');
         }
 
         if (!empty($options['evaluation'])) {
@@ -263,7 +282,7 @@ class model {
         return new static($modelobj);
     }
 
-    public function update($enabled, $indicators, $timesplitting) {
+    public function update($enabled, $indicators, $timesplitting = '') {
         global $USER, $DB;
 
         $now = time();
@@ -312,6 +331,10 @@ class model {
 
         $options['evaluation'] = true;
         $this->init_analyser($options);
+
+        if (empty($this->get_indicators())) {
+            throw new \moodle_exception('errornoindicators', 'tool_inspire');
+        }
 
         // Before get_labelled_data call so we get an early exception if it is not ready.
         $predictor = \tool_inspire\manager::get_predictions_processor();
@@ -378,6 +401,10 @@ class model {
             throw new \moodle_exception('invalidtimesplitting', 'tool_inspire', '', $this->model->id);
         }
 
+        if (empty($this->get_indicators())) {
+            throw new \moodle_exception('errornoindicators', 'tool_inspire');
+        }
+
         // Before get_labelled_data call so we get an early exception if it is not writable.
         $outputdir = $this->get_output_dir(array('execution'));
 
@@ -426,6 +453,10 @@ class model {
 
         if ($this->model->enabled == false || empty($this->model->timesplitting)) {
             throw new \moodle_exception('invalidtimesplitting', 'tool_inspire', '', $this->model->id);
+        }
+
+        if (empty($this->get_indicators())) {
+            throw new \moodle_exception('errornoindicators', 'tool_inspire');
         }
 
         // Before get_unlabelled_data call so we get an early exception if it is not writable.

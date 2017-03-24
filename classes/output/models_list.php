@@ -90,10 +90,12 @@ class models_list implements \renderable, \templatable {
             $actionsmenu->add($icon);
 
             // Evaluate model.
-            $url = new \moodle_url('model.php', array('action' => 'evaluate', 'id' => $model->get_id()));
-            $icon = new \action_menu_link_secondary($url, new \pix_icon('i/calc', get_string('evaluate', 'tool_inspire')),
-                get_string('evaluate', 'tool_inspire'));
-            $actionsmenu->add($icon);
+            if ($model->get_indicators()) {
+                $url = new \moodle_url('model.php', array('action' => 'evaluate', 'id' => $model->get_id()));
+                $icon = new \action_menu_link_secondary($url, new \pix_icon('i/calc', get_string('evaluate', 'tool_inspire')),
+                    get_string('evaluate', 'tool_inspire'));
+                $actionsmenu->add($icon);
+            }
 
             if ($modeldata->enabled && !empty($modeldata->timesplitting)) {
                 $url = new \moodle_url('model.php', array('action' => 'execute', 'id' => $model->get_id()));

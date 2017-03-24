@@ -68,7 +68,7 @@ switch ($action) {
         $customdata = array(
             'id' => $model->get_id(),
             'model' => $model,
-            'indicators' => \tool_inspire\manager::get_all_indicators(),
+            'indicators' => $model->get_potential_indicators(),
             'timesplittings' => \tool_inspire\manager::get_enabled_time_splitting_methods()
         );
         $mform = new \tool_inspire\output\form\edit_model(null, $customdata);

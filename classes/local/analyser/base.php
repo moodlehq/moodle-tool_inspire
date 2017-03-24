@@ -109,25 +109,42 @@ abstract class base {
     /**
      * Checks if the analyser satisfies all the model indicators requirements.
      *
-     * @throws requirements_exception
+     * @throws \tool_inspire\requirements_exception
      * @return void
      */
     protected function check_indicators_requirements() {
 
-        $providedsampledata = $this->provided_sample_data();
-
         foreach ($this->indicators as $indicator) {
-            $requiredsampledata = $indicator::required_sample_data();
-            if (empty($requiredsampledata)) {
-                // The indicator does not need any sample data.
-                continue;
-            }
-            $missingrequired = array_diff($requiredsampledata, $providedsampledata);
-            if (!empty($missingrequired)) {
+            $missingrequired = $this->check_indicator_requirements($indicator);
+            if ($missingrequired !== true) {
                 throw new \tool_inspire\requirements_exception(get_class($indicator) . ' indicator requires ' .
                     json_encode($missingrequired) . ' sample data which is not provided by ' . get_class($this));
             }
         }
+    }
+
+    /**
+     * check_indicator_requirements
+     *
+     * @param \tool_inspire\local\indicator\base $indicator
+     * @return true|string[] True if all good, missing requirements list otherwise
+     */
+    public function check_indicator_requirements(\tool_inspire\local\indicator\base $indicator) {
+
+        $providedsampledata = $this->provided_sample_data();
+
+        $requiredsampledata = $indicator::required_sample_data();
+        if (empty($requiredsampledata)) {
+            // The indicator does not need any sample data.
+            return true;
+        }
+        $missingrequired = array_diff($requiredsampledata, $providedsampledata);
+
+        if (empty($missingrequired)) {
+            return true;
+        }
+
+        return $missingrequired;
     }
 
     /**

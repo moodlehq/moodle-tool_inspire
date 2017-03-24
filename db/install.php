@@ -35,5 +35,8 @@ function xmldb_tool_inspire_install() {
     $target = \tool_inspire\manager::get_target('\tool_inspire\local\target\course_dropout');
     $indicators = \tool_inspire\manager::get_all_indicators();
 
-    \tool_inspire\model::create($target, $indicators);
+    // We need the model to be created in order to know all its potential indicators and set them.
+    $model = \tool_inspire\model::create($target, array());
+
+    $model->update(0, $model->get_potential_indicators());
 }
