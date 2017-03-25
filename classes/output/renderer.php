@@ -106,7 +106,12 @@ class renderer extends plugin_renderer_base {
             if (!is_numeric($timesplittingid)) {
                 $timesplitting = \tool_inspire\manager::get_time_splitting($timesplittingid);
                 $langstrdata = (object)array('name' => $timesplitting->get_name(), 'id' => $timesplittingid);
-                $output .= $OUTPUT->heading(get_string('executionresults', 'tool_inspire', $langstrdata), 3);
+
+                if (CLI_SCRIPT) {
+                    $output .= $OUTPUT->heading(get_string('executionresultscli', 'tool_inspire', $langstrdata), 3);
+                } else {
+                    $output .= $OUTPUT->heading(get_string('executionresults', 'tool_inspire', $langstrdata), 3);
+                }
             }
 
             if ($result->status == 0) {

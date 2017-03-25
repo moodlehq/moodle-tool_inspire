@@ -243,6 +243,10 @@ abstract class base {
         }
         $timesplitting->set_analysable($analysable);
 
+        if (CLI_SCRIPT) {
+            mtrace('Analysing id "' . $analysable->get_id() . '" with "' . $timesplitting->get_name() . '" time splitting method...');
+        }
+
         // What is a sample is defined by the analyser, it can be an enrolment, a course, a user, a question
         // attempt... it is on what we will base indicators calculations.
         list($sampleids, $samplesdata) = $this->get_all_samples($analysable);
