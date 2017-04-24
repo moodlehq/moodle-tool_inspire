@@ -4,10 +4,7 @@ declare(strict_types=1);
 
 namespace Phpml\Classification\Linear;
 
-use Phpml\Helper\Predictable;
-use Phpml\Helper\Trainable;
 use Phpml\Classification\Classifier;
-use Phpml\Classification\Linear\Perceptron;
 
 class Adaline extends Perceptron
 {
@@ -21,14 +18,6 @@ class Adaline extends Perceptron
      * Online training: Stochastic gradient descent learning
      */
     const ONLINE_TRAINING    = 2;
-
-    /**
-     * The function whose result will be used to calculate the network error
-     * for each instance
-     *
-     * @var string
-     */
-    protected static $errorFunction = 'output';
 
     /**
      * Training type may be either 'Batch' or 'Online' learning
@@ -64,59 +53,25 @@ class Adaline extends Perceptron
     /**
      * Adapts the weights with respect to given samples and targets
      * by use of gradient descent learning rule
-     */
-    protected function runTraining()
-    {
-        // If online training is chosen, then the parent runTraining method
-        // will be executed with the 'output' method as the error function
-        if ($this->trainingType == self::ONLINE_TRAINING) {
-            return parent::runTraining();
-        }
-
-        // Batch learning is executed:
-        $currIter = 0;
-        while ($this->maxIterations > $currIter++) {
-            $outputs = array_map([$this, 'output'], $this->samples);
-            $updates = array_map([$this, 'gradient'], $this->targets, $outputs);
-
-            $this->updateWeights($updates);
-        }
-    }
-
-    /**
-     * Returns the direction of gradient given the desired and actual outputs
      *
-     * @param int $desired
-     * @param int $output
-     * @return int
+     * @param array $samples
+     * @param array $targets
      */
-    protected function gradient($desired, $output)
+    protected function runTraining(array $samples, array $targets)
     {
-        return $desired - $output;
-    }
+        // The cost function is the sum of squares
+        $callback = function ($weights, $sample, $target) {
+            $this->weights = $weights;
 
-    /**
-     * Updates the weights of the network given the direction of the
-     * gradient for each sample
-     *
-     * @param array $updates
-     */
-    protected function updateWeights(array $updates)
-    {
-        // Updates all weights at once
-        for ($i=0; $i <= $this->featureCount; $i++) {
-            if ($i == 0) {
-                $this->weights[0] += $this->learningRate * array_sum($updates);
-            } else {
-                $col = array_column($this->samples, $i - 1);
+            $output = $this->output($sample);
+            $gradient = $output - $target;
+            $error = $gradient ** 2;
 
-                $error = 0;
-                foreach ($col as $index => $val) {
-                    $error += $val * $updates[$index];
-                }
+            return [$error, $gradient];
+        };
 
-                $this->weights[$i] += $this->learningRate * $error;
-            }
-        }
+        $isBatch = $this->trainingType == self::BATCH_TRAINING;
+
+        return parent::runGradientDescent($samples, $targets, $callback, $isBatch);
     }
 }

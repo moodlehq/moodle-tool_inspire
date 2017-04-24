@@ -5,31 +5,21 @@ declare(strict_types=1);
 namespace Phpml\Classification\Linear;
 
 use Phpml\Helper\Predictable;
-use Phpml\Helper\Trainable;
+use Phpml\Helper\OneVsRest;
+use Phpml\Helper\Optimizer\StochasticGD;
+use Phpml\Helper\Optimizer\GD;
 use Phpml\Classification\Classifier;
 use Phpml\Preprocessing\Normalizer;
+use Phpml\IncrementalEstimator;
 
-class Perceptron implements Classifier
+class Perceptron implements Classifier, IncrementalEstimator
 {
-    use Predictable;
+    use Predictable, OneVsRest;
 
     /**
-     * The function whose result will be used to calculate the network error
-     * for each instance
-     *
-     * @var string
+     * @var \Phpml\Helper\Optimizer\Optimizer
      */
-    protected static $errorFunction = 'outputClass';
-
-   /**
-     * @var array
-     */
-    protected $samples = [];
-
-    /**
-     * @var array
-     */
-    protected $targets = [];
+    protected $optimizer;
 
     /**
      * @var array
@@ -62,6 +52,16 @@ class Perceptron implements Classifier
     protected $normalizer;
 
     /**
+     * @var bool
+     */
+    protected $enableEarlyStop = true;
+
+    /**
+     * @var array
+     */
+    protected $costValues = [];
+
+    /**
      * Initalize a perceptron classifier with given learning rate and maximum
      * number of iterations used while training the perceptron <br>
      *
@@ -89,60 +89,138 @@ class Perceptron implements Classifier
         $this->maxIterations = $maxIterations;
     }
 
+    /**
+     * @param array $samples
+     * @param array $targets
+     * @param array $labels
+     */
+    public function partialTrain(array $samples, array $targets, array $labels = [])
+    {
+        return $this->trainByLabel($samples, $targets, $labels);
+    }
+
    /**
      * @param array $samples
      * @param array $targets
+     * @param array $labels
      */
-    public function train(array $samples, array $targets)
+    public function trainBinary(array $samples, array $targets, array $labels)
     {
-        $this->labels = array_keys(array_count_values($targets));
-        if (count($this->labels) > 2) {
-            throw new \Exception("Perceptron is for only binary (two-class) classification");
-        }
-
         if ($this->normalizer) {
             $this->normalizer->transform($samples);
         }
 
         // Set all target values to either -1 or 1
-        $this->labels = [1 => $this->labels[0], -1 => $this->labels[1]];
-        foreach ($targets as $target) {
-            $this->targets[] = $target == $this->labels[1] ? 1 : -1;
+        $this->labels = [1 => $labels[0], -1 => $labels[1]];
+        foreach ($targets as $key => $target) {
+            $targets[$key] = strval($target) == strval($this->labels[1]) ? 1 : -1;
         }
 
         // Set samples and feature count vars
-        $this->samples = array_merge($this->samples, $samples);
-        $this->featureCount = count($this->samples[0]);
+        $this->featureCount = count($samples[0]);
 
-        // Init weights with random values
-        $this->weights = array_fill(0, $this->featureCount + 1, 0);
-        foreach ($this->weights as &$weight) {
-            $weight = rand() / (float) getrandmax();
-        }
-        // Do training
-        $this->runTraining();
+        $this->runTraining($samples, $targets);
+    }
+
+    protected function resetBinary()
+    {
+        $this->labels = [];
+        $this->optimizer = null;
+        $this->featureCount = 0;
+        $this->weights = null;
+        $this->costValues = [];
     }
 
     /**
-     * Adapts the weights with respect to given samples and targets
-     * by use of perceptron learning rule
+     * Normally enabling early stopping for the optimization procedure may
+     * help saving processing time while in some cases it may result in
+     * premature convergence.<br>
+     *
+     * If "false" is given, the optimization procedure will always be executed
+     * for $maxIterations times
+     *
+     * @param bool $enable
      */
-    protected function runTraining()
+    public function setEarlyStop(bool $enable = true)
     {
-        $currIter = 0;
-        while ($this->maxIterations > $currIter++) {
-            foreach ($this->samples as $index => $sample) {
-                $target = $this->targets[$index];
-                $prediction = $this->{static::$errorFunction}($sample);
-                $update = $target - $prediction;
-                // Update bias
-                $this->weights[0] += $update * $this->learningRate; // Bias
-                // Update other weights
-                for ($i=1; $i <= $this->featureCount; $i++) {
-                    $this->weights[$i] += $update * $sample[$i - 1] * $this->learningRate;
-                }
-            }
+        $this->enableEarlyStop = $enable;
+
+        return $this;
+    }
+
+    /**
+     * Returns the cost values obtained during the training.
+     *
+     * @return array
+     */
+    public function getCostValues()
+    {
+        return $this->costValues;
+    }
+
+    /**
+     * Trains the perceptron model with Stochastic Gradient Descent optimization
+     * to get the correct set of weights
+     *
+     * @param array $samples
+     * @param array $targets
+     */
+    protected function runTraining(array $samples, array $targets)
+    {
+        // The cost function is the sum of squares
+        $callback = function ($weights, $sample, $target) {
+            $this->weights = $weights;
+
+            $prediction = $this->outputClass($sample);
+            $gradient = $prediction - $target;
+            $error = $gradient**2;
+
+            return [$error, $gradient];
+        };
+
+        $this->runGradientDescent($samples, $targets, $callback);
+    }
+
+    /**
+     * Executes a Gradient Descent algorithm for
+     * the given cost function
+     *
+     * @param array $samples
+     * @param array $targets
+     */
+    protected function runGradientDescent(array $samples, array $targets, \Closure $gradientFunc, bool $isBatch = false)
+    {
+        $class = $isBatch ? GD::class :  StochasticGD::class;
+
+        if (empty($this->optimizer)) {
+            $this->optimizer = (new $class($this->featureCount))
+                ->setLearningRate($this->learningRate)
+                ->setMaxIterations($this->maxIterations)
+                ->setChangeThreshold(1e-6)
+                ->setEarlyStop($this->enableEarlyStop);
         }
+
+        $this->weights = $this->optimizer->runOptimization($samples, $targets, $gradientFunc);
+        $this->costValues = $this->optimizer->getCostValues();
+    }
+
+    /**
+     * Checks if the sample should be normalized and if so, returns the
+     * normalized sample
+     *
+     * @param array $sample
+     *
+     * @return array
+     */
+    protected function checkNormalizedSample(array $sample)
+    {
+        if ($this->normalizer) {
+            $samples = [$sample];
+            $this->normalizer->transform($samples);
+            $sample = $samples[0];
+        }
+
+        return $sample;
     }
 
     /**
@@ -177,16 +255,33 @@ class Perceptron implements Classifier
     }
 
     /**
+     * Returns the probability of the sample of belonging to the given label.
+     *
+     * The probability is simply taken as the distance of the sample
+     * to the decision plane.
+     *
+     * @param array $sample
+     * @param mixed $label
+     */
+    protected function predictProbability(array $sample, $label)
+    {
+        $predicted = $this->predictSampleBinary($sample);
+
+        if (strval($predicted) == strval($label)) {
+            $sample = $this->checkNormalizedSample($sample);
+            return abs($this->output($sample));
+        }
+
+        return 0.0;
+    }
+
+    /**
      * @param array $sample
      * @return mixed
      */
-    protected function predictSample(array $sample)
+    protected function predictSampleBinary(array $sample)
     {
-        if ($this->normalizer) {
-            $samples = [$sample];
-            $this->normalizer->transform($samples);
-            $sample = $samples[0];
-        }
+        $sample = $this->checkNormalizedSample($sample);
 
         $predictedClass = $this->outputClass($sample);
 
