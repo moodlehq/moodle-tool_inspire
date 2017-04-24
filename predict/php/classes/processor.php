@@ -33,7 +33,7 @@ spl_autoload_register(function($class) {
     }
 });
 
-use Phpml\Classification\NaiveBayes;
+use Phpml\Classification\Linear\Adaline;
 use Phpml\CrossValidation\RandomSplit;
 use Phpml\Dataset\ArrayDataset;
 
@@ -67,7 +67,7 @@ class processor implements \tool_inspire\predictor {
         if (file_exists($modelfilepath)) {
             $classifier = $modelmanager->restoreFromFile($modelfilepath);
         } else {
-            $classifier = new \Phpml\Classification\NaiveBayes();
+            $classifier = new \Phpml\Classification\Linear\Adaline(0.001, self::BATCH_SIZE, false);
         }
 
         $fh = $dataset->get_content_file_handle();
@@ -88,7 +88,7 @@ class processor implements \tool_inspire\predictor {
             if (count($samples) === self::BATCH_SIZE) {
                 // Training it batches to avoid running out of memory.
 
-                $classifier->train($samples, $targets);
+                $classifier->partialTrain($samples, $targets, array(0, 1));
                 $samples = array();
                 $targets = array();
             }
@@ -97,7 +97,7 @@ class processor implements \tool_inspire\predictor {
 
         // Train the remaining samples.
         if ($samples) {
-            $classifier->train($samples, $targets);
+            $classifier->partialTrain($samples, $targets, array(0, 1));
         }
 
         $resultobj = new \stdClass();
@@ -232,7 +232,8 @@ class processor implements \tool_inspire\predictor {
         // Evaluate the model multiple times to confirm the results are not significantly random due to a short amount of data.
         for ($i = 0; $i < $niterations; $i++) {
 
-            $classifier = new \Phpml\Classification\NaiveBayes();
+            // Using PHP_INT_MAX as we already made an effort to reduce the evaluation dataset size.
+            $classifier = new \Phpml\Classification\Linear\Adaline(0.001, PHP_INT_MAX, false);
 
             // Split up the dataset in classifier and testing.
             $data = new RandomSplit(new ArrayDataset($samples, $targets), 0.2);
