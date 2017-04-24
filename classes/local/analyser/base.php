@@ -243,7 +243,7 @@ abstract class base {
         }
         $timesplitting->set_analysable($analysable);
 
-        if (CLI_SCRIPT) {
+        if (CLI_SCRIPT && !PHPUNIT_TEST) {
             mtrace('Analysing id "' . $analysable->get_id() . '" with "' . $timesplitting->get_name() . '" time splitting method...');
         }
 
