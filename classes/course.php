@@ -170,7 +170,7 @@ class course implements \tool_inspire\analysable {
     /**
      * Get the course end timestamp.
      *
-     * @return int Timestamp, \tool_inspire\analysable::MAX_TIME if we don't know but ongoing and 0 if we can not work it out.
+     * @return int Timestamp or 0 if time end was not set.
      */
     public function get_end() {
         global $DB;
@@ -184,6 +184,17 @@ class course implements \tool_inspire\analysable {
             $this->endtime = (int)$this->course->enddate;
             return $this->endtime;
         }
+
+        return 0;
+    }
+
+    /**
+     * Get the course end timestamp.
+     *
+     * @return int Timestamp, \tool_inspire\analysable::MAX_TIME if we don't know but ongoing and 0 if we can not work it out.
+     */
+    public function guess_end() {
+        global $DB;
 
         // Not worth trying if we weren't able to determine the startdate, we need to base the calculations below on the
         // course start date.
