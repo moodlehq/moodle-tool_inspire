@@ -163,7 +163,8 @@ class course_dropout extends binary {
             return get_string('nocompletiondetection', 'tool_inspire');
         }
 
-        if ($this->coursegradeitem->gradetype != GRADE_TYPE_VALUE) {
+        // It comes as a string.
+        if (!floatval($this->coursegradeitem->gradepass)) {
             return get_string('nocompletiondetection', 'tool_inspire');
         }
 
