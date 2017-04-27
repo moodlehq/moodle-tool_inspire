@@ -101,11 +101,6 @@ class course_dropout extends binary {
             return get_string('nocoursestudents', 'tool_inspire');
         }
 
-        // Courses that last more than 1 year (a bit more than that just in case) may not have a regular usage.
-        if ($course->get_end() - $course->get_start() > YEARSECS * 1.3) {
-            return get_string('coursetoolong', 'tool_inspire');
-        }
-
         if (!course_format_uses_sections($course->get_course_data()->format)) {
             // We can not split activities in time ranges.
             return get_string('nocoursesections', 'tool_inspire');
