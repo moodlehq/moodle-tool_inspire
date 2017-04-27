@@ -105,6 +105,12 @@ abstract class activity_cognitive_depth extends community_of_inquiry_activity {
             }
         }
 
+        // To avoid decimal problems.
+        if ($score > self::MAX_VALUE) {
+            return self::MAX_VALUE;
+        } else if ($score < self::MIN_VALUE) {
+            return self::MIN_VALUE;
+        }
         return $score;
     }
 }
