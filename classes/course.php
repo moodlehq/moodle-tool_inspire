@@ -150,21 +150,34 @@ class course implements \tool_inspire\analysable {
         if (!empty($this->course->startdate)) {
             $this->starttime = (int)$this->course->startdate;
         } else {
-            // Fallback to the first student log.
-            list($studentssql, $studentsparams) = $DB->get_in_or_equal($this->studentids, SQL_PARAMS_NAMED);
-            $select = 'courseid = :courseid AND userid ' . $studentssql;
-            $params = ['courseid' => $this->course->id] + $studentsparams;
-            $records = $DB->get_records_select('logstore_standard_log', $select, $params,
-                'timecreated ASC', 'id, timecreated', 0, 1);
-            if (!$records) {
-                // If there are no logs we assume the course has not started yet.
-                $this->starttime = 0;
-                return $this->starttime;
-            }
-            $this->starttime  = (int)reset($records)->timecreated;
+            $this->starttime = 0;
         }
 
         return $this->starttime;
+    }
+
+    public function guess_start() {
+        global $DB;
+
+        if (!$this->get_total_logs()) {
+            // Can't guess.
+            return 0;
+        }
+
+        // We first try to find current course student logs.
+        list($filterselect, $filterparams) = $this->course_students_query_filter();
+
+        $sql = "SELECT id, userid, timecreated FROM {logstore_standard_log}
+                  WHERE $filterselect
+                 ORDER BY timecreated ASC";
+        $studentlogs = $DB->get_records_sql($sql, $filterparams, 0, 1);
+        if ($studentlogs) {
+            $firstlog = reset($studentlogs);
+            return $firstlog->timecreated;
+        }
+
+        // Can't guess or not yet started.
+        return 0;
     }
 
     /**
@@ -196,88 +209,45 @@ class course implements \tool_inspire\analysable {
     public function guess_end() {
         global $DB;
 
-        // Not worth trying if we weren't able to determine the startdate, we need to base the calculations below on the
-        // course start date.
-        $starttime = $this->get_start();
-        if (!$starttime) {
-            $this->endtime = 0;
-            return $this->endtime;
-        }
-
         if ($this->get_total_logs() === 0) {
-            // No way to know if there are no logs.
+            // No way to guess if there are no logs.
             $this->endtime = 0;
             return $this->endtime;
         }
 
-        list($filterselect, $filterparams) = $this->course_students_query_filter();
+        list($filterselect, $filterparams) = $this->course_students_query_filter('ula');
 
-        $sql = "SELECT COUNT(DISTINCT userid) FROM {logstore_standard_log} " .
-            "WHERE $filterselect AND timecreated > :timecreated";
-        $params = $filterparams + array('timecreated' => $this->now - (WEEKSECS * 4));
-        $ntotallastmonth = $DB->count_records_sql($sql, $params);
-
-        // If more than 1/4 of the students accessed the course in the last 4 weeks we can consider that
-        // the course is still ongoing and we can not determine when it will finish.
-        if ($ntotallastmonth > count($this->studentids) / 4) {
-            $this->endtime = \tool_inspire\analysable::MAX_TIME;
-            return $this->endtime;
+        $monthsago = time() - (WEEKSECS * 4 * 2);
+        $select = $filterselect . ' AND timeaccess > :timeaccess';
+        $params = $filterparams + array('timeaccess' => $monthsago);
+        $sql = "SELECT timeaccess FROM {user_lastaccess} ula
+                  JOIN {enrol} e ON e.courseid = ula.courseid
+                  JOIN {user_enrolments} ue ON e.id = ue.enrolid AND ue.userid = ula.userid
+                 WHERE $select";
+        if ($records = $DB->get_records_sql($sql, $params)) {
+            // Consider it open if there are still student accesses.
+            return 0;
         }
 
-        // We consider that the course was already finished. We still need to work out a date though,
-        // this may be computationally expensive.
-        //
-        // We will consider the end date the approximate date when
-        // the {self::MIN_STUDENT_LOGS_PERCENT}% of the student logs are included.
-        //
-        // Default to ongoing. This may not be the best choice for courses with not much accesses, we
-        // may want to update self::MIN_STUDENT_LOGS_PERCENT in those cases.
-        $bestcandidate = \tool_inspire\analysable::MAX_TIME;
+        $sql = "SELECT timeaccess FROM {user_lastaccess} ula
+                  JOIN {enrol} e ON e.courseid = ula.courseid
+                  JOIN {user_enrolments} ue ON e.id = ue.enrolid AND ue.userid = ula.userid
+                 WHERE $filterselect AND ula.timeaccess != 0
+                 ORDER BY timeaccess DESC";
+        $studentlastaccesses = $DB->get_fieldset_sql($sql, $filterparams);
 
-        // We also store the percents so we can evaluate the algorithm and constants used.
-        $logspercents = [];
+        $mean = array_sum($studentlastaccesses) / count($studentlastaccesses);
+        $stddev = $this->std_dev($studentlastaccesses);
 
-        // We continuously try to find out the final course week until we reach 'a week' accuracy.
-        list($loopstart, $looptime, $loopend) = $this->update_loop_times($starttime, $this->now);
-
-        do {
-
-            // Add the time filters to the sql query.
-            $select = $filterselect . " AND timecreated >= :starttime AND timecreated <= :endtime";
-            $params = $filterparams + ['starttime' => $starttime, 'endtime' => $looptime];
-            $nlogs = $DB->count_records_select('logstore_standard_log', $select, $params);
-
-            // Move $looptime ahead or behind to find the more accurate end date according
-            // to self::MIN_STUDENT_LOGS_PERCENT.
-            $logspercents[$looptime] = intval($nlogs / $this->get_total_logs() * 100);
-            if ($nlogs !== 0 && $logspercents[$looptime] > self::MIN_STUDENT_LOGS_PERCENT) {
-                // We satisfy MIN_STUDENT_LOGS_PERCENT so we have a valid result.
-
-                // Store this value as the best end time candidate if the $looptime is lower than the
-                // previous best candidate.
-                if ($looptime < $bestcandidate) {
-                    $bestcandidate = $looptime;
-                }
-
-                // Go back in time to refine the end time. We want as much accuracy as possible.
-                list($loopstart, $looptime, $loopend) = $this->update_loop_times($loopstart, $looptime);
-            } else {
-                // We move ahead in time if we don't reach the minimum percent and if $nlogs === 0 (no logs between
-                // starttime and $looptime).
-                list($loopstart, $looptime, $loopend) = $this->update_loop_times($looptime, $loopend);
+        // Records are sorted by timeaccess DESC.
+        foreach ($studentlastaccesses as $time) {
+            // 2 std devs.
+            if ($time < ($mean + ($stddev * 2))) {
+                return $time;
             }
-
-        // We continuously check until we get 'a week' accuracy.
-        } while ($loopend - $loopstart > WEEKSECS);
-
-        // We couldn't work out any date with more logs than self::MIN_STUDENT_LOGS_PERCENT, notify the admin running
-        // the script about it.
-        if ($bestcandidate === \tool_inspire\analysable::MAX_TIME) {
-            debugging(json_encode($logspercents));
         }
 
-        $this->endtime = (int)$bestcandidate;
-        return $this->endtime;
+        return 0;
     }
 
     public function get_course_data() {
@@ -606,14 +576,37 @@ class course implements \tool_inspire\analysable {
      *
      * @return array
      */
-    protected function course_students_query_filter() {
+    protected function course_students_query_filter($prefix = false) {
         global $DB;
+
+        if ($prefix) {
+            $prefix = $prefix . '.';
+        }
 
         // Check the amount of student logs in the 4 previous weeks.
         list($studentssql, $studentsparams) = $DB->get_in_or_equal($this->studentids, SQL_PARAMS_NAMED);
-        $filterselect = "courseid = :courseid AND userid $studentssql";
+        $filterselect = $prefix . 'courseid = :courseid AND ' . $prefix . 'userid ' . $studentssql;
         $filterparams = array('courseid' => $this->course->id) + $studentsparams;
 
         return array($filterselect, $filterparams);
     }
+
+    /**
+     * Helper function.
+     *
+     * From http://php.net/manual/en/function.stats-standard-deviation.php comments.
+     *
+     * @param array $aValues
+     * @return float
+     */
+    protected function std_dev($aValues) {
+        $fMean = array_sum($aValues) / count($aValues);
+        $fVariance = 0.0;
+        foreach ($aValues as $i) {
+            $fVariance += pow($i - $fMean, 2);
+        }
+        $fVariance /= count($aValues);
+        return (float) sqrt($fVariance);
+    }
+
 }
