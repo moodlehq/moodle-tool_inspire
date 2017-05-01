@@ -133,36 +133,6 @@ class course_dropout extends binary {
             }
         }
 
-        // Now we check that we can analyse the course through course completion, course competencies or grades.
-        $nogradeitem = false;
-        $nogradevalue = false;
-        $nocompletion = false;
-        $nocompetencies = false;
-
-        $completion = new \completion_info($course->get_course_data());
-        if (!$completion->is_enabled() && $completion->has_criteria()) {
-            $nocompletion = true;
-        }
-
-        if (\core_competency\api::is_enabled() && \core_competency\api::count_competencies_in_course($course->get_id()) === 0) {
-            $nocompetencies = true;
-        }
-
-        // Not a valid target if there is no course grade item.
-        $this->coursegradeitem = \grade_item::fetch(array('itemtype' => 'course', 'courseid' => $course->get_id()));
-        if (empty($this->coursegradeitem)) {
-            $nogradeitem = true;
-        }
-
-        if ($nocompletion && $nocompetencies && $nogradeitem) {
-            return get_string('nocompletiondetection', 'tool_inspire');
-        }
-
-        // It comes as a string.
-        if (!floatval($this->coursegradeitem->gradepass)) {
-            return get_string('nocompletiondetection', 'tool_inspire');
-        }
-
         return true;
     }
 
@@ -172,8 +142,7 @@ class course_dropout extends binary {
      * The meaning of a drop out changes depending on the settings enabled in the course. Following these priorities order:
      * 1.- Course completion
      * 2.- All course competencies completion
-     * 3.- Course final grade over grade pass
-     * 4.- Course final grade below 50% of the course maximum grade
+     * 3.- No logs during the last 2 months of the course
      *
      * @param int $sampleid
      * @param \tool_inspire\analysable $course
@@ -184,13 +153,13 @@ class course_dropout extends binary {
 
         // TODO Even if targets are aware of the data the analyser returns, we can probably still feed samples
         // data with cached data.
-        $sql = "SELECT u.* FROM {user_enrolments} ue JOIN {user} u ON u.id = ue.userid WHERE ue.id = :ueid";
-        $user = $DB->get_record_sql($sql, array('ueid' => $sampleid));
+        $sql = "SELECT ue.* FROM {user_enrolments} ue JOIN {user} u ON u.id = ue.userid WHERE ue.id = :ueid";
+        $userenrol = $DB->get_record_sql($sql, array('ueid' => $sampleid));
 
         // We use completion as a success metric only when it is enabled.
         $completion = new \completion_info($course->get_course_data());
         if ($completion->is_enabled() && $completion->has_criteria()) {
-            $ccompletion = new \completion_completion(array('userid' => $user->id, 'course' => $course->get_id()));
+            $ccompletion = new \completion_completion(array('userid' => $userenrol->userid, 'course' => $course->get_id()));
             if ($ccompletion->is_complete()) {
                 return 0;
             } else {
@@ -203,7 +172,7 @@ class course_dropout extends binary {
             $ncoursecompetencies = \core_competency\api::count_competencies_in_course($course->get_id());
             if ($ncoursecompetencies > 0) {
                 $nusercompetencies = \core_competency\api::count_proficient_competencies_in_course_for_user(
-                    $course->get_id(), $user->id);
+                    $course->get_id(), $userenrol->userid);
                 if ($ncoursecompetencies > $nusercompetencies) {
                     return 1;
                 } else {
@@ -212,42 +181,18 @@ class course_dropout extends binary {
             }
         }
 
-        // At this stage we know that the course grade item exists.
-        if (empty($this->coursegradeitem)) {
-            $this->coursegradeitem = \grade_item::fetch(array('itemtype' => 'course', 'courseid' => $course->get_id()));
+        // Fallback to logs during the last 2 months of the course.
+        if ($userenrol->timeend != 0) {
+            $limit = $userenrol->timeend - (WEEKSECS * 8);
+        } else {
+            // Fallback to course end date.
+            $limit = $course->get_end() - (WEEKSECS * 8);
         }
-
-        // Falling back to the course grades.
-        $params = array('userid' => $user->id, 'itemid' => $this->coursegradeitem->id);
-        $grade = \grade_grade::fetch($params);
-        if (!$grade || !$grade->finalgrade) {
-            // We checked that the course is suitable for being analysed in is_valid_analysable so if the
-            // student do not have a final grade it is because there are no grades for that student, which is bad.
-            return 1;
-        }
-
-        $passed = $grade->is_passed();
-        // is_passed returns null if there is no pass grade or can't be calculated.
-        if ($passed !== null) {
-            // Returning the opposite as 1 means dropout user.
-            return !$passed;
-        }
-
-        // Pass if gets more than 50% of the course grade.
-        $mingrade = $grade->get_grade_min();
-        $maxgrade = $grade->get_grade_max();
-
-        // We can do nothing with this.
-        if ($maxgrade - $mingrade == 0) {
-            return null;
-        }
-
-        $weightedgrade = ($grade->finalgrade - $mingrade) / ($maxgrade - $mingrade);
-
-        if ($weightedgrade >= 0.5) {
+        $params = array('userid' => $userenrol->userid, 'courseid' => $course->get_id(), 'limit' => $limit);
+        $sql = "SELECT id FROM {logstore_standard_log} WHERE courseid = :courseid AND userid = :userid AND timecreated > :limit";
+        if ($DB->record_exists_sql($sql, $params)) {
             return 0;
         }
-
         return 1;
     }
 }
