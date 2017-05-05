@@ -27,6 +27,8 @@ The time splitting method divides the course duration in parts, the predictions 
 
 # Usage
 
+Please note that it is very important to properly set student enrolments and courses start and end dates. If both past courses and ongoing courses start and end dates are not properly set predictions will not be accurate.
+
 To start getting predictions you first have to evaluate the model and once you are happy with its predictions accuracy you have to train it.
 
 ## From CLI
