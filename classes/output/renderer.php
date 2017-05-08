@@ -229,6 +229,12 @@ class renderer extends plugin_renderer_base {
         return $output;
     }
 
+    /**
+     * Model disabled info.
+     *
+     * @param \stdClass $insightinfo
+     * @return string HTML
+     */
     public function render_model_disabled($insightinfo) {
         global $OUTPUT, $PAGE;
 
@@ -238,6 +244,26 @@ class renderer extends plugin_renderer_base {
 
         $output = $OUTPUT->header();
         $output .= $OUTPUT->notification(get_string('disabledmodel', 'tool_inspire'), \core\output\notification::NOTIFY_INFO);
+        $output .= $OUTPUT->footer();
+
+        return $output;
+    }
+
+    /**
+     * Model without predictions info.
+     *
+     * @param \context $context
+     * @return string HTML
+     */
+    public function render_no_predictions(\context $context) {
+        global $OUTPUT, $PAGE;
+
+        // We don't want to disclose the name of the model if it has not been enabled.
+        $PAGE->set_title($context->get_context_name());
+        $PAGE->set_heading($context->get_context_name());
+
+        $output = $OUTPUT->header();
+        $output .= $OUTPUT->notification(get_string('nopredictionsyet', 'tool_inspire'), \core\output\notification::NOTIFY_INFO);
         $output .= $OUTPUT->footer();
 
         return $output;

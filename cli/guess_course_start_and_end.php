@@ -61,6 +61,11 @@ if ($options['help']) {
     exit(0);
 }
 
+if ($options['guessstart'] === false || $options['guessend'] === false || $options['guessall'] === false) {
+    echo $help;
+    exit(0);
+}
+
 // Reformat them as an array.
 if ($options['filter'] !== false) {
     $options['filter'] = explode(',', clean_param($options['filter'], PARAM_SEQUENCE));

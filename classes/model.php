@@ -540,6 +540,12 @@ class model {
         if (!empty($samplecontexts)) {
             // Notify the target that all predictions have been processed.
             $this->get_target()->generate_insights($this->model->id, $samplecontexts);
+
+            // Aggressive invalidation, the cost of filling up the cache is not high.
+            $cache = \cache::make('tool_inspire', 'modelswithpredictions');
+            foreach ($samplecontexts as $context) {
+                $cache->delete($context->id);
+            }
         }
 
         $this->flag_file_as_used($samplesfile, 'predicted');
@@ -620,6 +626,15 @@ class model {
     }
 
     /**
+     * is_trained
+     *
+     * @return bool
+     */
+    public function is_trained() {
+        return (bool)$this->model->trained;
+    }
+
+    /**
      * mark_as_trained
      *
      * @return void
@@ -644,12 +659,27 @@ class model {
     }
 
     /**
-     * get_predictions
+     * Whether predictions exist for this context.
+     *
+     * @param \context $context
+     * @return bool
+     */
+    public function predictions_exist(\context $context) {
+        global $DB;
+
+        // Filters out previous predictions keeping only the last time range one.
+        $select = "modelid = :modelid AND contextid = :contextid";
+        $params = array($this->model->id, $context->id);
+        return $DB->record_exists_select('tool_inspire_predictions', $select, $params);
+    }
+
+    /**
+     * Gets the predictions for this context.
      *
      * @param \context $context
      * @return \tool_inspire\prediction[]
      */
-    public function get_predictions($context) {
+    public function get_predictions(\context $context) {
         global $DB;
 
         // Filters out previous predictions keeping only the last time range one.
@@ -885,6 +915,9 @@ class model {
         $DB->delete_records('tool_inspire_predictions', array('modelid' => $this->model->id));
         $DB->delete_records('tool_inspire_train_samples', array('modelid' => $this->model->id));
         $DB->delete_records('tool_inspire_used_files', array('modelid' => $this->model->id));
+
+        $cache = \cache::make('tool_inspire', 'enabledandtrainedmodels');
+        $result = $cache->purge();
     }
 
     private function increase_memory() {

@@ -35,12 +35,25 @@ defined('MOODLE_INTERNAL') || die();
  */
 class predictions_list implements \renderable, \templatable {
 
+    /**
+     * @var \tool_inspire\model
+     */
     protected $model;
+
+    /**
+     * @var \context
+     */
     protected $context;
 
-    public function __construct(\tool_inspire\model $model, \context $context) {
+    /**
+     * @var \tool_inspire\model
+     */
+    protected $othermodels;
+
+    public function __construct(\tool_inspire\model $model, \context $context, $othermodels) {
         $this->model = $model;
         $this->context = $context;
+        $this->othermodels = $othermodels;
     }
 
     /**
@@ -50,6 +63,7 @@ class predictions_list implements \renderable, \templatable {
      * @return \stdClass
      */
     public function export_for_template(\renderer_base $output) {
+        global $PAGE;
 
         $data = new \stdClass();
 
@@ -59,6 +73,26 @@ class predictions_list implements \renderable, \templatable {
         foreach ($predictions as $prediction) {
             $predictionrenderable = new \tool_inspire\output\prediction($prediction, $this->model);
             $data->predictions[] = $predictionrenderable->export_for_template($output);
+        }
+
+        if (empty($data->predictions)) {
+            $notification = new \core\output\notification(get_string('nopredictionsyet', 'tool_inspire')); 
+            $data->nopredictions = $notification->export_for_template($output);
+        }
+
+        if ($this->othermodels) {
+
+            $options = array();
+            foreach ($this->othermodels as $model) {
+                $options[$model->get_id()] = $model->get_target()->get_name();
+            }
+
+            // New moodle_url instance returned by magic_get_url.
+            $url = $PAGE->url;
+            $url->remove_params('modelid');
+            $modelselector = new \single_select($url, 'modelid', $options, '',
+                array('' => get_string('selectotherinsights', 'tool_inspire')));
+            $data->modelselector = $modelselector->export_for_template($output);
         }
 
         return $data;

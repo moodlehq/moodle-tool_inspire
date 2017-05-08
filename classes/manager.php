@@ -36,11 +36,6 @@ defined('MOODLE_INTERNAL') || die();
 class manager {
 
     /**
-     * @var \tool_inspire\model[]
-     */
-    protected static $models = null;
-
-    /**
      * @var \tool_inspire\predictor[]
      */
     protected static $predictionprocessors = null;
@@ -55,18 +50,26 @@ class manager {
      */
     protected static $alltimesplittings = null;
 
-    public static function get_all_models() {
+    public static function get_all_models($enabled = false, $trained = false, $predictioncontext = false) {
         global $DB;
 
-        if (self::$models !== null) {
-            return self::$models;
+        $filters = array();
+        if ($enabled) {
+            $filters['enabled'] = 1;
         }
+        if ($trained) {
+            $filters['trained'] = 1;
+        }
+        $modelobjs = $DB->get_records('tool_inspire_models', $filters);
 
-        $models = $DB->get_records('tool_inspire_models');
-        foreach ($models as $model) {
-            self::$models[$model->id] = new \tool_inspire\model($model);
+        $models = array();
+        foreach ($modelobjs as $modelobj) {
+            $model = new \tool_inspire\model($modelobj);
+            if (!$predictioncontext || $this->predictions_exist($predictioncontext)) {
+                $models[$modelobj->id] = $model;
+            }
         }
-        return self::$models;
+        return $models;
     }
 
     /**

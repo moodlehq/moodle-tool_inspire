@@ -24,8 +24,8 @@
 
 require_once(__DIR__ . '/../../../config.php');
 
-$modelid = required_param('modelid', PARAM_INT);
 $contextid = required_param('contextid', PARAM_INT);
+$modelid = optional_param('modelid', false, PARAM_INT);
 
 $context = context::instance_by_id($contextid);
 
@@ -42,8 +42,33 @@ if ($context->contextlevel === CONTEXT_MODULE) {
 
 require_capability('tool/inspire:listinsights', $context);
 
-$params = array('modelid' => $modelid, 'contextid' => $contextid);
+// Get all models that are enabled, trained and have predictions at this context.
+$othermodels = \tool_inspire\manager::get_all_models(true, true, $context);
+if (!$modelid && count($othermodels)) {
+    // Autoselect the only available model.
+    $model = reset($othermodels);
+    $modelid = $model->get_id();
+}
+if ($modelid) {
+    unset($othermodels[$modelid]);
+}
+
+$params = array('contextid' => $contextid);
 $url = new \moodle_url('/admin/tool/inspire/insights.php', $params);
+if ($modelid) {
+    $url->param('modelid', $modelid);
+}
+
+$PAGE->set_url($url);
+$PAGE->set_pagelayout('report');
+
+$renderer = $PAGE->get_renderer('tool_inspire');
+
+// No models with predictions available at this context level.
+if (!$modelid) {
+    echo $renderer->render_no_predictions($context);
+    exit(0);
+}
 
 $model = new \tool_inspire\model($modelid);
 
@@ -52,10 +77,6 @@ $insightinfo->contextname = $context->get_context_name();
 $insightinfo->insightname = $model->get_target()->get_name();
 $title = get_string('insightinfo', 'tool_inspire', $insightinfo);
 
-$PAGE->set_url($url);
-$PAGE->set_pagelayout('report');
-
-$renderer = $PAGE->get_renderer('tool_inspire');
 
 if (!$model->is_enabled() && !has_capability('tool/inspire:managemodels', $context)) {
     echo $renderer->render_model_disabled($insightinfo);
@@ -67,7 +88,7 @@ $PAGE->set_heading($title);
 
 echo $OUTPUT->header();
 
-$renderable = new \tool_inspire\output\predictions_list($model, $context);
+$renderable = new \tool_inspire\output\predictions_list($model, $context, $othermodels);
 echo $renderer->render($renderable);
 
 echo $OUTPUT->footer();
