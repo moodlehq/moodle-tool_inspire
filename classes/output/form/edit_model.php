@@ -68,6 +68,7 @@ class edit_model extends \moodleform {
         }
 
         $mform->addElement('select', 'timesplitting', get_string('timesplittingmethod', 'tool_inspire'), $timesplittings);
+        $mform->addHelpButton('timesplitting', 'timesplittingmethod', 'tool_inspire');
 
         $mform->addElement('hidden', 'id', $this->_customdata['id']);
         $mform->setType('id', PARAM_INT);

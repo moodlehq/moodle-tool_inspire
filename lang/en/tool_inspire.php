@@ -189,6 +189,7 @@ $string['timesplitting:singlerange'] = 'Single range';
 $string['timesplitting:weekly'] = 'Weekly';
 $string['timesplitting:weeklyaccum'] = 'Weekly accumulative';
 $string['timesplittingmethod'] = 'Time splitting method';
+$string['timesplittingmethod_help'] = 'The time splitting method divides the course duration in parts, the predictions engine will run at the end of these parts. It is recommended that you only enable the time splitting methods you could be interested on using; the evaluation process will iterate through all of them so the more time splitting methods to go through the slower the evaluation process will be.';
 $string['trainingprocessfinished'] = 'Training process finished';
 $string['trainingresults'] = 'Training results';
 $string['trainmodels'] = 'Train models';
