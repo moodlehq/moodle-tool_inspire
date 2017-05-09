@@ -916,7 +916,7 @@ class model {
         $DB->delete_records('tool_inspire_train_samples', array('modelid' => $this->model->id));
         $DB->delete_records('tool_inspire_used_files', array('modelid' => $this->model->id));
 
-        $cache = \cache::make('tool_inspire', 'enabledandtrainedmodels');
+        $cache = \cache::make('tool_inspire', 'modelswithpredictions');
         $result = $cache->purge();
     }
 
