@@ -141,8 +141,7 @@ class course_dropout extends binary {
      *
      * The meaning of a drop out changes depending on the settings enabled in the course. Following these priorities order:
      * 1.- Course completion
-     * 2.- All course competencies completion
-     * 3.- No logs during the last 2 months of the course
+     * 2.- No logs during the last quarter of the course
      *
      * @param int $sampleid
      * @param \tool_inspire\analysable $course
@@ -167,27 +166,9 @@ class course_dropout extends binary {
             }
         }
 
-        // Same with competencies.
-        if (\core_competency\api::is_enabled()) {
-            $ncoursecompetencies = \core_competency\api::count_competencies_in_course($course->get_id());
-            if ($ncoursecompetencies > 0) {
-                $nusercompetencies = \core_competency\api::count_proficient_competencies_in_course_for_user(
-                    $course->get_id(), $userenrol->userid);
-                if ($ncoursecompetencies > $nusercompetencies) {
-                    return 1;
-                } else {
-                    return 0;
-                }
-            }
-        }
-
-        // Fallback to logs during the last 2 months of the course.
-        if ($userenrol->timeend != 0) {
-            $limit = $userenrol->timeend - (WEEKSECS * 8);
-        } else {
-            // Fallback to course end date.
-            $limit = $course->get_end() - (WEEKSECS * 8);
-        }
+        // No logs during the last quarter of the course.
+        $courseduration = $course->get_end() - $course->get_start();
+        $limit = $course->get_end() - ($courseduration / 4);
         $params = array('userid' => $userenrol->userid, 'courseid' => $course->get_id(), 'limit' => $limit);
         $sql = "SELECT id FROM {logstore_standard_log} WHERE courseid = :courseid AND userid = :userid AND timecreated > :limit";
         if ($DB->record_exists_sql($sql, $params)) {
