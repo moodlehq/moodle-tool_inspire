@@ -1,6 +1,15 @@
-# Moodle inspire
+Descriptive and predictive analytics engine for Moodle using machine learning backends.
 
-This is a work in progress branch with a limited set of indicators. Once this is ready for testing we will make an announcement through the usual media channels. Use it at your own risk.
+**Includes**
+* A built-in prediction model for students at risk of dropping out of courses.
+* A set of student engagement indicators based on the Community of Inquiry.
+* An API to build prediction models for your plugins
+* Machine learning backends new plugin type
+
+**More information**
+* Project inspire information (mostly for educators / researchers): https://moodle.org/course/view.php?id=17233
+* Architecture overview (mostly for developers / systems administrators / researchers): https://docs.moodle.org/dev/Project_Inspire_API
+* Prototype (for everybody): http://prototype.moodle.net/inspirephase1/ (may not be up to date as development will continue on top of Moodle core).
 
 # Installation
 
@@ -8,14 +17,14 @@ https://docs.moodle.org/32/en/Installing_plugins#Installing_a_plugin
 
 # Configuration
 
-A couple of important settings:
+A couple of important sitewide settings:
 
 ## Predictions processor
 
-Prediction processors are the machine learning backends that process the datasets generated from the calculated indicators and targets. This plugin is shipped with 2 prediction processors:
+Prediction processors are the machine learning backends that process the datasets generated from the calculated indicators and targets and return predictions. This plugin is shipped with 2 prediction processors:
 
 * The PHP one is the default, there are no other system requirements
-* The Python one is more powerful and it generates graphs with the model performance but it requires setting up extra stuff like Python itself (https://wiki.python.org/moin/BeginnersGuide/Download) and the moodleinspire package (Only Python 2.7 support at the moment, working on compatibility with Python 3.x).
+* The Python one is more powerful and it generates graphs with the model performance but it requires setting up extra stuff like Python itself (https://wiki.python.org/moin/BeginnersGuide/Download) and the moodleinspire package.
 
 <!-- not displayed as a code block under a list unless we add something like this comment -->
     pip install moodleinspire
@@ -23,13 +32,15 @@ Prediction processors are the machine learning backends that process the dataset
 
 ## Time splitting methods
 
-The time splitting method divides the course duration in parts, the predictions engine will run at the end of these parts. It is recommended that you only enable the time splitting methods you could be interested on using; the evaluation process will iterate through all of them so the more time splitting methods to go through the slower the evaluation process will be.
+The time splitting method divides the course duration in parts, the predictions engine will run at the end of these parts. It is recommended that you only enable the time splitting methods you could be interested on using; the site contents analyser will calculate all indicators using each of the enabled time splitting methods. The more enabled time splitting methods the slower the evaluation process will be.
 
 # Usage
 
-Please note that it is very important to properly set courses start and end dates. If both past courses and ongoing courses start and end dates are not properly set predictions will not be accurate. We include a command line interface script (https://github.com/moodlehq/moodle-tool_inspire/blob/master/cli/guess_course_start_and_end.php) that tries to guess courses start and end dates by looking at the first and latest logs of each course, but you should still check that the guess start and end dates script results are correct.
+Please note that it is **very important** to properly set courses start and end dates. If both past courses and ongoing courses start and end dates are not properly set predictions will not be accurate. We include a command line interface script (https://github.com/moodlehq/moodle-tool_inspire/blob/master/cli/guess_course_start_and_end.php) that tries to guess courses start and end dates by looking at the first and latest logs of each course, but you should still check that the guess start and end dates script results are correct.
 
-## From the command line interface
+## Process the site contents
+
+### Using the command line interface
 
     // Evaluate the model using your site' contents (this is optional but useful as you want to see how the different time splitting methods perform)
     php cli/evaluate_model.php --modelid=1 --non-interactive
@@ -41,7 +52,7 @@ Please note that it is very important to properly set courses start and end date
     php admin/tool/task/cli/schedule_task.php --execute=\\tool_inspire\\task\\train_models
     php admin/tool/task/cli/schedule_task.php --execute=\\tool_inspire\\task\\predict_models
 
-## From the web interface
+### Using the web interface (not for big sites)
 
 - Go to **Site administration > Reports > Inspire models**
 - Select **Evaluate** from the **Actions** drop down menu (this is optional but useful as you want to see how the different time splitting methods perform)
