@@ -33,7 +33,7 @@ spl_autoload_register(function($class) {
     }
 });
 
-use Phpml\Classification\Linear\Adaline;
+use Phpml\Classification\Linear\Perceptron;
 use Phpml\CrossValidation\RandomSplit;
 use Phpml\Dataset\ArrayDataset;
 
@@ -49,6 +49,7 @@ defined('MOODLE_INTERNAL') || die();
 class processor implements \tool_inspire\predictor {
 
     const BATCH_SIZE = 1000;
+    const TRAIN_ITERATIONS = 20;
     const MODEL_FILENAME = 'model.ser';
 
     protected $limitedsize = false;
@@ -67,7 +68,7 @@ class processor implements \tool_inspire\predictor {
         if (file_exists($modelfilepath)) {
             $classifier = $modelmanager->restoreFromFile($modelfilepath);
         } else {
-            $classifier = new \Phpml\Classification\Linear\Adaline(0.001, self::BATCH_SIZE, false);
+            $classifier = new \Phpml\Classification\Linear\Perceptron(0.001, self::TRAIN_ITERATIONS, false);
         }
 
         $fh = $dataset->get_content_file_handle();
@@ -232,8 +233,7 @@ class processor implements \tool_inspire\predictor {
         // Evaluate the model multiple times to confirm the results are not significantly random due to a short amount of data.
         for ($i = 0; $i < $niterations; $i++) {
 
-            // Using PHP_INT_MAX as we already made an effort to reduce the evaluation dataset size.
-            $classifier = new \Phpml\Classification\Linear\Adaline(0.001, PHP_INT_MAX, false);
+            $classifier = new \Phpml\Classification\Linear\Perceptron(0.001, self::TRAIN_ITERATIONS, false);
 
             // Split up the dataset in classifier and testing.
             $data = new RandomSplit(new ArrayDataset($samples, $targets), 0.2);
@@ -241,8 +241,6 @@ class processor implements \tool_inspire\predictor {
             $classifier->train($data->getTrainSamples(), $data->getTrainLabels());
 
             $predictedlabels = $classifier->predict($data->getTestSamples());
-            $scores = array_fill(0, count($predictedlabels), 1);
-
             $phis[] = $this->get_phi($data->getTestLabels(), $predictedlabels);
         }
 
@@ -252,11 +250,18 @@ class processor implements \tool_inspire\predictor {
 
     protected function get_evaluation_result_object(\stored_file $dataset, $phis, $maxdeviation) {
 
-        // We convert phi (from -1 to 1) to a value between 0 and 1.
-        $avgphi = \Phpml\Math\Statistic\Mean::arithmetic($phis);
+        if (count($phis) === 1) {
+            $avgphi = reset($phis);
+        } else {
+            $avgphi = \Phpml\Math\Statistic\Mean::arithmetic($phis);
+        }
 
         // Standard deviation should ideally be calculated against the area under the curve.
-        $modeldev = \Phpml\Math\Statistic\StandardDeviation::population($phis);
+        if (count($phis) === 1) {
+            $modeldev = 0;
+        } else {
+            $modeldev = \Phpml\Math\Statistic\StandardDeviation::population($phis);
+        }
 
         // Let's fill the results object.
         $resultobj = new \stdClass();
@@ -265,7 +270,7 @@ class processor implements \tool_inspire\predictor {
         $resultobj->status = \tool_inspire\model::OK;
         $resultobj->info = array();
 
-        // Convert phi (from -1 to 1 to a value between 0 and 1) to a standard score.
+        // Convert phi to a standard score (from -1 to 1 to a value between 0 and 1).
         $resultobj->score = ($avgphi + 1) / 2;
 
         // If each iteration results varied too much we need more data to confirm that this is a valid model.
@@ -286,7 +291,7 @@ class processor implements \tool_inspire\predictor {
         }
 
         if ($this->limitedsize === true) {
-            $resultobj->info[] = get_string('datasetsizelimited', 'tool_inspire', display_size($dataset->get_filesize()));
+            $resultobj->info[] = get_string('datasetsizelimited', 'predict_php', display_size($dataset->get_filesize()));
         }
 
         return $resultobj;
