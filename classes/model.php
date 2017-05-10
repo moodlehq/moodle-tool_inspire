@@ -49,7 +49,7 @@ class model {
 
     const MIN_SCORE = 0.7;
     const ACCEPTED_DEVIATION = 0.05;
-    const EVALUATION_ITERATIONS = 20;
+    const EVALUATION_ITERATIONS = 10;
 
     /**
      * @var \stdClass
