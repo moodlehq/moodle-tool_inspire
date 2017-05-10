@@ -27,7 +27,7 @@ The time splitting method divides the course duration in parts, the predictions 
 
 # Usage
 
-Please note that it is very important to properly set student enrolments and courses start and end dates. If both past courses and ongoing courses start and end dates are not properly set predictions will not be accurate. We include a command line interface script (https://github.com/moodlehq/moodle-tool_inspire/blob/master/cli/guess_course_start_and_end.php) that tries to guess courses start and end dates by looking at the first and latest logs of each course, but you should still check that the guess start and end dates script results are correct.
+Please note that it is very important to properly set courses start and end dates. If both past courses and ongoing courses start and end dates are not properly set predictions will not be accurate. We include a command line interface script (https://github.com/moodlehq/moodle-tool_inspire/blob/master/cli/guess_course_start_and_end.php) that tries to guess courses start and end dates by looking at the first and latest logs of each course, but you should still check that the guess start and end dates script results are correct.
 
 ## From the command line interface
 
