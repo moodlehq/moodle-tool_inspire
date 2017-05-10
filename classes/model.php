@@ -349,6 +349,10 @@ class model {
             return array($result);
         }
 
+        if (CLI_SCRIPT) {
+            echo PHP_EOL . get_string('processingsitecontents', 'tool_inspire') . PHP_EOL;
+        }
+
         $results = array();
         foreach ($datasets as $timesplittingid => $dataset) {
 

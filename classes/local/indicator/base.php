@@ -102,6 +102,10 @@ abstract class base extends \tool_inspire\calculable {
      */
     public function calculate($sampleids, $samplesorigin, $starttime = false, $endtime = false) {
 
+        if (CLI_SCRIPT) {
+            echo '.';
+        }
+
         $calculations = array();
         foreach ($sampleids as $sampleid => $unusedsampleid) {
 

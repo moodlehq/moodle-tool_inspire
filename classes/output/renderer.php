@@ -102,6 +102,10 @@ class renderer extends plugin_renderer_base {
 
         foreach ($results as $timesplittingid => $result) {
 
+            if (!CLI_SCRIPT) {
+                $output .= $OUTPUT->box_start('generalbox m-b-3');
+            }
+
             // Check that the array key is a string, not all results depend on time splitting methods (e.g. general errors).
             if (!is_numeric($timesplittingid)) {
                 $timesplitting = \tool_inspire\manager::get_time_splitting($timesplittingid);
@@ -122,16 +126,6 @@ class renderer extends plugin_renderer_base {
                     \core\output\notification::NOTIFY_WARNING);
             }
 
-            // Not an else if because we can have them both.
-            if ($result->status & \tool_inspire\model::EVALUATE_LOW_SCORE) {
-                $output .= $OUTPUT->notification(get_string('lowaccuracy', 'tool_inspire'),
-                    \core\output\notification::NOTIFY_ERROR);
-            }
-            if ($result->status & \tool_inspire\model::EVALUATE_NOT_ENOUGH_DATA) {
-                $output .= $OUTPUT->notification(get_string('notenoughdata', 'tool_inspire'),
-                    \core\output\notification::NOTIFY_ERROR);
-            }
-
             if (isset($result->score)) {
                 // Score.
                 $output .= $OUTPUT->heading(get_string('accuracy', 'tool_inspire') . ': ' . round(floatval($result->score), 4) * 100  . '%', 4);
@@ -141,6 +135,10 @@ class renderer extends plugin_renderer_base {
                 foreach ($result->info as $message) {
                     $output .= $OUTPUT->notification($message, \core\output\notification::NOTIFY_WARNING);
                 }
+            }
+
+            if (!CLI_SCRIPT) {
+                $output .= $OUTPUT->box_end();
             }
         }
 
