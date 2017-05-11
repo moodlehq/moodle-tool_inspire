@@ -1,15 +1,20 @@
 Descriptive and predictive analytics engine for Moodle using machine learning backends.
 
 **Includes**
-* A built-in prediction model for students at risk of dropping out of courses.
+* A built-in prediction model: Students at risk of dropping out of courses.
 * A set of student engagement indicators based on the Community of Inquiry.
 * An API to build prediction models for your plugins
-* Machine learning backends new plugin type
+* Machine learning backend plugin type
 
 **More information**
 * Project inspire information (mostly for educators / researchers): https://moodle.org/course/view.php?id=17233
 * Architecture overview (mostly for developers / systems administrators / researchers): https://docs.moodle.org/dev/Project_Inspire_API
 * Prototype (for everybody): http://prototype.moodle.net/inspirephase1/ (may not be up to date as development will continue on top of Moodle core).
+
+# Requirements
+
+* Moodle 3.3
+* PHP 7.x
 
 # Installation
 
@@ -36,7 +41,7 @@ The time splitting method divides the course duration in parts, the predictions 
 
 # Usage
 
-Please note that it is **very important** to properly set courses start and end dates. If both past courses and ongoing courses start and end dates are not properly set predictions will not be accurate. We include a command line interface script (https://github.com/moodlehq/moodle-tool_inspire/blob/master/cli/guess_course_start_and_end.php) that tries to guess courses start and end dates by looking at the first and latest logs of each course, but you should still check that the guess start and end dates script results are correct.
+Please note that it is **very important** to properly set courses start and end dates. If both past courses and ongoing courses start and end dates are not properly set predictions will not be accurate. We include a command line interface script (https://github.com/moodlehq/moodle-tool_inspire/blob/master/cli/guess_course_start_and_end.php) that tries to guess course start and end dates by looking at the student enrolments and students' activity logs, but you should still check that the guess start and end dates script results are correct.
 
 ## Process the site contents
 
