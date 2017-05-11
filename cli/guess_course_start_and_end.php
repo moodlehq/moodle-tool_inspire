@@ -27,6 +27,9 @@ define('CLI_SCRIPT', true);
 require_once(__DIR__ . '/../../../../config.php');
 require_once($CFG->libdir.'/clilib.php');
 
+require_once($CFG->dirroot . '/course/lib.php');
+require_once($CFG->dirroot . '/course/format/weeks/lib.php');
+
 $help = "Guesses course start and end dates based on activity logs.
 
 Options:
@@ -93,35 +96,95 @@ if ($options['filter']) {
 
 $courses = $DB->get_recordset_select('course', implode(' AND ', $conditions), $params, 'sortorder ASC');
 foreach ($courses as $course) {
+    tool_inspire_calculate_course_dates($course, $options);
+}
+$courses->close();
+
+
+function tool_inspire_calculate_course_dates($course, $options) {
+    global $DB, $OUTPUT;
+
     $courseman = new \tool_inspire\course($course);
 
     $notification = $course->shortname . ' (id = ' . $course->id . '): ';
 
     if ($options['guessstart'] || $options['guessall']) {
-        $startdate = $courseman->guess_start();
-        if ($startdate) {
-            $course->startdate = $startdate;
-            $notification .= PHP_EOL . '  ' . get_string('startdate') . ': ' . userdate($course->startdate);
-        } else {
+
+        $originalstartdate = $course->startdate;
+
+        $guessedstartdate = $courseman->guess_start();
+        if ($guessedstartdate == $originalstartdate) {
+            if (!$guessedstartdate) {
+                $notification .= PHP_EOL . '  ' . get_string('cantguessstartdate', 'tool_inspire');
+            } else {
+                // No need to update.
+                $notification .= PHP_EOL . '  ' . get_string('samestartdate', 'tool_inspire') . ': ' . userdate($guessedstartdate);
+            }
+        } else if (!$guessedstartdate) {
             $notification .= PHP_EOL . '  ' . get_string('cantguessstartdate', 'tool_inspire');
-        }
-    }
-    if ($options['guessend'] || $options['guessall']) {
-        $enddate = $courseman->guess_end();
-        if ($enddate) {
-            $course->enddate = $enddate;
-            $notification .= PHP_EOL . '  ' . get_string('enddate') . ': ' . userdate($course->enddate);
         } else {
-            $notification .= PHP_EOL . '  ' . get_string('cantguessenddate', 'tool_inspire');
+            // Update it to something we guess.
+
+            // We set it to $course even if we don't update because may be needed to guess the end one.
+            $course->startdate = $guessedstartdate;
+            $notification .= PHP_EOL . '  ' . get_string('startdate') . ': ' . userdate($guessedstartdate);
+
+            // Two different course updates because week's end date may be recalculated after setting the start date.
+            if ($options['update']) {
+                update_course($course);
+
+                // Refresh course data as end date may have been updated.
+                $course = $DB->get_record('course', array('id' => $course->id));
+                $courseman = new \tool_inspire\course($course);
+            }
         }
     }
 
-    echo $OUTPUT->notification($notification);
+    if ($options['guessend'] || $options['guessall']) {
 
-    if ($options['update']) {
-        $DB->update_record('course', $course);
+        $originalenddate = $course->enddate;
+
+        $format = course_get_format($course);
+        $formatoptions = $format->get_format_options();
+
+        if ($course->format === 'weeks' && $formatoptions['automaticenddate']) {
+            // Special treatment for weeks with automatic end date.
+
+            if ($options['update']) {
+                format_weeks::update_end_date($course->id);
+                $course->enddate = $DB->get_field('course', 'enddate', array('id' => $course->id));
+                $notification .= PHP_EOL . '  ' . get_string('weeksenddateautomaticallyset', 'tool_inspire') . ': ' . userdate($course->enddate);
+            } else {
+                // We can't provide more info without actually updating it in db.
+                $notification .= PHP_EOL . '  ' . get_string('weeksenddatedefault', 'tool_inspire');
+            }
+        } else {
+            $guessedenddate = $courseman->guess_end();
+
+            if ($guessedenddate == $originalenddate) {
+                if (!$guessedenddate) {
+                    $notification .= PHP_EOL . '  ' . get_string('cantguessenddate', 'tool_inspire');
+                } else {
+                    // No need to update.
+                    $notification .= PHP_EOL . '  ' . get_string('sameenddate', 'tool_inspire') . ': ' . userdate($guessedenddate);
+                }
+            } else if (!$guessedenddate) {
+                $notification .= PHP_EOL . '  ' . get_string('cantguessenddate', 'tool_inspire');
+            } else {
+                // Update it to something we guess.
+
+                $course->enddate = $guessedenddate;
+                $notification .= PHP_EOL . '  ' . get_string('enddate') . ': ' . userdate($guessedenddate);
+
+                if ($options['update']) {
+                    update_course($course);
+                }
+            }
+        }
+
     }
+
+    echo mtrace($notification);
 }
-$courses->close();
 
 exit(0);

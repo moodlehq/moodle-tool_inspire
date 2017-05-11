@@ -166,18 +166,37 @@ class course implements \tool_inspire\analysable {
 
         // We first try to find current course student logs.
         list($filterselect, $filterparams) = $this->course_students_query_filter();
-
-        $sql = "SELECT id, userid, timecreated FROM {logstore_standard_log}
+        $sql = "SELECT MIN(timecreated) FROM {logstore_standard_log}
                   WHERE $filterselect
-                 ORDER BY timecreated ASC";
-        $studentlogs = $DB->get_records_sql($sql, $filterparams, 0, 1);
-        if ($studentlogs) {
-            $firstlog = reset($studentlogs);
-            return $firstlog->timecreated;
+                 GROUP BY userid";
+        $firstlogs = $DB->get_fieldset_sql($sql, $filterparams);
+        if (empty($firstlogs)) {
+            return 0;
+        }
+        sort($firstlogs);
+        $firstlogsmedian = $this->median($firstlogs);
+
+        // Not using enrol API because we may be dealing with databases that used
+        // 3rd party enrolment plugins that are not available in the database.
+        // TODO We will need to switch to enrol API once we have enough data.
+        list($studentssql, $studentparams) = $DB->get_in_or_equal($this->studentids, SQL_PARAMS_NAMED);
+        $sql = "SELECT ue.* FROM {user_enrolments} ue
+                  JOIN {enrol} e ON e.id = ue.enrolid
+                 WHERE e.courseid = :courseid AND ue.userid $studentssql";
+        $studentenrolments = $DB->get_records_sql($sql, array('courseid' => $this->course->id) + $studentparams);
+        if (empty($studentenrolments)) {
+            return 0;
         }
 
-        // Can't guess or not yet started.
-        return 0;
+        $enrolstart = array();
+        foreach ($studentenrolments as $studentenrolment) {
+            // I don't like CASE WHEN :P
+            $enrolstart[] = ($studentenrolment->timestart) ? $studentenrolment->timestart : $studentenrolment->timecreated;
+        }
+        sort($enrolstart);
+        $enrolstartmedian = $this->median($enrolstart);
+
+        return intval(($enrolstartmedian + $firstlogsmedian) / 2);
     }
 
     /**
@@ -217,6 +236,7 @@ class course implements \tool_inspire\analysable {
 
         list($filterselect, $filterparams) = $this->course_students_query_filter('ula');
 
+        // Consider the course open if there are still student accesses.
         $monthsago = time() - (WEEKSECS * 4 * 2);
         $select = $filterselect . ' AND timeaccess > :timeaccess';
         $params = $filterparams + array('timeaccess' => $monthsago);
@@ -225,7 +245,6 @@ class course implements \tool_inspire\analysable {
                   JOIN {user_enrolments} ue ON e.id = ue.enrolid AND ue.userid = ula.userid
                  WHERE $select";
         if ($records = $DB->get_records_sql($sql, $params)) {
-            // Consider it open if there are still student accesses.
             return 0;
         }
 
@@ -235,19 +254,12 @@ class course implements \tool_inspire\analysable {
                  WHERE $filterselect AND ula.timeaccess != 0
                  ORDER BY timeaccess DESC";
         $studentlastaccesses = $DB->get_fieldset_sql($sql, $filterparams);
-
-        $mean = array_sum($studentlastaccesses) / count($studentlastaccesses);
-        $stddev = $this->std_dev($studentlastaccesses);
-
-        // Records are sorted by timeaccess DESC.
-        foreach ($studentlastaccesses as $time) {
-            // 2 std devs.
-            if ($time < ($mean + ($stddev * 2))) {
-                return $time;
-            }
+        if (empty($studentlastaccesses)) {
+            return 0;
         }
+        sort($studentlastaccesses);
 
-        return 0;
+        return $this->median($studentlastaccesses);
     }
 
     public function get_course_data() {
@@ -592,21 +604,31 @@ class course implements \tool_inspire\analysable {
     }
 
     /**
-     * Helper function.
+     * Calculate median
      *
-     * From http://php.net/manual/en/function.stats-standard-deviation.php comments.
+     * Keys are ignored.
      *
-     * @param array $aValues
-     * @return float
+     * @param int|float $values Sorted array of values
+     * @return int
      */
-    protected function std_dev($aValues) {
-        $fMean = array_sum($aValues) / count($aValues);
-        $fVariance = 0.0;
-        foreach ($aValues as $i) {
-            $fVariance += pow($i - $fMean, 2);
-        }
-        $fVariance /= count($aValues);
-        return (float) sqrt($fVariance);
-    }
+    protected function median($values) {
+        $count = count($values);
 
+        if ($count === 1) {
+            return reset($values);
+        }
+
+        $middlevalue = floor(($count - 1) / 2);
+
+        if ($count % 2) {
+            // Odd number, middle is the median.
+            $median = $values[$middlevalue];
+        } else {
+            // Even number, calculate avg of 2 medians.
+            $low = $values[$middlevalue];
+            $high = $values[$middlevalue + 1];
+            $median = (($low + $high) / 2);
+        }
+        return intval($median);
+    }
 }
