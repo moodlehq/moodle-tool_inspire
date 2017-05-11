@@ -61,7 +61,7 @@ if ($options['help']) {
     exit(0);
 }
 
-if ($options['guessstart'] === false || $options['guessend'] === false || $options['guessall'] === false) {
+if ($options['guessstart'] === false && $options['guessend'] === false && $options['guessall'] === false) {
     echo $help;
     exit(0);
 }
