@@ -24,6 +24,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2016052308;
-$plugin->requires = 2016051900;
+$plugin->version = 2017050900;
+$plugin->requires = 2017050900;   // Moodle 3.3rc2a
+$plugin->release = 'v3.3-r1';
+$plugin->maturity  = MATURITY_BETA;
 $plugin->component = 'tool_inspire';
