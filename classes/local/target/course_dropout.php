@@ -168,7 +168,7 @@ class course_dropout extends binary {
 
         // No logs during the last quarter of the course.
         $courseduration = $course->get_end() - $course->get_start();
-        $limit = $course->get_end() - ($courseduration / 4);
+        $limit = intval($course->get_end() - ($courseduration / 4));
         $params = array('userid' => $userenrol->userid, 'courseid' => $course->get_id(), 'limit' => $limit);
         $sql = "SELECT id FROM {logstore_standard_log} WHERE courseid = :courseid AND userid = :userid AND timecreated > :limit";
         if ($DB->record_exists_sql($sql, $params)) {
