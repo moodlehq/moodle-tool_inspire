@@ -139,6 +139,10 @@ abstract class base {
 
         $this->add_metadata($dataset, $indicators, $target);
 
+        if (CLI_SCRIPT) {
+            echo PHP_EOL;
+        }
+
         return $dataset;
     }
 
