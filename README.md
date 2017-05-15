@@ -11,6 +11,8 @@ Descriptive and predictive analytics engine for Moodle using machine learning ba
 * Architecture overview (mostly for developers / systems administrators / researchers): https://docs.moodle.org/dev/Project_Inspire_API
 * Prototype (for everybody): http://prototype.moodle.net/inspirephase1/ (may not be up to date as development will continue on top of Moodle core).
 
+Note that *Students at risk of dropping out of courses* prediction model is experimental, we are still working on improving the model to make it applicable to all kind of courses.
+
 # Requirements
 
 * Moodle 3.3
