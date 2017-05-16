@@ -1,4 +1,8 @@
-Descriptive and predictive analytics engine for Moodle using machine learning backends.
+The Inspire plugin implements open source, transparent next-generation learning analytics using machine learning backends that go beyond simple descriptive analytics to provide predictions of learner success, and ultimately diagnosis and prescriptions (advisements) to learners and teachers. From Moodle HQ.
+
+This is Moodle's offical descriptive and predictive analytics engine, implementing machine learning backends.
+
+Currently it's a plugin for 3.3, but once tested and improved it will go into core.
 
 **Includes**
 * A built-in prediction model: Students at risk of dropping out of courses.
