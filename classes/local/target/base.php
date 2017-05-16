@@ -218,7 +218,7 @@ abstract class base extends \tool_inspire\calculable {
      */
     public function calculate($sampleids, \tool_inspire\analysable $analysable) {
 
-        if (CLI_SCRIPT) {
+        if (!PHPUNIT_TEST && CLI_SCRIPT) {
             echo '.';
         }
 

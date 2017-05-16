@@ -102,7 +102,7 @@ abstract class base extends \tool_inspire\calculable {
      */
     public function calculate($sampleids, $samplesorigin, $starttime = false, $endtime = false) {
 
-        if (CLI_SCRIPT) {
+        if (!PHPUNIT_TEST && CLI_SCRIPT) {
             echo '.';
         }
 

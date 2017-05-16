@@ -349,7 +349,7 @@ class model {
             return array($result);
         }
 
-        if (CLI_SCRIPT) {
+        if (!PHPUNIT_TEST && CLI_SCRIPT) {
             echo PHP_EOL . get_string('processingsitecontents', 'tool_inspire') . PHP_EOL;
         }
 

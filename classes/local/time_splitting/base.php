@@ -139,7 +139,7 @@ abstract class base {
 
         $this->add_metadata($dataset, $indicators, $target);
 
-        if (CLI_SCRIPT) {
+        if (!PHPUNIT_TEST && CLI_SCRIPT) {
             echo PHP_EOL;
         }
 
