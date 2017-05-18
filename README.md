@@ -20,7 +20,7 @@ Note that *Students at risk of dropping out of courses* prediction model is expe
 # Requirements
 
 * Moodle 3.3
-* PHP 7.x
+* PHP 7.x (required if you are using the PHP predictions processor, more info below)
 
 # Installation
 
@@ -34,7 +34,7 @@ A couple of important sitewide settings:
 
 Prediction processors are the machine learning backends that process the datasets generated from the calculated indicators and targets and return predictions. This plugin is shipped with 2 prediction processors:
 
-* The PHP one is the default, there are no other system requirements
+* The PHP one is the default, the only requirement is PHP 7.x, no other system requirements
 * The Python one is more powerful and it generates graphs with the model performance but it requires setting up extra stuff like Python itself (https://wiki.python.org/moin/BeginnersGuide/Download) and the moodleinspire package.
 
 <!-- not displayed as a code block under a list unless we add something like this comment -->
