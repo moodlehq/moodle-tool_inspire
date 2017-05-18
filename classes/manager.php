@@ -65,7 +65,7 @@ class manager {
         $models = array();
         foreach ($modelobjs as $modelobj) {
             $model = new \tool_inspire\model($modelobj);
-            if (!$predictioncontext || $this->predictions_exist($predictioncontext)) {
+            if (!$predictioncontext || $model->predictions_exist($predictioncontext)) {
                 $models[$modelobj->id] = $model;
             }
         }
