@@ -17,7 +17,7 @@
 /**
  * Php predictions processor
  *
- * @package   tool_inspire
+ * @package   predict_php
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -33,7 +33,7 @@ spl_autoload_register(function($class) {
     }
 });
 
-use Phpml\Classification\Linear\Perceptron;
+use Phpml\Preprocessing\Normalizer;
 use Phpml\CrossValidation\RandomSplit;
 use Phpml\Dataset\ArrayDataset;
 
@@ -42,14 +42,14 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * PHP predictions processor.
  *
- * @package   tool_inspire
+ * @package   predict_php
  * @copyright 2016 David Monllao {@link http://www.davidmonllao.com}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class processor implements \tool_inspire\predictor {
 
-    const BATCH_SIZE = 1000;
-    const TRAIN_ITERATIONS = 20;
+    const BATCH_SIZE = 5000;
+    const TRAIN_ITERATIONS = 500;
     const MODEL_FILENAME = 'model.ser';
 
     protected $limitedsize = false;
@@ -68,7 +68,7 @@ class processor implements \tool_inspire\predictor {
         if (file_exists($modelfilepath)) {
             $classifier = $modelmanager->restoreFromFile($modelfilepath);
         } else {
-            $classifier = new \Phpml\Classification\Linear\Perceptron(0.001, self::TRAIN_ITERATIONS, false);
+            $classifier = new \Phpml\Classification\Linear\LogisticRegression(self::TRAIN_ITERATIONS, Normalizer::NORM_L2);
         }
 
         $fh = $dataset->get_content_file_handle();
@@ -233,7 +233,7 @@ class processor implements \tool_inspire\predictor {
         // Evaluate the model multiple times to confirm the results are not significantly random due to a short amount of data.
         for ($i = 0; $i < $niterations; $i++) {
 
-            $classifier = new \Phpml\Classification\Linear\Perceptron(0.001, self::TRAIN_ITERATIONS, false);
+            $classifier = new \Phpml\Classification\Linear\LogisticRegression(self::TRAIN_ITERATIONS, Normalizer::NORM_L2);
 
             // Split up the dataset in classifier and testing.
             $data = new RandomSplit(new ArrayDataset($samples, $targets), 0.2);
@@ -298,6 +298,7 @@ class processor implements \tool_inspire\predictor {
     }
 
     protected function get_phi($testlabels, $predictedlabels) {
+
         // Binary here only as well.
         $matrix = \Phpml\Metric\ConfusionMatrix::compute($testlabels, $predictedlabels, array(0, 1));
 
