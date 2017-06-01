@@ -16,6 +16,9 @@ php:
  - 7.0
  - 7.1
 
+addons:
+  postgresql: "9.3"
+
 env:
  global:
   - MOODLE_BRANCH=master
