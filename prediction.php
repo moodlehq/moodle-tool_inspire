@@ -62,7 +62,7 @@ $insightinfo->contextname = $context->get_context_name();
 $insightinfo->insightname = $model->get_target()->get_name();
 $title = get_string('insightinfo', 'tool_inspire', $insightinfo);
 
-$modelready = $model->$model->is_enabled() && $model->is_trained() && $model->predictions_exist($context);
+$modelready = $model->is_enabled() && $model->is_trained() && $model->predictions_exist($context);
 if (!$modelready && !has_capability('tool/inspire:managemodels', $context)) {
     echo $renderer->render_model_disabled($insightinfo);
     exit(0);

@@ -62,7 +62,7 @@ if (!isset($actions[$actionname])) {
     throw new \moodle_exception('errorunknownaction', 'tool_inspire');
 }
 
-$modelready = $model->$model->is_enabled() && $model->is_trained() && $model->predictions_exist($context);
+$modelready = $model->is_enabled() && $model->is_trained() && $model->predictions_exist($context);
 if (!$modelready && !has_capability('tool/inspire:managemodels', $context)) {
 
     $PAGE->set_pagelayout('report');

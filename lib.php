@@ -37,8 +37,8 @@ function tool_inspire_extend_navigation_course($navigation, $course, $context) {
     if (has_capability('tool/inspire:listinsights', $context)) {
 
         $cache = \cache::make('tool_inspire', 'modelswithpredictions');
-        $models = $cache->get($context->id);
-        if ($models === false) {
+        $modelids = $cache->get($context->id);
+        if ($modelids === false) {
             // Fill the cache.
             $models = \tool_inspire\manager::get_all_models(true, true, $context);
             $modelids = array_keys($models);
