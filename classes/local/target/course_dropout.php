@@ -106,12 +106,13 @@ class course_dropout extends binary {
             return get_string('nocoursesections', 'tool_inspire');
         }
 
+        if ($course->get_end() == 0) {
+            // We require time end to be set.
+            return get_string('nocourseendtime', 'tool_inspire');
+        }
+
         // Ongoing courses data can not be used to train.
         if ($fortraining && !$course->is_finished()) {
-            if ($course->get_end() === 0) {
-                // More specific error.
-                return get_string('nocourseendtime', 'tool_inspire');
-            }
             return get_string('coursenotyetfinished', 'tool_inspire');
         }
 
