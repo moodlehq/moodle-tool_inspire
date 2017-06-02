@@ -28,6 +28,7 @@ $string['analysablenotused'] = 'Analysable {$a->analysableid} not used: {$a->err
 $string['analysablenotvalidfortarget'] = 'Analysable {$a->analysableid} is not valid for this target: {$a->result}';
 $string['analysingsitedata'] = 'Analysing the site';
 $string['bettercli'] = 'Models\' evaluation and execution are heavy processes, it is better to run them through command line interface';
+$string['cachedef_modelswithpredictions'] = 'Models with available predictions';
 $string['cantguessstartdate'] = 'Can\'t guess the start date';
 $string['cantguessenddate'] = 'Can\'t guess the end date';
 $string['clienablemodel'] = 'You can enable the model by selecting a time splitting method by its id. Note that you can also enable it later using the web interface (\'none\' to exit)';
