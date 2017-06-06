@@ -55,6 +55,9 @@ class processor implements \tool_inspire\predictor {
     protected $limitedsize = false;
 
     public function is_ready() {
+        if (version_compare(phpversion(), '7.0.0') < 0) {
+            return get_string('errorphp7required', 'predict_php');
+        }
         return true;
     }
 
